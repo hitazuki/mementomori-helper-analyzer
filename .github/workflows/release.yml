@@ -44,6 +44,7 @@ jobs:
           go build -ldflags="-s -w" -o mmth-analyzer${{ matrix.binary_ext }} ./cmd/server
 
       - name: Prepare package (Windows)
+        id: prepare_windows
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
@@ -73,9 +74,10 @@ jobs:
           $readmeContent | Out-File -FilePath "$packageName\README.md" -Encoding UTF8
 
           Compress-Archive -Path "$packageName" -DestinationPath "$packageName.zip" -Force
-          echo "PACKAGE_NAME=$packageName.zip" >> $env:GITHUB_ENV
+          echo "package_name=$packageName.zip" >> $env:GITHUB_OUTPUT
 
       - name: Prepare package (Linux)
+        id: prepare_linux
         if: matrix.os == 'ubuntu-latest'
         run: |
           version="${GITHUB_REF#refs/tags/v}"
@@ -105,13 +107,13 @@ jobs:
               ".github/workflows/assets/README_LINUX.md" > "${package_name}/README.md"
 
           tar -czf "${package_name}.tar.gz" "${package_name}"
-          echo "PACKAGE_NAME=${package_name}.tar.gz" >> $GITHUB_ENV
+          echo "package_name=${package_name}.tar.gz" >> $GITHUB_OUTPUT
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
-          path: ${{ env.PACKAGE_NAME }}
+          path: ${{ matrix.os == 'windows-latest' && steps.prepare_windows.outputs.package_name || steps.prepare_linux.outputs.package_name }}
 
   release:
     needs: build
