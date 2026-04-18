@@ -1,0 +1,72 @@
+[remote.github]
+owner = "hitazuki"
+repo = "mementomori-helper-analyzer"
+
+[changelog]
+header = """
+# Changelog
+"""
+
+body = """
+{%- macro remote_url() -%}
+  https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}
+{%- endmacro -%}
+
+{% macro print_commit(commit) -%}
+    - {% if commit.scope %}*({{ commit.scope }})* {% endif %}\
+        {% if commit.breaking %}[**breaking**] {% endif %}\
+        {{ commit.message | split(pat="\n") | first | upper_first }} \
+        {% if commit.github.username %} @{{ commit.github.username }}{% else %} {{ commit.author.name }}{% endif %}
+{% endmacro -%}
+
+{% if version %}\
+    ## {{ version | trim_start_matches(pat="v") }} ({{ timestamp | date(format="%Y-%m-%d") }})
+{% else %}\
+    ## Unreleased
+{% endif %}\
+
+{% for group, commits in commits | group_by(attribute="group") %}
+    ### {{ group | striptags | trim | upper_first }}
+    {% for commit in commits
+    | filter(attribute="scope")
+    | sort(attribute="scope") %}
+        {{ self::print_commit(commit=commit) }}
+    {%- endfor %}
+    {% for commit in commits %}
+        {%- if not commit.scope -%}
+            {{ self::print_commit(commit=commit) }}
+        {% endif -%}
+    {% endfor -%}
+{% endfor -%}
+"""
+
+footer = """
+"""
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+split_commits = false
+protect_breaking_commits = false
+commit_parsers = [
+    { message = ".*\\[skip changelog\\].*", skip = true },
+    { body = ".*\\[skip changelog\\].*", skip = true },
+    { message = "^feat", group = "<!-- 0 -->✨ Features" },
+    { message = "^fix", group = "<!-- 1 -->🐛 Bug Fixes" },
+    { message = "^docs", group = "<!-- 4 -->📚 Documentation" },
+    { message = "^perf", group = "<!-- 3 -->🚀 Performance" },
+    { message = "^refactor", group = "<!-- 2 -->🚜 Refactoring" },
+    { message = "^style", group = "<!-- 5 -->🎨 Styling" },
+    { message = "^test", group = "<!-- 6 -->🧪 Testing" },
+    { message = "^chore\\(deps\\)", group = "📦 Dependencies" },
+    { message = "^chore", group = "<!-- 8 -->🔧 Chores" },
+    { message = "^ci", group = "<!-- 7 -->⚙️ CI/CD" },
+    { body = ".*security", group = "<!-- 9 -->🔒 Security" },
+    { message = "^revert", group = "<!-- 10 -->◀️ Reverts" },
+]
+
+ignore_tags = "rc"
+sort_commits = "oldest"
+
+[git.github]
+commits = true
