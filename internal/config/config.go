@@ -1,12 +1,13 @@
-package main
+package config
 
 import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"mmth-analyzer/scraper"
 	"os"
 	"time"
+
+	"mmth-analyzer/internal/scraper"
 )
 
 // AppConfig 应用配置

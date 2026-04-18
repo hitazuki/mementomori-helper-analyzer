@@ -1,158 +1,110 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Claude Code 开发指南
 
-## Project Overview
+## 项目简介
 
-mmth-analyzer is a web application for displaying diamond statistics and scraping diamond data from the MementoMori Helper (mmth) web service. It provides a web UI with charts and a backend API built with Gin.
+MMTH Analyzer - 钻石统计数据的 Web 展示服务
 
-## Architecture Overview
+## 开发命令
 
-```
-mmth-analyzer/
-├── main.go                    # Entry point, Gin server setup, scheduled tasks
-├── config.go                  # Configuration loading
-├── restart.ps1                # Service restart script
-├── handlers/
-│   └── handlers.go            # HTTP API handlers
-├── scraper/
-│   └── scraper.go             # chromedp-based web scraping
-├── static/
-│   ├── index.html             # Frontend (Alpine.js + ECharts)
-│   └── js/app.js              # Frontend logic
-├── data/                      # Data storage directory
-└── config/                    # Configuration directory
-    ├── app.json               # App config (user editable)
-    ├── app.example.json       # App config example
-    └── test_local.json        # Local test config
-```
-
-## Development Commands
-
-### Building
 ```bash
-cd ~/projects/mmth-analyzer
+# 构建
 go build -o mmth-analyzer .
-```
 
-### Running
-```bash
-# With default config (uses config/app.json if exists)
+# 运行
 ./mmth-analyzer
-
-# With custom config
+# 或使用指定配置
 ./mmth-analyzer -config ./config/test_local.json
 
-# Access at http://localhost:5391 (or configured port)
+# 访问
+http://localhost:5391
 ```
 
-### Restart Service (PowerShell)
+## 规范
+
+### Git Commit
+
+使用约定式提交（Conventional Commits）：
+
+```text
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**type 类型：**
+
+- `feat`: 新功能
+- `fix`: 修复
+- `docs`: 文档
+- `style`: 格式（不影响代码运行的变动）
+- `refactor`: 重构
+- `test`: 测试
+- `chore`: 构建/工具
+
+**示例：**
+
+```text
+feat(api): add new endpoint for account history
+
+Add /api/mmth-diamonds/history/:server/:account endpoint.
+
+Closes #123
+```
+
+### Go 代码规范
+
+- 使用 `gofmt` 格式化代码
+- 使用 `go vet` 静态分析
+- 函数/结构体需添加文档注释
+- 错误处理：优先返回错误而非 panic
+- 配置变更需同步更新 `config/app.example.json`
+
+**检查命令：**
+
 ```bash
-./restart.ps1           # Build and restart
-./restart.ps1 -NoBuild  # Restart without rebuild
+gofmt -l .
+go vet ./...
 ```
 
-## Key Files
+### 子模块规范
 
-- **main.go**: Entry point, initializes Gin server, CORS config, routes, and starts scheduled scrape task
-- **config.go**: Configuration struct and loader (Port, DataDir, ScrapeInterval, ScrapeCfg)
-- **handlers/handlers.go**: API handlers for stats and scrape endpoints
-- **scraper/scraper.go**: chromedp-based scraper for mmth character page
+- mmth-etl 作为子模块位于 `mmth-etl/`
+- 修改子模块代码后在子模块目录独立提交
+- 更新子模块引用：`git submodule update --remote`
 
-## API Endpoints
+### 配置文件规范
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/stats` | GET | Returns diamond_stats.json content |
-| `/api/mmth-diamonds/all` | GET | Returns latest scraped mmth diamond data |
-| `/api/mmth-diamonds/history` | GET | Returns all accounts history data |
-| `/api/mmth-diamonds/history/:server/:account` | GET | Returns single account history |
-| `/api/scrape/all` | POST | Manually trigger scrape for all accounts |
-| `/api/scrape/account` | POST | Scrape single account (URL, account, server in body) |
+- `config/app.json` - 本地配置文件（gitignore）
+- `config/app.example.json` - 配置示例（同步维护）
+- 新增配置项必须提供默认值
 
-## Configuration
+### 前端规范
 
-### Config File Location
+- Alpine.js 用于状态管理
+- ECharts 用于图表
+- 使用 Tailwind CSS 类名
+- 代码位于 `static/` 目录
 
-**Priority (high to low):**
-1. `-config` flag specified file
-2. `config/app.json` (default config file)
-3. Built-in defaults
+## 目录结构
 
-### Quick Start
-
-```bash
-# Copy example config
-cp config/app.example.json config/app.json
-
-# Edit config/app.json with your settings
-# Then run
-./mmth-analyzer
+```text
+├── *.go              # Go 源码
+├── go.mod            # 模块定义
+├── CLAUDE.md         # 本文件
+├── README.md         # 项目说明
+├── Dockerfile        # 容器构建
+├── docker-compose.yml # 服务编排
+├── mmth-etl/         # 子模块（ETL处理）
+├── handlers/         # HTTP处理器
+├── scraper/          # 抓取逻辑
+├── static/           # 前端静态文件
+├── scripts/          # 辅助脚本
+├── data/             # 数据目录（gitignore）
+└── config/           # 配置目录
+    ├── app.json          # 本地配置（gitignore）
+    └── app.example.json  # 配置示例
 ```
-
-### Config Format (`config/app.json`)
-
-```json
-{
-  "port": "5391",
-  "data_dir": "./data",
-  "diamond_stats_path": "../diamond_tracker/data/diamond_stats.json",
-  "scrape_interval": "6h",
-  "mmth_servers": [
-    {
-      "name": "server1",
-      "base_url": "http://mmth-server:5390",
-      "accounts": ["account1", "account2"]
-    }
-  ]
-}
-```
-
-**Fields:**
-- `port`: Server port (default: 5391)
-- `data_dir`: Data storage directory
-- `diamond_stats_path`: Path to diamond_stats.json
-- `scrape_interval`: Duration format like `1h`, `30m`, `6h`
-- `mmth_servers`: Array of mmth server configurations
-
-### Default Config
-
-Without config file, uses:
-- Port: 5391
-- DataDir: ./data
-- ScrapeInterval: 6 hours
-- No mmth servers configured (scraping disabled)
-
-## Frontend
-
-- **Framework**: Alpine.js (CDN, no build required)
-- **Charts**: ECharts
-- **CSS**: Tailwind CSS (CDN)
-
-## Dependencies
-
-- `github.com/gin-gonic/gin` - HTTP framework
-- `github.com/gin-contrib/cors` - CORS middleware
-- `github.com/gin-contrib/static` - Static file serving
-- `github.com/chromedp/chromedp` - Headless browser for scraping
-
-## Data Flow
-
-```
-User Click → API Handler → Action → Response
-                ↓
-         /api/stats    → Read diamond_stats.json
-         /api/scrape   → chromedp → mmth → parse → save JSON
-```
-
-## Scheduled Tasks
-
-The application runs a background goroutine that:
-1. Executes scrape on startup (if mmth_servers configured)
-2. Repeats at configured interval
-
-## Notes
-
-- chromedp requires Chrome/Chromium installed on the system
-- CORS is configured to allow all origins (`*`)
-- Data is stored in `data/mmth_diamonds.json` and `data/history/*.json`

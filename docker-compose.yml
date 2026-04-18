@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  mmth-analyzer:
+    build: .
+    container_name: mmth-analyzer
+    ports:
+      - "5391:5391"
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - shared-data:/app/shared
+    environment:
+      - CHROME_BIN=/usr/bin/chromium-browser
+    restart: unless-stopped
+    networks:
+      - mmth-network
+
+  mmth-etl:
+    build:
+      context: ./mmth-etl
+      dockerfile: Dockerfile
+    container_name: mmth-etl
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      - shared-data:/app/shared
+      - ./mmth-etl/logs:/app/logs:ro
+    command: >
+      sh -c "while true; do
+        if [ -f /app/logs/game.log ]; then
+          ./mmth_etl /app/logs/game.log;
+        fi;
+        sleep 300;
+      done"
+    restart: unless-stopped
+    networks:
+      - mmth-network
+
+volumes:
+  shared-data:
+
+networks:
+  mmth-network:
+    driver: bridge

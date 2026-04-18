@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+mmth-analyzer
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data and logs (mount as volumes instead)
+/data/
+*.log
+
+# Claude Code
+.claude/
+
+# Scripts
+scripts/
+*.ps1
+
+# Documentation
+README.md
+CLAUDE.md
+LICENSE
