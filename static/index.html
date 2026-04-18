@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MMTH Diamond Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div x-data="app()" x-init="init()" class="container mx-auto px-4 py-8">
+        <!-- 头部 -->
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">MMTH Diamond Tracker</h1>
+            <p class="text-gray-600">钻石数据监控与历史趋势</p>
+        </header>
+
+        <!-- 操作按钮 -->
+        <div class="mb-6 flex flex-wrap gap-4">
+            <button @click="refreshAll()"
+                    :disabled="loading"
+                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 transition"
+                    x-text="loading ? '加载中...' : '刷新数据'">
+            </button>
+            <button @click="triggerScrape()"
+                    :disabled="scraping"
+                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 transition"
+                    x-text="scraping ? '抓取中...' : '抓取MMTH钻石'">
+            </button>
+        </div>
+
+        <!-- Tab 切换 -->
+        <div class="mb-6 border-b border-gray-200">
+            <nav class="flex space-x-8">
+                <button @click="switchTab('mmth')"
+                        :class="activeTab === 'mmth' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        class="py-4 px-1 border-b-2 font-medium text-sm">
+                    MMTH 钻石监控
+                </button>
+                <button @click="switchTab('logs')"
+                        :class="activeTab === 'logs' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        class="py-4 px-1 border-b-2 font-medium text-sm">
+                    钻石日志统计
+                </button>
+            </nav>
+        </div>
+
+        <!-- MMTH 钻石监控 Tab -->
+        <div x-show="activeTab === 'mmth'" x-cloak>
+            <p class="text-sm text-gray-500 mb-4" x-show="lastScrapeTime" x-text="'最后抓取时间: ' + lastScrapeTime"></p>
+
+            <!-- 最新抓取数据 -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">最新钻石数据</h2>
+                <div x-show="latestData.length === 0" class="text-gray-500">暂无数据</div>
+                <div x-show="latestData.length > 0" class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b bg-gray-50">
+                                <th class="text-left py-3 px-4">服务器</th>
+                                <th class="text-left py-3 px-4">账号</th>
+                                <th class="text-right py-3 px-4">总钻石</th>
+                                <th class="text-right py-3 px-4">免费钻石</th>
+                                <th class="text-right py-3 px-4">付费钻石</th>
+                                <th class="text-left py-3 px-4">状态</th>
+                                <th class="text-left py-3 px-4">时间</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="item in latestData" :key="item.account">
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="py-3 px-4" x-text="item.server"></td>
+                                    <td class="py-3 px-4 font-medium" x-text="item.account"></td>
+                                    <td class="py-3 px-4 text-right font-mono" x-text="item.total.toLocaleString()"></td>
+                                    <td class="py-3 px-4 text-right font-mono text-blue-600" x-text="item.free.toLocaleString()"></td>
+                                    <td class="py-3 px-4 text-right font-mono text-purple-600" x-text="item.paid.toLocaleString()"></td>
+                                    <td class="py-3 px-4">
+                                        <span x-show="!item.error" class="text-green-600">正常</span>
+                                        <span x-show="item.error" class="text-red-600" x-text="item.error"></span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-500" x-text="item.timestamp"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 历史趋势图 -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">历史趋势</h2>
+                <div class="mb-4 flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label class="block text-gray-700 mb-1 text-sm">选择账号:</label>
+                        <select x-model="selectedAccount"
+                                class="border rounded px-3 py-2 w-48"
+                                @change="updateMmthCharts()">
+                            <option value="">全部账号</option>
+                            <template x-for="name in mmthAccountNames" :key="name">
+                                <option :value="name" x-text="name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-1 text-sm">数据类型:</label>
+                        <select x-model="dataType"
+                                class="border rounded px-3 py-2 w-32"
+                                @change="updateMmthCharts()">
+                            <option value="total">总钻石</option>
+                            <option value="free">免费钻石</option>
+                            <option value="paid">付费钻石</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-1 text-sm">时间维度:</label>
+                        <select x-model="mmthTimeGroup"
+                                class="border rounded px-3 py-2 w-32"
+                                @change="updateMmthCharts()">
+                            <option value="raw">原始</option>
+                            <option value="day">按天</option>
+                            <option value="week">按周</option>
+                            <option value="month">按月</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="historyChart" style="width: 100%; height: 400px;"></div>
+            </div>
+
+            <!-- 汇总统计卡片 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <template x-for="item in latestData.filter(i => !i.error)" :key="item.account">
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <div class="text-sm text-gray-600" x-text="item.account"></div>
+                        <div class="text-2xl font-bold text-blue-600" x-text="item.total.toLocaleString()"></div>
+                        <div class="text-xs text-gray-400 mt-1">
+                            免费: <span x-text="item.free.toLocaleString()"></span> |
+                            付费: <span x-text="item.paid.toLocaleString()"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- 钻石日志统计 Tab -->
+        <div x-show="activeTab === 'logs'" x-cloak>
+            <!-- 角色选择 -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <div class="mb-4 flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label class="block text-gray-700 mb-2">选择角色:</label>
+                        <select x-model="selectedCharacter"
+                                class="border rounded px-3 py-2 w-full md:w-64"
+                                @change="updateLogsCharts()">
+                            <option value="">全部</option>
+                            <template x-for="name in characterNames" :key="name">
+                                <option :value="name" x-text="name"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-2">时间维度:</label>
+                        <select x-model="logsTimeGroup"
+                                class="border rounded px-3 py-2 w-32"
+                                @change="updateLogsCharts()">
+                            <option value="day">按天</option>
+                            <option value="week">按周</option>
+                            <option value="month">按月</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 汇总卡片 -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-blue-50 rounded p-4">
+                        <div class="text-sm text-blue-600">总获取</div>
+                        <div class="text-2xl font-bold text-blue-800" x-text="totalGain.toLocaleString()"></div>
+                    </div>
+                    <div class="bg-red-50 rounded p-4">
+                        <div class="text-sm text-red-600">总消耗</div>
+                        <div class="text-2xl font-bold text-red-800" x-text="totalConsume.toLocaleString()"></div>
+                    </div>
+                    <div class="bg-green-50 rounded p-4">
+                        <div class="text-sm text-green-600">净变化</div>
+                        <div class="text-2xl font-bold text-green-800" x-text="totalNetChange.toLocaleString()"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 图表 -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <div id="dailyChart" style="width: 100%; height: 400px;" class="mb-6"></div>
+                <div id="sourceChart" style="width: 100%; height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js?v=5"></script>
+</body>
+</html>
