@@ -33,9 +33,8 @@ mmth-analyzer
 .DS_Store
 Thumbs.db
 
-# Data and config (user-specific)
+# Data (user-specific)
 /data/
-/config/test_local.json
 
 # Logs
 *.log
