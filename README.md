@@ -12,33 +12,45 @@
 
 ## 技术栈
 
-| 组件 | 技术 |
-|------|------|
-| 后端 | Go + Gin |
-| 抓取 | chromedp (headless Chrome) |
-| 前端 | Alpine.js + ECharts |
-| 样式 | Tailwind CSS |
+| 组件 | 技术                         |
+|------|------------------------------|
+| 后端 | Go + Gin                     |
+| 抓取 | chromedp (headless Chrome)   |
+| 前端 | Alpine.js + ECharts          |
+| 样式 | Tailwind CSS                 |
 
 ## 项目结构
 
-```
+```text
 mmth-analyzer/
-├── main.go              # 入口文件，服务器启动和定时任务
-├── config.go            # 配置定义和加载
-├── handlers/
-│   └── handlers.go      # API 处理函数
-├── scraper/
-│   └── scraper.go       # mmth 抓取逻辑
-├── static/              # 前端静态文件
-│   ├── index.html
-│   └── js/app.js
-├── scripts/             # 工具脚本
-│   ├── restart.ps1      # PowerShell 重启脚本
-│   └── README.md        # 脚本使用说明
-├── data/                # 数据存储目录
-├── config/              # 配置文件目录
-│   ├── app.json         # 主配置文件（用户编辑）
-│   └── app.example.json # 配置示例
+├── cmd/
+│   └── server/
+│       └── main.go              # 入口文件，服务器启动
+├── internal/                    # 内部包
+│   ├── config/                  # 配置定义和加载
+│   │   └── config.go
+│   ├── handlers/                # HTTP处理器
+│   │   ├── history.go
+│   │   ├── routes.go
+│   │   ├── scrape.go
+│   │   └── stats.go
+│   ├── scheduler/               # 定时任务调度
+│   │   └── scheduler.go
+│   ├── scraper/                 # mmth抓取逻辑
+│   │   └── scraper.go
+│   └── service/                 # 业务服务层
+│       ├── diamond.go
+│       └── scrape.go
+├── mmth-etl/                    # 子模块（ETL处理）
+├── static/                      # 前端静态文件
+│   └── js/
+│       └── app.js
+├── scripts/                     # 工具脚本
+├── data/                        # 数据存储目录
+├── config/                      # 配置文件目录
+│   ├── app.json                 # 主配置文件（用户编辑）
+│   └── app.example.json         # 配置示例
+├── web/                         # web相关
 └── README.md
 ```
 
@@ -78,7 +90,7 @@ go build -o mmth-analyzer .
 ./mmth-analyzer -config ./config/test_local.json
 ```
 
-访问 http://localhost:5391
+访问 <http://localhost:5391>
 
 ## 管理脚本
 
@@ -105,6 +117,7 @@ go build -o mmth-analyzer .
 ```
 
 **配置项说明：**
+
 - `port`: 服务端口（默认 5391）
 - `data_dir`: 数据存储目录
 - `diamond_stats_path`: diamond_stats.json 文件路径
@@ -113,18 +126,19 @@ go build -o mmth-analyzer .
 
 ## API 接口
 
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/stats` | GET | 获取 diamond_stats.json 数据 |
-| `/api/mmth-diamonds/all` | GET | 获取最新抓取的钻石数据 |
-| `/api/mmth-diamonds/history` | GET | 获取所有账号历史数据 |
-| `/api/mmth-diamonds/history/:server/:account` | GET | 获取指定账号历史 |
-| `/api/scrape/all` | POST | 手动触发全部账号抓取 |
-| `/api/scrape/account` | POST | 抓取单个账号 |
+|端点|方法|说明|
+|---|---|---|
+|`/api/stats`|GET|获取 diamond_stats.json 数据|
+|`/api/mmth-diamonds/all`|GET|获取最新抓取的钻石数据|
+|`/api/mmth-diamonds/history`|GET|获取所有账号历史数据|
+|`/api/mmth-diamonds/history/:server/:account`|GET|获取指定账号历史|
+|`/api/scrape/all`|POST|手动触发全部账号抓取|
+|`/api/scrape/account`|POST|抓取单个账号|
 
 ## 数据存储
 
 抓取的数据存储在 `data/` 目录：
+
 - `mmth_diamonds.json`: 最新抓取结果
 - `history/`: 按账号存储的历史数据（格式：`{server}-{account}-diamonds.json`）
 

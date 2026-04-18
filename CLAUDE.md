@@ -70,6 +70,13 @@ gofmt -l .
 go vet ./...
 ```
 
+### Markdown 规范
+
+- 使用 VS Code 内置 Markdown 检查或 npx markdownlint-cli 检查
+- 文件末尾保留一个空行
+- 标题前后空行
+- 代码块指定语言
+
 ### 子模块规范
 
 - mmth-etl 作为子模块位于 `mmth-etl/`
@@ -92,19 +99,26 @@ go vet ./...
 ## 目录结构
 
 ```text
-├── *.go              # Go 源码
-├── go.mod            # 模块定义
-├── CLAUDE.md         # 本文件
-├── README.md         # 项目说明
-├── Dockerfile        # 容器构建
-├── docker-compose.yml # 服务编排
-├── mmth-etl/         # 子模块（ETL处理）
-├── handlers/         # HTTP处理器
-├── scraper/          # 抓取逻辑
-├── static/           # 前端静态文件
-├── scripts/          # 辅助脚本
-├── data/             # 数据目录（gitignore）
-└── config/           # 配置目录
-    ├── app.json          # 本地配置（gitignore）
-    └── app.example.json  # 配置示例
+├── cmd/                # 入口文件
+│   └── server/
+│       └── main.go     # 服务器启动入口
+├── internal/           # 内部包
+│   ├── config/         # 配置定义和加载
+│   ├── handlers/       # HTTP处理器
+│   ├── scheduler/      # 定时任务调度
+│   ├── scraper/        # mmth抓取逻辑
+│   └── service/        # 业务服务层
+├── mmth-etl/           # 子模块（ETL处理）
+├── static/             # 前端静态文件
+├── scripts/            # 辅助脚本
+├── data/               # 数据目录（gitignore）
+├── config/             # 配置目录
+│   ├── app.json        # 本地配置（gitignore）
+│   └── app.example.json # 配置示例
+├── web/                # web相关
+├── go.mod              # 模块定义
+├── CLAUDE.md           # 开发指南
+├── README.md           # 项目说明
+├── Dockerfile          # 容器构建
+└── docker-compose.yml  # 服务编排
 ```

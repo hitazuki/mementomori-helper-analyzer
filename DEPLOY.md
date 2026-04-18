@@ -2,7 +2,7 @@
 
 ## 架构说明
 
-```
+```text
 mmth-analyzer/          # 主项目 (Web 展示)
 ├── mmth-etl/            # 子模块 (日志处理)
 │   ├── mmth_etl         # ETL 工具 - 解析日志生成 diamond_stats.json
@@ -64,7 +64,8 @@ docker-compose logs -f
 
 ```bash
 # 每小时执行一次 ETL
-0 * * * * cd /path/to/mmth-analyzer && docker-compose run --rm mmth-etl ./mmth_etl /app/logs/game.log
+0 * * * * cd /path/to/mmth-analyzer && docker-compose run --rm mmth-etl \
+    ./mmth_etl /app/logs/game.log
 ```
 
 ## 3. Windows 直接运行
@@ -127,7 +128,7 @@ pause
 
 部署后的完整结构：
 
-```
+```text
 mmth-analyzer/
 ├── mmth-etl/                 # 子模块
 │   ├── mmth_etl(.exe)       # ETL 二进制
@@ -143,7 +144,7 @@ mmth-analyzer/
 
 ## 5. 数据流
 
-```
+```text
 游戏日志 → mmth-etl → diamond_stats.json → mmth-analyzer → Web 展示
               ↑                                    ↑
          定时/手动触发                        定时读取/实时抓取
@@ -151,13 +152,13 @@ mmth-analyzer/
 
 ## 6. 常用操作
 
-| 操作 | Linux (Docker) | Windows |
-|------|---------------|---------|
-| 启动服务 | `docker-compose up -d` | `start.bat` |
-| 停止服务 | `docker-compose down` | 关闭窗口 |
-| 查看日志 | `docker-compose logs -f` | 直接查看 |
-| 手动 ETL | `docker-compose run mmth-etl ...` | `mmth_etl.exe logs/game.log` |
-| 更新代码 | `git pull && git submodule update` | 相同 |
+|操作|Linux (Docker)|Windows|
+|---|---|---|
+|启动服务|`docker-compose up -d`|`start.bat`|
+|停止服务|`docker-compose down`|关闭窗口|
+|查看日志|`docker-compose logs -f`|直接查看|
+|手动 ETL|`docker-compose run mmth-etl ...`|`mmth_etl.exe logs/game.log`|
+|更新代码|`git pull && git submodule update`|相同|
 
 ## 7. 注意事项
 

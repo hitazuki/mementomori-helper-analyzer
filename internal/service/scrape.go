@@ -7,9 +7,9 @@ import (
 
 // ScrapeService 抓取服务
 type ScrapeService struct {
-	dataDir  string
-	servers  []scraper.ServerConfig
-	mutex    *sync.Mutex
+	dataDir string
+	servers []scraper.ServerConfig
+	mutex   *sync.Mutex
 }
 
 // NewScrapeService 创建抓取服务
