@@ -191,6 +191,7 @@ git push origin v1.0.0
 ```
 
 自动构建：
+
 - Windows amd64 包（ZIP）
 - Linux amd64 包（TAR.GZ）
 
@@ -207,4 +208,4 @@ git push origin v1.0.0
 
 ## 许可证
 
-[MIT](LICENSE)
+[LGPL-2.1](LICENSE)
