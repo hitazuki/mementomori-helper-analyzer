@@ -3,6 +3,7 @@ function app() {
         // 通用状态
         loading: false,
         scraping: false,
+        etlProcessing: false,
         activeTab: 'mmth',
 
         // MMTH 数据
@@ -130,6 +131,27 @@ function app() {
                 alert('请求失败: ' + e.message);
             } finally {
                 this.scraping = false;
+            }
+        },
+
+        async triggerETL() {
+            this.etlProcessing = true;
+            try {
+                const res = await fetch('/api/etl/process', { method: 'POST' });
+                const data = await res.json();
+                if (res.ok) {
+                    await this.loadStats();
+                    if (this.activeTab === 'logs') {
+                        this.updateLogsCharts();
+                    }
+                    alert(`ETL处理完成: 处理 ${data.total_files} 个文件，成功 ${data.success} 个`);
+                } else {
+                    alert('ETL处理失败: ' + (data.error || '未知错误'));
+                }
+            } catch (e) {
+                alert('请求失败: ' + e.message);
+            } finally {
+                this.etlProcessing = false;
             }
         },
 

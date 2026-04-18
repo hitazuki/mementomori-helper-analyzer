@@ -154,7 +154,7 @@ fi
 if [ "$NO_BUILD" = false ]; then
   echo ""
   echo "Building..."
-  go build -o mmth-analyzer .
+  go build -o mmth-analyzer ./cmd/server
   echo "Build success"
 else
   echo ""

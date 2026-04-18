@@ -130,7 +130,7 @@ if ($Stop) {
 if (-not $NoBuild) {
     Write-Host "`nBuilding..." -ForegroundColor Yellow
     Set-Location $script:ProjectRoot
-    go build -o mmth-analyzer .
+    go build -o mmth-analyzer.exe ./cmd/server
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Build failed"
         exit 1

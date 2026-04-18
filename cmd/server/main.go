@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"sync"
 
 	"mmth-analyzer/internal/config"
@@ -28,14 +29,17 @@ func main() {
 	if cfg.ScrapeCfg != nil {
 		scrapeService = service.NewScrapeService(cfg.DataDir, cfg.ScrapeCfg.Servers, scrapeMutex)
 	}
+	etlService := service.NewETLService(cfg.EtlBinaryPath, cfg.MmthLogsDir, cfg.EtlOutputDir)
 
 	// 创建处理器
-	statsHandler := handlers.NewStatsHandler(diamondService, cfg.DiamondStatsPath)
+	diamondStatsPath := filepath.Join(cfg.EtlOutputDir, "diamond_stats.json")
+	statsHandler := handlers.NewStatsHandler(diamondService, diamondStatsPath)
 	var scrapeHandler *handlers.ScrapeHandler
 	if scrapeService != nil {
 		scrapeHandler = handlers.NewScrapeHandler(scrapeService)
 	}
 	historyHandler := handlers.NewHistoryHandler(diamondService)
+	etlHandler := handlers.NewETLHandler(etlService)
 
 	// 启动定时任务
 	if cfg.ScrapeCfg != nil && len(cfg.ScrapeCfg.Servers) > 0 {
@@ -61,7 +65,7 @@ func main() {
 	})
 
 	// 注册 API 路由
-	router := handlers.NewRouter(statsHandler, scrapeHandler, historyHandler)
+	router := handlers.NewRouter(statsHandler, scrapeHandler, historyHandler, etlHandler)
 	router.Register(r)
 
 	// 启动服务器

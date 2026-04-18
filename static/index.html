@@ -31,6 +31,11 @@
                     class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 transition"
                     x-text="scraping ? '抓取中...' : '抓取MMTH钻石'">
             </button>
+            <button @click="triggerETL()"
+                    :disabled="etlProcessing"
+                    class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 transition"
+                    x-text="etlProcessing ? '处理中...' : '更新日志数据'">
+            </button>
         </div>
 
         <!-- Tab 切换 -->
@@ -198,6 +203,6 @@
         </div>
     </div>
 
-    <script src="js/app.js?v=5"></script>
+    <script src="js/app.js?v=6"></script>
 </body>
 </html>

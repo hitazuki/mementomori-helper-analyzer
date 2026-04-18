@@ -1,17 +1,19 @@
 {
   "port": "5391",
   "data_dir": "./data",
-  "diamond_stats_path": "../diamond_tracker/data/diamond_stats.json",
+  "etl_binary_path": "./mmth-etl/mmth_etl.exe",
+  "mmth_logs_dir": "./data/logs",
+  "etl_output_dir": "./data/etl",
   "scrape_interval": "6h",
   "mmth_servers": [
     {
       "name": "server1",
-      "base_url": "http://localhost:5290",
+      "base_url": "http://localhost:5555",
       "accounts": ["account1", "account2"]
     },
     {
       "name": "server2",
-      "base_url": "http://localhost:5390",
+      "base_url": "http://localhost:6666",
       "accounts": ["account3"]
     }
   ]

@@ -6,17 +6,19 @@ import (
 
 // Router 路由注册器
 type Router struct {
-	statsHandler   *StatsHandler
-	scrapeHandler  *ScrapeHandler
+	statsHandler  *StatsHandler
+	scrapeHandler *ScrapeHandler
 	historyHandler *HistoryHandler
+	etlHandler    *ETLHandler
 }
 
 // NewRouter 创建路由注册器
-func NewRouter(stats *StatsHandler, scrape *ScrapeHandler, history *HistoryHandler) *Router {
+func NewRouter(stats *StatsHandler, scrape *ScrapeHandler, history *HistoryHandler, etl *ETLHandler) *Router {
 	return &Router{
 		statsHandler:   stats,
 		scrapeHandler:  scrape,
 		historyHandler: history,
+		etlHandler:     etl,
 	}
 }
 
@@ -35,5 +37,8 @@ func (r *Router) Register(e *gin.Engine) {
 		// 抓取
 		api.POST("/scrape/all", r.scrapeHandler.ScrapeAll)
 		api.POST("/scrape/account", r.scrapeHandler.ScrapeAccount)
+
+		// ETL处理
+		api.POST("/etl/process", r.etlHandler.ProcessAll)
 	}
 }

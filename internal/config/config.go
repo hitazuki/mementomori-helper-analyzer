@@ -12,29 +12,35 @@ import (
 
 // AppConfig 应用配置
 type AppConfig struct {
-	Port             string                 `json:"port"`
-	DataDir          string                 `json:"data_dir"`
-	DiamondStatsPath string                 `json:"diamond_stats_path"`
-	ScrapeInterval   string                 `json:"scrape_interval"`
-	MmthServers      []scraper.ServerConfig `json:"mmth_servers,omitempty"`
+	Port           string                 `json:"port"`
+	DataDir        string                 `json:"data_dir"`
+	ScrapeInterval string                 `json:"scrape_interval"`
+	MmthServers    []scraper.ServerConfig `json:"mmth_servers,omitempty"`
+	EtlBinaryPath  string                 `json:"etl_binary_path"`
+	MmthLogsDir    string                 `json:"mmth_logs_dir"`
+	EtlOutputDir   string                 `json:"etl_output_dir"`
 }
 
 // Config 运行时配置
 type Config struct {
-	Port             string
-	DataDir          string
-	DiamondStatsPath string
-	ScrapeInterval   time.Duration
-	ScrapeCfg        *scraper.ScrapeConfig
+	Port           string
+	DataDir        string
+	ScrapeInterval time.Duration
+	ScrapeCfg      *scraper.ScrapeConfig
+	EtlBinaryPath  string
+	MmthLogsDir    string
+	EtlOutputDir   string
 }
 
 // defaultConfig 默认配置（本地测试用）
 func defaultConfig() *Config {
 	return &Config{
-		Port:             "5391",
-		DataDir:          "./data",
-		DiamondStatsPath: "../diamond_tracker/data/diamond_stats.json",
-		ScrapeInterval:   6 * time.Hour,
+		Port:           "5391",
+		DataDir:        "./data",
+		ScrapeInterval: 6 * time.Hour,
+		EtlBinaryPath:  "./mmth-etl/mmth_etl.exe",
+		MmthLogsDir:    "./data/logs",
+		EtlOutputDir:   "./data/etl",
 	}
 }
 
@@ -91,8 +97,10 @@ func LoadAppConfig(path string) (*AppConfig, error) {
 // ToRuntimeConfig 转换为运行时配置
 func (ac *AppConfig) ToRuntimeConfig() *Config {
 	cfg := &Config{
-		DataDir:          ac.DataDir,
-		DiamondStatsPath: ac.DiamondStatsPath,
+		DataDir:        ac.DataDir,
+		EtlBinaryPath:  ac.EtlBinaryPath,
+		MmthLogsDir:    ac.MmthLogsDir,
+		EtlOutputDir:   ac.EtlOutputDir,
 		ScrapeCfg: &scraper.ScrapeConfig{
 			Servers: ac.MmthServers,
 		},
@@ -123,10 +131,12 @@ func (ac *AppConfig) ToRuntimeConfig() *Config {
 // SaveExampleConfig 保存示例配置到文件
 func SaveExampleConfig(path string) error {
 	example := &AppConfig{
-		Port:             "5391",
-		DataDir:          "./data",
-		DiamondStatsPath: "../diamond_tracker/data/diamond_stats.json",
-		ScrapeInterval:   "6h",
+		Port:           "5391",
+		DataDir:        "./data",
+		ScrapeInterval: "6h",
+		EtlBinaryPath:  "./mmth-etl/mmth_etl.exe",
+		MmthLogsDir:    "./data/logs",
+		EtlOutputDir:   "./data/etl",
 		MmthServers: []scraper.ServerConfig{
 			{
 				Name:     "server1",
