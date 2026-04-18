@@ -1,0 +1,211 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            goos: windows
+            goarch: amd64
+            artifact_name: mmth-analyzer-windows-amd64
+            binary_ext: .exe
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            artifact_name: mmth-analyzer-linux-amd64
+            binary_ext: ''
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Build ETL submodule
+        run: |
+          cd mmth-etl
+          go build -ldflags="-s -w" -o mmth_etl${{ matrix.binary_ext }} .
+
+      - name: Build main application
+        run: |
+          go build -ldflags="-s -w" -o mmth-analyzer${{ matrix.binary_ext }} ./cmd/server
+
+      - name: Prepare package (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF -replace 'refs/tags/v', ''
+          $packageName = "mmth-analyzer-$version-${{ matrix.goos }}-${{ matrix.goarch }}"
+          New-Item -ItemType Directory -Path "$packageName" -Force
+          New-Item -ItemType Directory -Path "$packageName\config" -Force
+          New-Item -ItemType Directory -Path "$packageName\data\etl" -Force
+          New-Item -ItemType Directory -Path "$packageName\data\logs" -Force
+          New-Item -ItemType Directory -Path "$packageName\data\history" -Force
+
+          Copy-Item "mmth-analyzer.exe" "$packageName\"
+          Copy-Item "mmth-etl\mmth_etl.exe" "$packageName\"
+          Copy-Item -Recurse "static" "$packageName\"
+          Copy-Item "config\app.example.json" "$packageName\config\"
+          Copy-Item -Recurse "scripts\*.ps1" "$packageName\" -ErrorAction SilentlyContinue
+
+          @"
+          # MMTH Analyzer v$version
+
+          ## 快速开始
+
+          1. 复制 `config\app.example.json` 为 `config\app.json`
+          2. 编辑 `config\app.json` 填入你的配置
+          3. 双击运行 `mmth-analyzer.exe` 或使用 `start.ps1` 脚本
+          4. 访问 http://localhost:5391
+
+          ## 目录说明
+
+          - `mmth-analyzer.exe` - 主程序
+          - `mmth_etl.exe` - ETL处理程序
+          - `static/` - 前端静态文件
+          - `config/` - 配置文件目录
+          - `data/` - 数据存储目录
+
+          ## 脚本使用
+
+          ```powershell
+          .\start.ps1     # 启动服务
+          .\stop.ps1      # 停止服务
+          .\restart.ps1   # 重启服务
+          ```
+
+          ## 系统要求
+
+          - Windows 10/11 或 Windows Server 2019+
+          - Chrome/Chromium 浏览器（用于数据抓取）
+
+          ## 版本信息
+
+          - 版本: v$version
+          - 构建时间: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+          - Git Commit: $($env:GITHUB_SHA.Substring(0, 7))
+          "@ | Out-File -FilePath "$packageName\README.md" -Encoding UTF8
+
+          Compress-Archive -Path "$packageName" -DestinationPath "$packageName.zip" -Force
+          echo "PACKAGE_NAME=$packageName.zip" >> $env:GITHUB_ENV
+
+      - name: Prepare package (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          version="${GITHUB_REF#refs/tags/v}"
+          package_name="mmth-analyzer-${version}-${{ matrix.goos }}-${{ matrix.goarch }}"
+          mkdir -p "${package_name}/config"
+          mkdir -p "${package_name}/data/etl"
+          mkdir -p "${package_name}/data/logs"
+          mkdir -p "${package_name}/data/history"
+
+          cp "mmth-analyzer" "${package_name}/"
+          cp "mmth-etl/mmth_etl" "${package_name}/"
+          cp -r "static" "${package_name}/"
+          cp "config/app.example.json" "${package_name}/config/"
+          cp scripts/*.sh "${package_name}/" 2>/dev/null || true
+          chmod +x "${package_name}/mmth-analyzer"
+          chmod +x "${package_name}/mmth_etl"
+          chmod +x "${package_name}"/*.sh 2>/dev/null || true
+
+          cat > "${package_name}/README.md" << EOF
+          # MMTH Analyzer v${version}
+
+          ## 快速开始
+
+          1. 复制 \`config/app.example.json\` 为 \`config/app.json\`
+          2. 编辑 \`config/app.json\` 填入你的配置
+          3. 运行 \`./mmth-analyzer\` 或使用 \`./start.sh\` 脚本
+          4. 访问 http://localhost:5391
+
+          ## 目录说明
+
+          - \`mmth-analyzer\` - 主程序
+          - \`mmth_etl\` - ETL处理程序
+          - \`static/\` - 前端静态文件
+          - \`config/\` - 配置文件目录
+          - \`data/\` - 数据存储目录
+
+          ## 脚本使用
+
+          \`\`\`bash
+          ./start.sh     # 启动服务
+          ./stop.sh      # 停止服务
+          ./restart.sh   # 重启服务
+          \`\`\`
+
+          ## 系统要求
+
+          - Linux (amd64)
+          - Chrome/Chromium 浏览器（用于数据抓取）
+
+          ## 版本信息
+
+          - 版本: v${version}
+          - 构建时间: $(date '+%Y-%m-%d %H:%M:%S')
+          - Git Commit: ${GITHUB_SHA:0:7}
+          EOF
+
+          tar -czf "${package_name}.tar.gz" "${package_name}"
+          echo "PACKAGE_NAME=${package_name}.tar.gz" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ env.PACKAGE_NAME }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true
+          body: |
+            ## 安装说明
+
+            ### Windows
+            1. 下载 `mmth-analyzer-windows-amd64.zip`
+            2. 解压到目标目录
+            3. 复制 `config/app.example.json` 为 `config/app.json` 并配置
+            4. 运行 `mmth-analyzer.exe`
+
+            ### Linux
+            1. 下载 `mmth-analyzer-linux-amd64.tar.gz`
+            2. 解压：`tar -xzf mmth-analyzer-linux-amd64.tar.gz`
+            3. 复制 `config/app.example.json` 为 `config/app.json` 并配置
+            4. 运行：`./mmth-analyzer`
+
+            ## 包含组件
+
+            - `mmth-analyzer` - 主程序（Web服务 + API）
+            - `mmth_etl` - ETL处理程序（日志解析）
+            - 前端静态文件（Alpine.js + ECharts）
+            - 管理脚本（start/stop/restart）
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
