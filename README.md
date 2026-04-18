@@ -1,6 +1,6 @@
 # MMTH Analyzer
 
-一个用于展示钻石统计数据和抓取 MementoMori Helper (mmth) 账号钻石信息的 Web 应用。
+MMTH Analyzer 是 [mementomori-helper](https://github.com/moonheart/mementomori-helper) 的旁路数据分析器，用于旁路式处理/分析/监控mementomori-helper的日志数据和前端数据。
 
 ## 功能特点
 
