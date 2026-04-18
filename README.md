@@ -133,7 +133,3 @@ go build -o mmth-analyzer .
 - chromedp 需要系统安装 Chrome/Chromium
 - 抓取功能需要 mmth 服务可访问
 - 确保配置文件中的 `mmth_servers` 配置正确
-
-## 许可证
-
-MIT License
