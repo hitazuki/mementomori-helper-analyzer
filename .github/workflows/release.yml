@@ -54,50 +54,23 @@ jobs:
           New-Item -ItemType Directory -Path "$packageName\data\etl" -Force
           New-Item -ItemType Directory -Path "$packageName\data\logs" -Force
           New-Item -ItemType Directory -Path "$packageName\data\history" -Force
+          New-Item -ItemType Directory -Path "$packageName\mmth-etl" -Force
 
           Copy-Item "mmth-analyzer.exe" "$packageName\"
-          Copy-Item "mmth-etl\mmth_etl.exe" "$packageName\"
+          Copy-Item "mmth-etl\mmth_etl.exe" "$packageName\mmth-etl\"
           Copy-Item -Recurse "static" "$packageName\"
           Copy-Item "config\app.example.json" "$packageName\config\"
           Copy-Item -Recurse "scripts\*.ps1" "$packageName\" -ErrorAction SilentlyContinue
 
-          @"
-          # MMTH Analyzer v$version
-
-          ## 快速开始
-
-          1. 复制 `config\app.example.json` 为 `config\app.json`
-          2. 编辑 `config\app.json` 填入你的配置
-          3. 双击运行 `mmth-analyzer.exe` 或使用 `start.ps1` 脚本
-          4. 访问 http://localhost:5391
-
-          ## 目录说明
-
-          - `mmth-analyzer.exe` - 主程序
-          - `mmth_etl.exe` - ETL处理程序
-          - `static/` - 前端静态文件
-          - `config/` - 配置文件目录
-          - `data/` - 数据存储目录
-
-          ## 脚本使用
-
-          ```powershell
-          .\start.ps1     # 启动服务
-          .\stop.ps1      # 停止服务
-          .\restart.ps1   # 重启服务
-          ```
-
-          ## 系统要求
-
-          - Windows 10/11 或 Windows Server 2019+
-          - Chrome/Chromium 浏览器（用于数据抓取）
-
-          ## 版本信息
-
-          - 版本: v$version
-          - 构建时间: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-          - Git Commit: $($env:GITHUB_SHA.Substring(0, 7))
-          "@ | Out-File -FilePath "$packageName\README.md" -Encoding UTF8
+          # 读取模板并替换占位符
+          $readmeTemplate = Get-Content ".github\workflows\assets\README_WINDOWS.md" -Raw
+          $buildTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+          $gitCommit = $env:GITHUB_SHA.Substring(0, 7)
+          $readmeContent = $readmeTemplate `
+              -replace '{VERSION}', $version `
+              -replace '{BUILD_TIME}', $buildTime `
+              -replace '{GIT_COMMIT}', $gitCommit
+          $readmeContent | Out-File -FilePath "$packageName\README.md" -Encoding UTF8
 
           Compress-Archive -Path "$packageName" -DestinationPath "$packageName.zip" -Force
           echo "PACKAGE_NAME=$packageName.zip" >> $env:GITHUB_ENV
@@ -112,52 +85,24 @@ jobs:
           mkdir -p "${package_name}/data/logs"
           mkdir -p "${package_name}/data/history"
 
+          mkdir -p "${package_name}/mmth-etl"
+
           cp "mmth-analyzer" "${package_name}/"
-          cp "mmth-etl/mmth_etl" "${package_name}/"
+          cp "mmth-etl/mmth_etl" "${package_name}/mmth-etl/"
           cp -r "static" "${package_name}/"
           cp "config/app.example.json" "${package_name}/config/"
           cp scripts/*.sh "${package_name}/" 2>/dev/null || true
           chmod +x "${package_name}/mmth-analyzer"
-          chmod +x "${package_name}/mmth_etl"
+          chmod +x "${package_name}/mmth-etl/mmth_etl"
           chmod +x "${package_name}"/*.sh 2>/dev/null || true
 
-          cat > "${package_name}/README.md" << EOF
-          # MMTH Analyzer v${version}
-
-          ## 快速开始
-
-          1. 复制 \`config/app.example.json\` 为 \`config/app.json\`
-          2. 编辑 \`config/app.json\` 填入你的配置
-          3. 运行 \`./mmth-analyzer\` 或使用 \`./start.sh\` 脚本
-          4. 访问 http://localhost:5391
-
-          ## 目录说明
-
-          - \`mmth-analyzer\` - 主程序
-          - \`mmth_etl\` - ETL处理程序
-          - \`static/\` - 前端静态文件
-          - \`config/\` - 配置文件目录
-          - \`data/\` - 数据存储目录
-
-          ## 脚本使用
-
-          \`\`\`bash
-          ./start.sh     # 启动服务
-          ./stop.sh      # 停止服务
-          ./restart.sh   # 重启服务
-          \`\`\`
-
-          ## 系统要求
-
-          - Linux (amd64)
-          - Chrome/Chromium 浏览器（用于数据抓取）
-
-          ## 版本信息
-
-          - 版本: v${version}
-          - 构建时间: $(date '+%Y-%m-%d %H:%M:%S')
-          - Git Commit: ${GITHUB_SHA:0:7}
-          EOF
+          # 读取模板并替换占位符
+          build_time=$(date '+%Y-%m-%d %H:%M:%S')
+          git_commit=${GITHUB_SHA:0:7}
+          sed -e "s/{VERSION}/${version}/g" \
+              -e "s/{BUILD_TIME}/${build_time}/g" \
+              -e "s/{GIT_COMMIT}/${git_commit}/g" \
+              ".github/workflows/assets/README_LINUX.md" > "${package_name}/README.md"
 
           tar -czf "${package_name}.tar.gz" "${package_name}"
           echo "PACKAGE_NAME=${package_name}.tar.gz" >> $GITHUB_ENV
