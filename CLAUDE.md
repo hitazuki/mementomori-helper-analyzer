@@ -10,12 +10,12 @@ MMTH Analyzer - 钻石统计数据的 Web 展示服务
 
 ```bash
 # 构建
-go build -o mmth-analyzer .
+go build -o mmth-analyzer.exe ./cmd/server
 
 # 运行
-./mmth-analyzer
+./mmth-analyzer.exe
 # 或使用指定配置
-./mmth-analyzer -config ./config/test_local.json
+./mmth-analyzer.exe -config ./config/test_local.json
 
 # 访问
 http://localhost:5391
