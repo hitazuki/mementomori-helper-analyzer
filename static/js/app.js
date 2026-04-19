@@ -22,11 +22,16 @@ function app() {
         dailyChart: null,
         sourceChart: null,
 
+        // 洞穴统计数据
+        caveStats: {},
+        caveDays: 7,
+
         async init() {
             await Promise.all([
                 this.loadLatestData(),
                 this.loadHistoryData(),
-                this.loadStats()
+                this.loadStats(),
+                this.loadCaveStats()
             ]);
             // 延长延迟确保 Alpine.js 完成初始渲染
             setTimeout(() => this.initCharts(), 300);
@@ -38,10 +43,11 @@ function app() {
             setTimeout(() => {
                 if (tab === 'mmth') {
                     this.historyChart && this.historyChart.resize();
-                } else {
+                } else if (tab === 'logs') {
                     // 切换到日志统计时，如果图表未初始化则初始化，否则更新
                     this.initOrUpdateLogsCharts();
                 }
+                // cave tab 不需要图表初始化
             }, 150);
         },
 
@@ -145,7 +151,10 @@ function app() {
                 const res = await fetch('/api/etl/process', { method: 'POST' });
                 const data = await res.json();
                 if (res.ok) {
-                    await this.loadStats();
+                    await Promise.all([
+                        this.loadStats(),
+                        this.loadCaveStats()
+                    ]);
                     if (this.activeTab === 'logs') {
                         this.updateLogsCharts();
                     }
@@ -343,6 +352,70 @@ function app() {
             }
         },
 
+        // ===== 洞穴统计相关 =====
+        get caveRecentDates() {
+            const dates = [];
+            const today = new Date();
+            for (let i = 0; i < this.caveDays; i++) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - i);
+                dates.push(d.toISOString().substring(0, 10));
+            }
+            return dates;
+        },
+
+        get caveCharacters() {
+            const chars = new Set();
+            for (const serverName of Object.keys(this.caveStats || {})) {
+                const serverData = this.caveStats[serverName];
+                for (const charName of Object.keys(serverData || {})) {
+                    chars.add(charName);
+                }
+            }
+            return Array.from(chars).sort();
+        },
+
+        getCaveStatus(charName, date) {
+            for (const serverName of Object.keys(this.caveStats || {})) {
+                const serverData = this.caveStats[serverName];
+                if (serverData && serverData[charName] && serverData[charName][date]) {
+                    return serverData[charName][date].status;
+                }
+            }
+            return null;
+        },
+
+        getCaveStatusText(charName, date) {
+            const status = this.getCaveStatus(charName, date);
+            switch (status) {
+                case 'finished': return '已完成';
+                case 'started': return '未完成';
+                case 'error': return '异常';
+                default: return '未执行';
+            }
+        },
+
+        getCaveStatusClass(charName, date) {
+            const status = this.getCaveStatus(charName, date);
+            switch (status) {
+                case 'finished': return 'bg-green-100 text-green-800';
+                case 'started': return 'bg-yellow-100 text-yellow-800';
+                case 'error': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-500';
+            }
+        },
+
+        async loadCaveStats() {
+            try {
+                const res = await fetch('/api/cave/stats');
+                if (res.ok) {
+                    this.caveStats = await res.json();
+                }
+            } catch (e) {
+                console.error('Failed to load cave stats:', e);
+            }
+        },
+
         updateLogsCharts() {
             this.updateDailyChart();
             this.updateSourceChart();
@@ -491,7 +564,8 @@ function app() {
                 await Promise.all([
                     this.loadLatestData(),
                     this.loadHistoryData(),
-                    this.loadStats()
+                    this.loadStats(),
+                    this.loadCaveStats()
                 ]);
                 // 只更新当前显示的Tab图表
                 this.updateMmthCharts();

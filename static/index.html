@@ -56,6 +56,11 @@
                         class="py-4 px-1 border-b-2 font-medium text-sm">
                     钻石日志统计
                 </button>
+                <button @click="switchTab('cave')"
+                        :class="activeTab === 'cave' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        class="py-4 px-1 border-b-2 font-medium text-sm">
+                    洞窟日志统计
+                </button>
             </nav>
         </div>
 
@@ -206,8 +211,54 @@
                 <div id="sourceChart" style="width: 100%; height: 300px;"></div>
             </div>
         </div>
+
+        <!-- 洞窟日志统计 Tab -->
+        <div x-show="activeTab === 'cave'" x-cloak>
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">时空洞窟状态</h2>
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-gray-600">显示天数:</label>
+                        <select x-model.number="caveDays" class="border rounded px-2 py-1 text-sm w-20">
+                            <option value="5">5天</option>
+                            <option value="7">7天</option>
+                            <option value="14">14天</option>
+                            <option value="30">30天</option>
+                        </select>
+                    </div>
+                </div>
+                <div x-show="caveCharacters.length === 0" class="text-gray-500">暂无数据</div>
+                <div x-show="caveCharacters.length > 0" class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b bg-gray-50">
+                                <th class="text-left py-2 px-3 font-medium">角色</th>
+                                <template x-for="date in caveRecentDates" :key="date">
+                                    <th class="text-center py-2 px-2 font-medium whitespace-nowrap" x-text="date.substring(5)"></th>
+                                </template>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="char in caveCharacters" :key="char">
+                                <tr class="border-b hover:bg-gray-50">
+                                    <td class="py-2 px-3 font-medium whitespace-nowrap" x-text="char"></td>
+                                    <template x-for="date in caveRecentDates" :key="date">
+                                        <td class="py-2 px-1 text-center whitespace-nowrap">
+                                            <span class="px-2 py-1 rounded text-xs whitespace-nowrap"
+                                                  :class="getCaveStatusClass(char, date)"
+                                                  x-text="getCaveStatusText(char, date)">
+                                            </span>
+                                        </td>
+                                    </template>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <script src="js/app.js?v=7"></script>
+    <script src="js/app.js?v=11"></script>
 </body>
 </html>

@@ -45,6 +45,7 @@ func main() {
 		servers = cfg.ScrapeCfg.Servers
 	}
 	etlHandler := handlers.NewETLHandler(etlService, servers)
+	caveHandler := handlers.NewCaveHandler(etlService)
 
 	// 启动定时任务
 	if cfg.ScrapeCfg != nil && len(cfg.ScrapeCfg.Servers) > 0 {
@@ -70,7 +71,7 @@ func main() {
 	})
 
 	// 注册 API 路由
-	router := handlers.NewRouter(statsHandler, scrapeHandler, historyHandler, etlHandler)
+	router := handlers.NewRouter(statsHandler, scrapeHandler, historyHandler, etlHandler, caveHandler)
 	router.Register(r)
 
 	// 启动服务器

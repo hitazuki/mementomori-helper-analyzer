@@ -130,6 +130,20 @@ if ($Stop) {
 if (-not $NoBuild) {
     Write-Host "`nBuilding..." -ForegroundColor Yellow
     Set-Location $script:ProjectRoot
+
+    # Build ETL submodule
+    Write-Host "  Building ETL submodule..." -ForegroundColor Gray
+    Set-Location "mmth-etl"
+    go build -o mmth_etl.exe .
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "ETL build failed"
+        exit 1
+    }
+    Set-Location $script:ProjectRoot
+    Write-Host "  ETL build success" -ForegroundColor Gray
+
+    # Build main application
+    Write-Host "  Building main application..." -ForegroundColor Gray
     go build -o mmth-analyzer.exe ./cmd/server
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Build failed"

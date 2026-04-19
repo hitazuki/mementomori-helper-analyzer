@@ -117,3 +117,38 @@ func (s *ETLService) CombineAllStats() (map[string]interface{}, error) {
 
 	return result, nil
 }
+
+
+// CombineAllCaveStats 合并所有服务器的洞穴统计数据
+func (s *ETLService) CombineAllCaveStats() (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+
+	// 读取输出目录下的所有子目录
+	entries, err := os.ReadDir(s.outputDir)
+	if err != nil {
+		return nil, fmt.Errorf("读取输出目录失败: %w", err)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		serverName := entry.Name()
+		caveStatsPath := filepath.Join(s.outputDir, serverName, "cave_stats.json")
+
+		data, err := os.ReadFile(caveStatsPath)
+		if err != nil {
+			continue // 跳过不存在或读取失败的文件
+		}
+
+		var stats map[string]interface{}
+		if err := json.Unmarshal(data, &stats); err != nil {
+			continue // 跳过解析失败的文件
+		}
+
+		result[serverName] = stats
+	}
+
+	return result, nil
+}

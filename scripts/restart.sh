@@ -154,6 +154,16 @@ fi
 if [ "$NO_BUILD" = false ]; then
   echo ""
   echo "Building..."
+
+  # Build ETL submodule
+  echo "  Building ETL submodule..."
+  cd mmth-etl
+  go build -o mmth_etl .
+  cd "$PROJECT_ROOT"
+  echo "  ETL build success"
+
+  # Build main application
+  echo "  Building main application..."
   go build -o mmth-analyzer ./cmd/server
   echo "Build success"
 else
