@@ -387,51 +387,50 @@ function app() {
 
             const groupKeys = Object.keys(grouped).sort();
 
-            // 构建系列 - 每个角色两个系列（获取/消耗）
+            // 构建系列 - 每个角色一个系列（净变化 = 获取 - 消耗）
             const series = [];
-            // 为不同角色分配不同的颜色组
             const characterColors = [
-                { gain: '#10b981', consume: '#ef4444' }, // 绿/红
-                { gain: '#3b82f6', consume: '#f97316' }, // 蓝/橙
-                { gain: '#8b5cf6', consume: '#eab308' }, // 紫/黄
-                { gain: '#ec4899', consume: '#06b6d4' }, // 粉/青
-                { gain: '#84cc16', consume: '#6366f1' }, // 浅绿/靛
+                '#10b981', // 绿
+                '#3b82f6', // 蓝
+                '#8b5cf6', // 紫
+                '#ec4899', // 粉
+                '#f97316', // 橙
             ];
 
             characters.forEach((charName, idx) => {
-                const colors = characterColors[idx % characterColors.length];
-                const gainData = groupKeys.map(key => grouped[key][charName]?.gain ?? 0);
-                const consumeData = groupKeys.map(key => grouped[key][charName]?.consume ?? 0);
+                const netData = groupKeys.map(key => {
+                    const charGroup = grouped[key][charName];
+                    if (!charGroup) return 0;
+                    return (charGroup.gain || 0) - (charGroup.consume || 0);
+                });
 
                 series.push({
-                    name: charName + '-获取',
+                    name: charName,
                     type: 'bar',
-                    data: gainData,
-                    itemStyle: { color: colors.gain },
+                    data: netData,
+                    itemStyle: { color: characterColors[idx % characterColors.length] },
                     emphasis: { focus: 'series' }
                 });
-                series.push({
-                    name: charName + '-消耗',
-                    type: 'bar',
-                    data: consumeData,
-                    itemStyle: { color: colors.consume },
-                    emphasis: { focus: 'series' }
-                });
-            });
-
-            const legendData = [];
-            characters.forEach(charName => {
-                legendData.push(charName + '-获取');
-                legendData.push(charName + '-消耗');
             });
 
             this.dailyChart.setOption({
-                title: { text: '钻石变动统计', left: 'center' },
+                title: { text: '钻石净变动统计', left: 'center' },
                 tooltip: {
                     trigger: 'axis',
-                    axisPointer: { type: 'shadow' }
+                    axisPointer: { type: 'shadow' },
+                    formatter: function(params) {
+                        if (!params || params.length === 0) return '';
+                        let result = params[0].axisValue + '<br/>';
+                        params.forEach(p => {
+                            const val = p.value;
+                            const sign = val >= 0 ? '+' : '';
+                            const color = val >= 0 ? '#10b981' : '#ef4444';
+                            result += `${p.marker} ${p.seriesName}: <span style="color:${color}">${sign}${val.toLocaleString()}</span><br/>`;
+                        });
+                        return result;
+                    }
                 },
-                legend: { data: legendData, bottom: 0, type: 'scroll' },
+                legend: { data: characters, bottom: 0, type: 'scroll' },
                 grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
                 xAxis: { type: 'category', data: groupKeys, axisLabel: { rotate: 45 } },
                 yAxis: { type: 'value' },
