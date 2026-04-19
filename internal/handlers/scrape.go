@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"mmth-analyzer/internal/service"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,10 +17,26 @@ func NewScrapeHandler(scrapeService *service.ScrapeService) *ScrapeHandler {
 	return &ScrapeHandler{scrapeService: scrapeService}
 }
 
+// isChromeNotFoundError 检查错误是否为 Chrome 未找到
+func isChromeNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "未找到 Chrome/Chromium")
+}
+
 // ScrapeAll 抓取所有账号
 func (h *ScrapeHandler) ScrapeAll(c *gin.Context) {
 	err := h.scrapeService.ScrapeAll()
 	if err != nil {
+		// 检查是否是 Chrome 未找到错误
+		if isChromeNotFoundError(err) {
+			c.JSON(500, gin.H{
+				"error":         err.Error(),
+				"chrome_needed": true,
+			})
+			return
+		}
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}

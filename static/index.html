@@ -20,22 +20,27 @@
         </header>
 
         <!-- 操作按钮 -->
-        <div class="mb-6 flex flex-wrap gap-4">
-            <button @click="refreshAll()"
-                    :disabled="loading"
-                    class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 transition"
-                    x-text="loading ? '加载中...' : '刷新数据'">
-            </button>
-            <button @click="triggerScrape()"
-                    :disabled="scraping"
-                    class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 transition"
-                    x-text="scraping ? '抓取中...' : '抓取MMTH钻石'">
-            </button>
-            <button @click="triggerETL()"
-                    :disabled="etlProcessing"
-                    class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 transition"
-                    x-text="etlProcessing ? '处理中...' : '更新日志数据'">
-            </button>
+        <div class="mb-6">
+            <div class="flex flex-wrap gap-4">
+                <button @click="refreshAll()"
+                        :disabled="loading"
+                        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 transition"
+                        x-text="loading ? '加载中...' : '刷新数据'">
+                </button>
+                <button @click="triggerScrape()"
+                        :disabled="scraping"
+                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 transition"
+                        x-text="scraping ? '抓取中...' : '抓取MMTH钻石'">
+                </button>
+                <button @click="triggerETL()"
+                        :disabled="etlProcessing"
+                        class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 transition"
+                        x-text="etlProcessing ? '处理中...' : '更新日志数据'">
+                </button>
+            </div>
+            <p class="mt-2 text-sm text-gray-500">
+                <span class="text-amber-600">⚠️</span> 抓取功能需要 Chrome/Chromium 浏览器（Docker 镜像已内置）
+            </p>
         </div>
 
         <!-- Tab 切换 -->
@@ -203,6 +208,6 @@
         </div>
     </div>
 
-    <script src="js/app.js?v=6"></script>
+    <script src="js/app.js?v=7"></script>
 </body>
 </html>

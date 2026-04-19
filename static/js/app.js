@@ -125,7 +125,12 @@ function app() {
                     this.updateMmthCharts();
                     alert('抓取成功');
                 } else {
-                    alert('抓取失败: ' + (data.error || '未知错误'));
+                    // 检查是否是 Chrome 未安装错误
+                    if (data.chrome_needed) {
+                        alert('⚠️ ' + data.error + '\n\n请安装 Chrome/Chromium 浏览器后再使用抓取功能。\n\nWindows: 下载 Google Chrome 安装\nLinux: sudo apt install chromium-browser');
+                    } else {
+                        alert('抓取失败: ' + (data.error || '未知错误'));
+                    }
                 }
             } catch (e) {
                 alert('请求失败: ' + e.message);

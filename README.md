@@ -17,9 +17,19 @@ MMTH Analyzer 是 [mementomori-helper](https://github.com/moonheart/mementomori-
 
 ### 方式一：Docker 部署（推荐）
 
+提供两个版本的镜像：
+
+| 镜像标签 | 大小 | 功能 |
+|----------|------|------|
+| `latest` | ~420MB | 完整版，支持抓取 + ETL |
+| `lite` | ~25MB | 轻量版，仅支持 ETL（无 Chrome） |
+
 ```bash
-# 拉取镜像
+# 完整版（支持抓取）
 docker pull hitazuki/mmth-analyzer:latest
+
+# 轻量版（仅 ETL，体积小）
+docker pull hitazuki/mmth-analyzer:lite
 
 # 运行容器
 docker run -d \
@@ -49,11 +59,16 @@ docker-compose up -d
    - Windows: `mmth-analyzer-vX.X.X-windows-amd64.zip`
    - Linux: `mmth-analyzer-vX.X.X-linux-amd64.tar.gz`
 3. 解压到目标目录
-4. 复制 `config/app.example.json` 为 `config/app.json` 并配置
-5. 运行主程序：
+4. **安装 Chrome/Chromium**（使用抓取功能必须）
+   - Windows: 下载 [Google Chrome](https://www.google.com/chrome/) 安装
+   - Linux: `sudo apt install chromium-browser` 或 `sudo dnf install chromium`
+5. 复制 `config/app.example.json` 为 `config/app.json` 并配置
+6. 运行主程序：
    - Windows: `mmth-analyzer.exe`
    - Linux: `./mmth-analyzer`
-6. 访问 <http://localhost:5391>
+7. 访问 <http://localhost:5391>
+
+> **说明**：抓取功能依赖 Chrome/Chromium 浏览器渲染页面。如果仅使用 ETL 日志解析功能，无需安装 Chrome。
 
 ## 配置文件
 
@@ -86,9 +101,9 @@ docker-compose up -d
 
 ## 注意事项
 
-- chromedp 需要系统安装 Chrome/Chromium（Docker 镜像已包含）
+- **抓取功能**：需要安装 Chrome/Chromium（Docker 镜像已内置，Release 包需手动安装）
+- **ETL 功能**：无需 Chrome，仅需配置日志文件路径
 - 抓取功能需要 mmth 服务可访问
-- ETL 处理需要读取配置的日志文件
 
 ---
 

@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/chromedp/chromedp"
@@ -50,8 +52,63 @@ type ScrapeConfig struct {
 	Servers []ServerConfig `json:"servers"`
 }
 
+// checkChrome 检查 Chrome/Chromium 是否可用
+func checkChrome() error {
+	// 检查环境变量指定的 Chrome
+	if chromePath := os.Getenv("CHROME_BIN"); chromePath != "" {
+		if _, err := exec.LookPath(chromePath); err == nil {
+			return nil
+		}
+	}
+
+	// 检查常见的 Chrome/Chromium 路径
+	chromePaths := []string{
+		"chromium-browser",
+		"chromium",
+		"google-chrome",
+		"chrome",
+		// Windows
+		"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+		"C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+		// macOS
+		"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+		// Linux common paths
+		"/usr/bin/chromium-browser",
+		"/usr/bin/chromium",
+		"/usr/bin/google-chrome",
+		"/usr/bin/chrome",
+	}
+
+	for _, path := range chromePaths {
+		if _, err := exec.LookPath(path); err == nil {
+			return nil
+		}
+		// 检查绝对路径
+		if _, err := os.Stat(path); err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("未找到 Chrome/Chromium 浏览器，请安装后再使用抓取功能")
+}
+
+// isChromeNotFoundError 检查错误是否为 Chrome 未找到
+func isChromeNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := err.Error()
+	return strings.Contains(errStr, "exec:") &&
+		strings.Contains(errStr, "executable file not found")
+}
+
 // ScrapeAccount 抓取单个账号的钻石数据
 func ScrapeAccount(mmthUrl, account, serverName string) (*AccountDiamondData, error) {
+	// 检查 Chrome/Chromium 是否可用
+	if err := checkChrome(); err != nil {
+		return nil, err
+	}
+
 	// 配置 Chrome 选项（支持无头/容器环境）
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.Flag("headless", true),
@@ -82,6 +139,10 @@ func ScrapeAccount(mmthUrl, account, serverName string) (*AccountDiamondData, er
 		chromedp.Sleep(5*time.Second),
 	)
 	if err != nil {
+		// 检查是否是 Chrome 未找到错误
+		if isChromeNotFoundError(err) {
+			return nil, fmt.Errorf("未找到 Chrome/Chromium 浏览器，请安装后再使用抓取功能")
+		}
 		return nil, fmt.Errorf("navigate failed: %w", err)
 	}
 
