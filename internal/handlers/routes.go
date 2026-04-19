@@ -26,6 +26,11 @@ func NewRouter(stats *StatsHandler, scrape *ScrapeHandler, history *HistoryHandl
 func (r *Router) Register(e *gin.Engine) {
 	api := e.Group("/api")
 	{
+		// 健康检查
+		api.GET("/health", func(c *gin.Context) {
+			c.JSON(200, gin.H{"status": "ok"})
+		})
+
 		// 统计数据
 		api.GET("/stats", r.statsHandler.GetStats)
 		api.GET("/mmth-diamonds/all", r.statsHandler.GetAllDiamonds)

@@ -2,44 +2,38 @@ version: '3.8'
 
 services:
   mmth-analyzer:
-    build: .
+    image: ${DOCKER_IMAGE:hitazuki/mmth-analyzer:latest}
     container_name: mmth-analyzer
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "5391:5391"
     volumes:
       - ./data:/app/data
       - ./config:/app/config
-      - shared-data:/app/shared
     environment:
       - CHROME_BIN=/usr/bin/chromium-browser
+      - TZ=Asia/Shanghai
     restart: unless-stopped
-    networks:
-      - mmth-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5391/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
-  mmth-etl:
-    build:
-      context: ./mmth-etl
-      dockerfile: Dockerfile
-    container_name: mmth-etl
-    volumes:
-      - ./data:/app/data
-      - ./config:/app/config
-      - shared-data:/app/shared
-      - ./mmth-etl/logs:/app/logs:ro
-    command: >
-      sh -c "while true; do
-        if [ -f /app/logs/game.log ]; then
-          ./mmth_etl /app/logs/game.log;
-        fi;
-        sleep 300;
-      done"
-    restart: unless-stopped
-    networks:
-      - mmth-network
-
-volumes:
-  shared-data:
-
-networks:
-  mmth-network:
-    driver: bridge
+# 使用示例:
+# 1. 从 DockerHub 拉取运行:
+#    docker-compose up -d
+#
+# 2. 使用指定镜像:
+#    DOCKER_IMAGE=username/mmth-analyzer:v1.0.0 docker-compose up -d
+#
+# 3. 本地构建:
+#    docker-compose build
+#    docker-compose up -d
+#
+# 4. 首次使用需复制配置文件:
+#    cp config/app.example.json config/app.json
+#    # 然后编辑 config/app.json 配置服务器信息
