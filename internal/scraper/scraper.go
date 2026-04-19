@@ -52,8 +52,8 @@ type ScrapeConfig struct {
 	Servers []ServerConfig `json:"servers"`
 }
 
-// checkChrome 检查 Chrome/Chromium 是否可用
-func checkChrome() error {
+// CheckChrome 检查 Chrome/Chromium 是否可用
+func CheckChrome() error {
 	// 检查环境变量指定的 Chrome
 	if chromePath := os.Getenv("CHROME_BIN"); chromePath != "" {
 		if _, err := exec.LookPath(chromePath); err == nil {
@@ -105,7 +105,7 @@ func isChromeNotFoundError(err error) bool {
 // ScrapeAccount 抓取单个账号的钻石数据
 func ScrapeAccount(mmthUrl, account, serverName string) (*AccountDiamondData, error) {
 	// 检查 Chrome/Chromium 是否可用
-	if err := checkChrome(); err != nil {
+	if err := CheckChrome(); err != nil {
 		return nil, err
 	}
 
