@@ -42,6 +42,7 @@ type ServerConfig struct {
 	Name     string   `json:"name"`
 	BaseURL  string   `json:"base_url"`
 	Accounts []string `json:"accounts"`
+	LogPath  string   `json:"log_path,omitempty"` // 该服务器的日志文件路径
 }
 
 // ScrapeConfig 抓取配置
@@ -229,14 +230,18 @@ type AccountHistoryRecord struct {
 
 // saveLatestData 保存最新数据（覆盖写入）
 func saveLatestData(dataDir string, result MultiScrapeResult) error {
-	savePath := filepath.Join(dataDir, "mmth_diamonds.json")
+	saveDir := filepath.Join(dataDir, "scrape", "diamonds")
+	if err := os.MkdirAll(saveDir, 0755); err != nil {
+		return fmt.Errorf("create scrape dir failed: %w", err)
+	}
+	savePath := filepath.Join(saveDir, "mmth_diamonds.json")
 	data, _ := json.MarshalIndent(result, "", "  ")
 	return os.WriteFile(savePath, data, 0644)
 }
 
 // saveAccountHistories 按账号保存历史记录到独立文件
 func saveAccountHistories(dataDir string, result MultiScrapeResult) error {
-	historyDir := filepath.Join(dataDir, "history")
+	historyDir := filepath.Join(dataDir, "scrape", "diamonds", "history")
 	if err := os.MkdirAll(historyDir, 0755); err != nil {
 		return fmt.Errorf("create history dir failed: %w", err)
 	}
@@ -311,7 +316,9 @@ func ScrapeMmthDiamonds(mmthUrl, dataDir string) (*ScrapeResult, error) {
 	}
 
 	// 保存到文件（兼容旧格式）
-	savePath := filepath.Join(dataDir, "mmth_diamonds.json")
+	saveDir := filepath.Join(dataDir, "scrape", "diamonds")
+	os.MkdirAll(saveDir, 0755)
+	savePath := filepath.Join(saveDir, "mmth_diamonds.json")
 	jsonData, _ := json.MarshalIndent(result.Data, "", "  ")
 	os.WriteFile(savePath, jsonData, 0644)
 

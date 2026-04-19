@@ -39,6 +39,7 @@ func (r *Router) Register(e *gin.Engine) {
 		api.POST("/scrape/account", r.scrapeHandler.ScrapeAccount)
 
 		// ETL处理
-		api.POST("/etl/process", r.etlHandler.ProcessAll)
+		api.POST("/etl/process", r.etlHandler.ProcessServers)
+		api.GET("/etl/stats", r.etlHandler.GetCombinedStats)
 	}
 }

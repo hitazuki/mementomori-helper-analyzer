@@ -28,12 +28,12 @@ func (s *DiamondService) GetStats(diamondStatsPath string) ([]byte, error) {
 
 // GetAllDiamonds 获取所有账号最新数据
 func (s *DiamondService) GetAllDiamonds() ([]byte, error) {
-	return os.ReadFile(filepath.Join(s.dataDir, "mmth_diamonds.json"))
+	return os.ReadFile(filepath.Join(s.dataDir, "scrape", "diamonds", "mmth_diamonds.json"))
 }
 
 // GetAccountHistory 获取单个账号历史
 func (s *DiamondService) GetAccountHistory(server, account string) ([]byte, error) {
-	filepath := filepath.Join(s.dataDir, "history", server+"-"+account+"-diamonds.json")
+	filepath := filepath.Join(s.dataDir, "scrape", "diamonds", "history", server+"-"+account+"-diamonds.json")
 	if _, err := os.Stat(filepath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("history not found")
 	}
@@ -52,7 +52,7 @@ type HistoryRecord struct {
 
 // GetAllHistory 获取所有账号历史
 func (s *DiamondService) GetAllHistory() (map[string][]gin.H, error) {
-	historyDir := filepath.Join(s.dataDir, "history")
+	historyDir := filepath.Join(s.dataDir, "scrape", "diamonds", "history")
 
 	files, err := os.ReadDir(historyDir)
 	if err != nil {

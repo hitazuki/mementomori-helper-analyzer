@@ -17,7 +17,6 @@ type AppConfig struct {
 	ScrapeInterval string                 `json:"scrape_interval"`
 	MmthServers    []scraper.ServerConfig `json:"mmth_servers,omitempty"`
 	EtlBinaryPath  string                 `json:"etl_binary_path"`
-	MmthLogsDir    string                 `json:"mmth_logs_dir"`
 	EtlOutputDir   string                 `json:"etl_output_dir"`
 }
 
@@ -28,7 +27,6 @@ type Config struct {
 	ScrapeInterval time.Duration
 	ScrapeCfg      *scraper.ScrapeConfig
 	EtlBinaryPath  string
-	MmthLogsDir    string
 	EtlOutputDir   string
 }
 
@@ -39,7 +37,6 @@ func defaultConfig() *Config {
 		DataDir:        "./data",
 		ScrapeInterval: 6 * time.Hour,
 		EtlBinaryPath:  "./mmth-etl/mmth_etl.exe",
-		MmthLogsDir:    "./data/logs",
 		EtlOutputDir:   "./data/etl",
 	}
 }
@@ -96,14 +93,27 @@ func LoadAppConfig(path string) (*AppConfig, error) {
 
 // ToRuntimeConfig 转换为运行时配置
 func (ac *AppConfig) ToRuntimeConfig() *Config {
+	// 默认值
+	defaults := defaultConfig()
+
 	cfg := &Config{
-		DataDir:        ac.DataDir,
-		EtlBinaryPath:  ac.EtlBinaryPath,
-		MmthLogsDir:    ac.MmthLogsDir,
-		EtlOutputDir:   ac.EtlOutputDir,
+		DataDir:       defaults.DataDir,
+		EtlBinaryPath: defaults.EtlBinaryPath,
+		EtlOutputDir:  defaults.EtlOutputDir,
 		ScrapeCfg: &scraper.ScrapeConfig{
 			Servers: ac.MmthServers,
 		},
+	}
+
+	// 配置文件中的值覆盖默认值
+	if ac.DataDir != "" {
+		cfg.DataDir = ac.DataDir
+	}
+	if ac.EtlBinaryPath != "" {
+		cfg.EtlBinaryPath = ac.EtlBinaryPath
+	}
+	if ac.EtlOutputDir != "" {
+		cfg.EtlOutputDir = ac.EtlOutputDir
 	}
 
 	// 设置端口
@@ -135,13 +145,13 @@ func SaveExampleConfig(path string) error {
 		DataDir:        "./data",
 		ScrapeInterval: "6h",
 		EtlBinaryPath:  "./mmth-etl/mmth_etl.exe",
-		MmthLogsDir:    "./data/logs",
 		EtlOutputDir:   "./data/etl",
 		MmthServers: []scraper.ServerConfig{
 			{
 				Name:     "server1",
 				BaseURL:  "http://localhost:5390",
 				Accounts: []string{"account1", "account2"},
+				LogPath:  "./data/logs/server1.log",
 			},
 		},
 	}

@@ -1,24 +1,25 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"mmth-analyzer/internal/scraper"
 )
 
 // ETLService ETL处理服务
 type ETLService struct {
 	binaryPath string
-	logsDir    string
 	outputDir  string
 }
 
 // NewETLService 创建ETL服务实例
-func NewETLService(binaryPath, logsDir, outputDir string) *ETLService {
+func NewETLService(binaryPath, outputDir string) *ETLService {
 	return &ETLService{
 		binaryPath: binaryPath,
-		logsDir:    logsDir,
 		outputDir:  outputDir,
 	}
 }
@@ -32,52 +33,86 @@ type ProcessResult struct {
 	ProcessDetails []string `json:"process_details,omitempty"`
 }
 
-// ProcessAllLogs 处理日志目录中所有日志文件
-func (s *ETLService) ProcessAllLogs() (*ProcessResult, error) {
-	// 确保输出目录存在
-	if err := os.MkdirAll(s.outputDir, 0755); err != nil {
-		return nil, fmt.Errorf("创建输出目录失败: %w", err)
+// ProcessServerLogs 处理指定服务器的日志文件
+func (s *ETLService) ProcessServerLogs(serverName, logPath string) error {
+	// 为该服务器创建独立的输出目录
+	outputDir := filepath.Join(s.outputDir, serverName)
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return fmt.Errorf("创建输出目录失败: %w", err)
 	}
 
-	// 获取所有日志文件（支持 .json 和 .log 扩展名）
-	var files []string
-	for _, ext := range []string{".json", ".log"} {
-		matches, err := filepath.Glob(filepath.Join(s.logsDir, "*"+ext))
-		if err != nil {
-			return nil, fmt.Errorf("扫描日志目录失败: %w", err)
-		}
-		files = append(files, matches...)
+	// 调用 ETL，指定独立输出目录
+	cmd := exec.Command(s.binaryPath, "-output", outputDir, logPath)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("ETL处理失败: %w, output: %s", err, string(output))
 	}
 
-	if len(files) == 0 {
-		return &ProcessResult{
-			TotalFiles:   0,
-			SuccessCount: 0,
-			FailedCount:  0,
-		}, nil
-	}
+	return nil
+}
 
+// ProcessAllServers 遍历所有服务器配置，独立处理每个服务器的日志
+func (s *ETLService) ProcessAllServers(servers []scraper.ServerConfig) (*ProcessResult, error) {
 	result := &ProcessResult{
-		TotalFiles:     len(files),
+		TotalFiles:     len(servers),
 		FailedFiles:    make([]string, 0),
 		ProcessDetails: make([]string, 0),
 	}
 
-	for _, file := range files {
-		fileName := filepath.Base(file)
-		cmd := exec.Command(s.binaryPath, "-output", s.outputDir, file)
-		output, err := cmd.CombinedOutput()
+	for _, server := range servers {
+		if server.LogPath == "" {
+			result.FailedCount++
+			result.FailedFiles = append(result.FailedFiles, server.Name)
+			result.ProcessDetails = append(result.ProcessDetails,
+				fmt.Sprintf("[%s] 跳过: 未配置 log_path", server.Name))
+			continue
+		}
 
+		err := s.ProcessServerLogs(server.Name, server.LogPath)
 		if err != nil {
 			result.FailedCount++
-			result.FailedFiles = append(result.FailedFiles, fileName)
+			result.FailedFiles = append(result.FailedFiles, server.Name)
 			result.ProcessDetails = append(result.ProcessDetails,
-				fmt.Sprintf("[%s] 失败: %v", fileName, err))
+				fmt.Sprintf("[%s] 失败: %v", server.Name, err))
 		} else {
 			result.SuccessCount++
 			result.ProcessDetails = append(result.ProcessDetails,
-				fmt.Sprintf("[%s] 成功: %s", fileName, string(output)))
+				fmt.Sprintf("[%s] 成功处理: %s", server.Name, server.LogPath))
 		}
+	}
+
+	return result, nil
+}
+
+// CombineAllStats 合并所有服务器的统计数据（带服务器标识）
+func (s *ETLService) CombineAllStats() (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+
+	// 读取输出目录下的所有子目录
+	entries, err := os.ReadDir(s.outputDir)
+	if err != nil {
+		return nil, fmt.Errorf("读取输出目录失败: %w", err)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		serverName := entry.Name()
+		statsPath := filepath.Join(s.outputDir, serverName, "diamond_stats.json")
+
+		data, err := os.ReadFile(statsPath)
+		if err != nil {
+			continue // 跳过不存在或读取失败的文件
+		}
+
+		var stats map[string]interface{}
+		if err := json.Unmarshal(data, &stats); err != nil {
+			continue // 跳过解析失败的文件
+		}
+
+		result[serverName] = stats
 	}
 
 	return result, nil

@@ -172,10 +172,10 @@ go build -o mmth-analyzer.exe ./cmd/server
 
 数据存储在 `data/` 目录：
 
-- `mmth_diamonds.json`: 最新抓取结果
-- `history/`: 按账号存储的历史数据（格式：`{server}-{account}-diamonds.json`）
-- `etl/diamond_stats.json`: ETL 生成的钻石统计数据
-- `etl/mmth_etl_state.json`: ETL 处理状态（断点续传）
+- `scrape/diamonds/mmth_diamonds.json`: 最新抓取结果
+- `scrape/diamonds/history/`: 按账号存储的历史数据（格式：`{server}-{account}-diamonds.json`）
+- `etl/{server}/diamond_stats.json`: 各服务器的钻石统计数据
+- `etl/{server}/mmth_etl_state.json`: 各服务器的 ETL 处理状态（断点续传）
 - `logs/`: 待处理的日志文件目录
 
 ## GitHub Actions 自动发布

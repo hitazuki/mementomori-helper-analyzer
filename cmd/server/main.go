@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
 	"sync"
 
 	"mmth-analyzer/internal/config"
 	"mmth-analyzer/internal/handlers"
 	"mmth-analyzer/internal/scheduler"
+	"mmth-analyzer/internal/scraper"
 	"mmth-analyzer/internal/service"
 
 	"github.com/gin-contrib/cors"
@@ -29,17 +29,22 @@ func main() {
 	if cfg.ScrapeCfg != nil {
 		scrapeService = service.NewScrapeService(cfg.DataDir, cfg.ScrapeCfg.Servers, scrapeMutex)
 	}
-	etlService := service.NewETLService(cfg.EtlBinaryPath, cfg.MmthLogsDir, cfg.EtlOutputDir)
+	etlService := service.NewETLService(cfg.EtlBinaryPath, cfg.EtlOutputDir)
 
 	// 创建处理器
-	diamondStatsPath := filepath.Join(cfg.EtlOutputDir, "diamond_stats.json")
-	statsHandler := handlers.NewStatsHandler(diamondService, diamondStatsPath)
+	statsHandler := handlers.NewStatsHandler(diamondService, etlService)
 	var scrapeHandler *handlers.ScrapeHandler
 	if scrapeService != nil {
 		scrapeHandler = handlers.NewScrapeHandler(scrapeService)
 	}
 	historyHandler := handlers.NewHistoryHandler(diamondService)
-	etlHandler := handlers.NewETLHandler(etlService)
+
+	// 获取服务器配置用于ETL多服务器处理
+	var servers []scraper.ServerConfig
+	if cfg.ScrapeCfg != nil {
+		servers = cfg.ScrapeCfg.Servers
+	}
+	etlHandler := handlers.NewETLHandler(etlService, servers)
 
 	// 启动定时任务
 	if cfg.ScrapeCfg != nil && len(cfg.ScrapeCfg.Servers) > 0 {

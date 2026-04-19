@@ -112,6 +112,12 @@ go vet ./...
 ├── static/             # 前端静态文件
 ├── scripts/            # 辅助脚本
 ├── data/               # 数据目录（gitignore）
+│   ├── scrape/diamonds/          # 钻石监控数据
+│   │   ├── mmth_diamonds.json    # 最新抓取结果
+│   │   └── history/              # 历史记录
+│   ├── etl/                      # ETL输出
+│   │   └── {server}/             # 按服务器隔离
+│   └── logs/                     # 日志文件
 ├── config/             # 配置目录
 │   ├── app.json        # 本地配置（gitignore）
 │   └── app.example.json # 配置示例
