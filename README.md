@@ -22,10 +22,10 @@ MMTH Analyzer 是 [mementomori-helper](https://github.com/moonheart/mementomori-
 
 提供两个版本的镜像：
 
-| 镜像标签 | 大小 | 功能 |
-|----------|------|------|
-| `latest` | ~420MB | 完整版，支持抓取 + ETL |
-| `lite` | ~25MB | 轻量版，仅支持 ETL（无 Chrome） |
+| 镜像标签 | 大小   | 功能                             |
+|----------|--------|----------------------------------|
+| `latest` | ~420MB | 完整版，支持抓取 + ETL           |
+| `lite`   | ~25MB  | 轻量版，仅支持 ETL（无 Chrome）  |
 
 ```bash
 # 完整版（支持抓取）
@@ -87,7 +87,7 @@ docker-compose up -d
       "name": "server1",
       "base_url": "http://mmth-server:5390",
       "accounts": ["account1", "account2"],
-      "log_path": "./data/logs/server1.log"
+      "log_path": "./data/logs/server1"
     }
   ]
 }
@@ -95,12 +95,15 @@ docker-compose up -d
 
 **主要配置项：**
 
-| 配置项 | 说明 | 默认值 |
-|--------|------|--------|
-| `port` | 服务端口 | `5391` |
-| `data_dir` | 数据存储目录 | `./data` |
-| `scrape_interval` | 抓取间隔 | `6h` |
-| `mmth_servers` | 服务器配置数组 | - |
+| 配置项           | 说明               | 默认值   |
+|------------------|--------------------|----------|
+| `port`           | 服务端口           | `5391`   |
+| `data_dir`       | 数据存储目录       | `./data` |
+| `scrape_interval`| 抓取间隔           | `6h`     |
+| `mmth_servers`   | 服务器配置数组     | -        |
+| `log_path`       | 日志文件/目录路径  | -        |
+
+> **log_path 说明**：可以是单个日志文件路径（如 `./data/logs/server1.log`）或目录路径（如 `./data/logs/server1`）。为目录时将自动遍历处理目录下所有 `.log` 文件。
 
 ## 注意事项
 
@@ -116,13 +119,13 @@ docker-compose up -d
 
 ### 技术栈
 
-| 组件 | 技术 |
-|------|------|
-| 后端 | Go + Gin |
-| 抓取 | chromedp (headless Chrome) |
-| 前端 | Alpine.js + ECharts |
-| 样式 | Tailwind CSS |
-| ETL | Go (独立子模块) |
+| 组件 | 技术                      |
+|------|---------------------------|
+| 后端 | Go + Gin                  |
+| 抓取 | chromedp (headless Chrome)|
+| 前端 | Alpine.js + ECharts       |
+| 样式 | Tailwind CSS              |
+| ETL  | Go (独立子模块)           |
 
 ### 从源码构建
 
@@ -143,18 +146,18 @@ go build -o mmth-analyzer ./cmd/server
 
 ### API 接口
 
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/api/health` | GET | 健康检查 |
-| `/api/stats` | GET | 获取 diamond_stats.json 数据 |
-| `/api/mmth-diamonds/all` | GET | 获取最新抓取的钻石数据 |
-| `/api/mmth-diamonds/history` | GET | 获取所有账号历史数据 |
-| `/api/scrape/all` | POST | 手动触发全部账号抓取 |
-| `/api/etl/process` | POST | 触发 ETL 处理日志 |
-| `/api/cave/stats` | GET | 获取时空洞窟统计数据 |
-| `/api/challenge/stats` | GET | 获取战斗日志统计数据 |
-| `/api/rune-ticket/stats` | GET | 获取饼干统计数据 |
-| `/api/upgrade-panacea/stats` | GET | 获取红水统计数据 |
+| 端点                           | 方法 | 说明                         |
+|--------------------------------|------|------------------------------|
+| `/api/health`                  | GET  | 健康检查                     |
+| `/api/stats`                   | GET  | 获取 diamond_stats.json 数据 |
+| `/api/mmth-diamonds/all`       | GET  | 获取最新抓取的钻石数据       |
+| `/api/mmth-diamonds/history`   | GET  | 获取所有账号历史数据         |
+| `/api/scrape/all`              | POST | 手动触发全部账号抓取         |
+| `/api/etl/process`             | POST | 触发 ETL 处理日志            |
+| `/api/cave/stats`              | GET  | 获取时空洞窟统计数据         |
+| `/api/challenge/stats`         | GET  | 获取战斗日志统计数据         |
+| `/api/rune-ticket/stats`       | GET  | 获取饼干统计数据             |
+| `/api/upgrade-panacea/stats`   | GET  | 获取红水统计数据             |
 
 ### 项目结构
 

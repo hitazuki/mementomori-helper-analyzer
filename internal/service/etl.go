@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"mmth-analyzer/internal/scraper"
 )
@@ -34,6 +35,8 @@ type ProcessResult struct {
 }
 
 // ProcessServerLogs 处理指定服务器的日志文件
+// logPath 可以是文件路径或目录路径
+// 如果是目录，将遍历目录下的所有 .log 文件进行处理
 func (s *ETLService) ProcessServerLogs(serverName, logPath string) error {
 	// 为该服务器创建独立的输出目录
 	outputDir := filepath.Join(s.outputDir, serverName)
@@ -41,13 +44,59 @@ func (s *ETLService) ProcessServerLogs(serverName, logPath string) error {
 		return fmt.Errorf("创建输出目录失败: %w", err)
 	}
 
-	// 调用 ETL，指定独立输出目录
-	cmd := exec.Command(s.binaryPath, "-output", outputDir, logPath)
+	// 判断路径是文件还是目录
+	info, err := os.Stat(logPath)
+	if err != nil {
+		return fmt.Errorf("无法访问路径 %s: %w", logPath, err)
+	}
+
+	if info.IsDir() {
+		// 目录：遍历处理所有日志文件
+		return s.processLogDirectory(outputDir, logPath)
+	}
+
+	// 文件：直接处理
+	return s.processLogFile(outputDir, logPath)
+}
+
+// processLogDirectory 处理目录下的所有日志文件
+func (s *ETLService) processLogDirectory(outputDir, dirPath string) error {
+	entries, err := os.ReadDir(dirPath)
+	if err != nil {
+		return fmt.Errorf("读取目录失败: %w", err)
+	}
+
+	hasError := false
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue // 跳过子目录
+		}
+
+		// 只处理 .log 文件
+		if !strings.HasSuffix(strings.ToLower(entry.Name()), ".log") {
+			continue
+		}
+
+		logFile := filepath.Join(dirPath, entry.Name())
+		if err := s.processLogFile(outputDir, logFile); err != nil {
+			fmt.Printf("处理日志文件失败 %s: %v\n", logFile, err)
+			hasError = true
+		}
+	}
+
+	if hasError {
+		return fmt.Errorf("部分日志文件处理失败")
+	}
+	return nil
+}
+
+// processLogFile 处理单个日志文件
+func (s *ETLService) processLogFile(outputDir, logFile string) error {
+	cmd := exec.Command(s.binaryPath, "-output", outputDir, logFile)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("ETL处理失败: %w, output: %s", err, string(output))
 	}
-
 	return nil
 }
 
