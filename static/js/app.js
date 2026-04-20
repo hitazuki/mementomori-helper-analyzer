@@ -31,13 +31,23 @@ function app() {
         challengeSelectedCharacter: '',
         challengeSelectedType: 'all', // all, quest, Infinity, Azure, Crimson, Emerald, Amber
 
+        // 物品统计数据
+        runeTicketStats: {},
+        upgradePanaceaStats: {},
+        itemSelectedCharacter: '',
+        itemTimeGroup: 'day',
+        itemDailyChart: null,
+        itemSourceChart: null,
+
         async init() {
             await Promise.all([
                 this.loadLatestData(),
                 this.loadHistoryData(),
                 this.loadStats(),
                 this.loadCaveStats(),
-                this.loadChallengeStats()
+                this.loadChallengeStats(),
+                this.loadRuneTicketStats(),
+                this.loadUpgradePanaceaStats()
             ]);
             // 延长延迟确保 Alpine.js 完成初始渲染
             setTimeout(() => this.initCharts(), 300);
@@ -52,9 +62,26 @@ function app() {
                 } else if (tab === 'logs') {
                     // 切换到日志统计时，如果图表未初始化则初始化，否则更新
                     this.initOrUpdateLogsCharts();
+                } else if (tab === 'items') {
+                    this.initOrUpdateItemCharts();
                 }
                 // cave tab 不需要图表初始化
             }, 150);
+        },
+
+        // 初始化或更新物品图表（延迟初始化策略）
+        initOrUpdateItemCharts() {
+            const dailyEl = document.getElementById('itemDailyChart');
+            const sourceEl = document.getElementById('itemSourceChart');
+
+            if (!this.itemDailyChart && dailyEl) {
+                this.itemDailyChart = echarts.init(dailyEl);
+            }
+            if (!this.itemSourceChart && sourceEl) {
+                this.itemSourceChart = echarts.init(sourceEl);
+            }
+
+            this.updateItemCharts();
         },
 
         // 初始化或更新日志图表（延迟初始化策略）
@@ -624,6 +651,112 @@ function app() {
             }
         },
 
+        // ===== 物品统计相关 =====
+        get itemCharacterNames() {
+            const chars = new Set();
+            for (const serverName of Object.keys(this.runeTicketStats || {})) {
+                const serverData = this.runeTicketStats[serverName];
+                for (const charName of Object.keys(serverData || {})) {
+                    chars.add(charName);
+                }
+            }
+            return Array.from(chars).sort();
+        },
+
+        get itemTotalGain() {
+            const characters = this.itemSelectedCharacter
+                ? [this.itemSelectedCharacter]
+                : this.itemCharacterNames;
+            let total = 0;
+            for (const charName of characters) {
+                for (const serverName of Object.keys(this.runeTicketStats || {})) {
+                    const serverData = this.runeTicketStats[serverName];
+                    if (serverData && serverData[charName] && serverData[charName].total) {
+                        total += serverData[charName].total.gain || 0;
+                    }
+                }
+            }
+            return total;
+        },
+
+        get itemTotalConsume() {
+            const characters = this.itemSelectedCharacter
+                ? [this.itemSelectedCharacter]
+                : this.itemCharacterNames;
+            let total = 0;
+            for (const charName of characters) {
+                for (const serverName of Object.keys(this.runeTicketStats || {})) {
+                    const serverData = this.runeTicketStats[serverName];
+                    if (serverData && serverData[charName] && serverData[charName].total) {
+                        total += serverData[charName].total.consume || 0;
+                    }
+                }
+            }
+            return total;
+        },
+
+        get itemTotalNetChange() {
+            return this.itemTotalGain - this.itemTotalConsume;
+        },
+
+        get upgradePanaceaTotalGain() {
+            const characters = this.itemSelectedCharacter
+                ? [this.itemSelectedCharacter]
+                : this.itemCharacterNames;
+            let total = 0;
+            for (const charName of characters) {
+                for (const serverName of Object.keys(this.upgradePanaceaStats || {})) {
+                    const serverData = this.upgradePanaceaStats[serverName];
+                    if (serverData && serverData[charName] && serverData[charName].total) {
+                        total += serverData[charName].total.gain || 0;
+                    }
+                }
+            }
+            return total;
+        },
+
+        get upgradePanaceaTotalConsume() {
+            const characters = this.itemSelectedCharacter
+                ? [this.itemSelectedCharacter]
+                : this.itemCharacterNames;
+            let total = 0;
+            for (const charName of characters) {
+                for (const serverName of Object.keys(this.upgradePanaceaStats || {})) {
+                    const serverData = this.upgradePanaceaStats[serverName];
+                    if (serverData && serverData[charName] && serverData[charName].total) {
+                        total += serverData[charName].total.consume || 0;
+                    }
+                }
+            }
+            return total;
+        },
+
+        get upgradePanaceaTotalNetChange() {
+            return this.upgradePanaceaTotalGain - this.upgradePanaceaTotalConsume;
+        },
+
+        async loadRuneTicketStats() {
+            try {
+                const res = await fetch('/api/rune-ticket/stats');
+                if (res.ok) {
+                    this.runeTicketStats = await res.json();
+                }
+            } catch (e) {
+                console.error('Failed to load rune ticket stats:', e);
+            }
+        },
+
+        async loadUpgradePanaceaStats() {
+            try {
+                const res = await fetch('/api/upgrade-panacea/stats');
+                if (res.ok) {
+                    this.upgradePanaceaStats = await res.json();
+                }
+            } catch (e) {
+                console.error('Failed to load upgrade panacea stats:', e);
+            }
+        },
+
         updateLogsCharts() {
             this.updateDailyChart();
             this.updateSourceChart();
@@ -765,6 +898,159 @@ function app() {
             });
         },
 
+        // 物品统计图表更新
+        updateItemCharts() {
+            this.updateItemDailyChart();
+            this.updateItemSourceChart();
+        },
+
+        updateItemDailyChart() {
+            if (!this.itemDailyChart) return;
+
+            const characters = this.itemSelectedCharacter
+                ? [this.itemSelectedCharacter]
+                : this.itemCharacterNames;
+
+            if (characters.length === 0) {
+                this.itemDailyChart.setOption({
+                    title: { text: '暂无数据', left: 'center', top: 'center' }
+                }, true);
+                return;
+            }
+
+            // 合并所有服务器的饼干数据
+            const combinedStats = {};
+            characters.forEach(charName => {
+                for (const serverName of Object.keys(this.runeTicketStats || {})) {
+                    const serverData = this.runeTicketStats[serverName];
+                    if (serverData && serverData[charName]) {
+                        if (!combinedStats[charName]) {
+                            combinedStats[charName] = { daily: {} };
+                        }
+                        const daily = serverData[charName].daily || {};
+                        for (const [date, dayData] of Object.entries(daily)) {
+                            if (!combinedStats[charName].daily[date]) {
+                                combinedStats[charName].daily[date] = { gain: 0, consume: 0 };
+                            }
+                            combinedStats[charName].daily[date].gain += dayData.gain || 0;
+                            combinedStats[charName].daily[date].consume += dayData.consume || 0;
+                        }
+                    }
+                }
+            });
+
+            // 按时间分组收集数据
+            const grouped = {};
+            characters.forEach(charName => {
+                const charData = combinedStats[charName] || {};
+                const daily = charData.daily || {};
+
+                Object.entries(daily).forEach(([date, dayData]) => {
+                    const key = this.getTimeKey(date, this.itemTimeGroup);
+                    if (!grouped[key]) {
+                        grouped[key] = {};
+                    }
+                    if (!grouped[key][charName]) {
+                        grouped[key][charName] = { gain: 0, consume: 0 };
+                    }
+                    grouped[key][charName].gain += dayData.gain || 0;
+                    grouped[key][charName].consume += dayData.consume || 0;
+                });
+            });
+
+            const groupKeys = Object.keys(grouped).sort();
+
+            const characterColors = ['#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316'];
+            const series = characters.map((charName, idx) => {
+                const netData = groupKeys.map(key => {
+                    const charGroup = grouped[key][charName];
+                    if (!charGroup) return 0;
+                    return (charGroup.gain || 0) - (charGroup.consume || 0);
+                });
+
+                return {
+                    name: charName,
+                    type: 'bar',
+                    data: netData,
+                    itemStyle: { color: characterColors[idx % characterColors.length] },
+                    emphasis: { focus: 'series' }
+                };
+            });
+
+            this.itemDailyChart.setOption({
+                title: { text: '饼干净变动统计', left: 'center' },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: { type: 'shadow' },
+                    formatter: function(params) {
+                        if (!params || params.length === 0) return '';
+                        let result = params[0].axisValue + '<br/>';
+                        params.forEach(p => {
+                            const val = p.value;
+                            const sign = val >= 0 ? '+' : '';
+                            const color = val >= 0 ? '#10b981' : '#ef4444';
+                            result += `${p.marker} ${p.seriesName}: <span style="color:${color}">${sign}${val.toLocaleString()}</span><br/>`;
+                        });
+                        return result;
+                    }
+                },
+                legend: { data: characters, bottom: 0, type: 'scroll' },
+                grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: groupKeys, axisLabel: { rotate: 45 } },
+                yAxis: { type: 'value' },
+                series: series
+            }, true);
+        },
+
+        updateItemSourceChart() {
+            if (!this.itemSourceChart) return;
+
+            const characters = this.itemSelectedCharacter
+                ? [this.itemSelectedCharacter]
+                : this.itemCharacterNames;
+
+            const sources = {};
+
+            characters.forEach(charName => {
+                for (const serverName of Object.keys(this.runeTicketStats || {})) {
+                    const serverData = this.runeTicketStats[serverName];
+                    if (serverData && serverData[charName] && serverData[charName].total) {
+                        const totalSources = serverData[charName].total.sources || {};
+                        Object.entries(totalSources).forEach(([sourceName, sourceData]) => {
+                            if (!sources[sourceName]) {
+                                sources[sourceName] = { gain: 0, consume: 0 };
+                            }
+                            sources[sourceName].gain += sourceData.gain || 0;
+                            sources[sourceName].consume += sourceData.consume || 0;
+                        });
+                    }
+                }
+            });
+
+            const data = Object.entries(sources)
+                .map(([name, val]) => ({ name, value: val.gain + val.consume }))
+                .filter(d => d.value > 0)
+                .sort((a, b) => b.value - a.value);
+
+            this.itemSourceChart.setOption({
+                title: { text: '来源分布', left: 'center' },
+                tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+                series: [{
+                    type: 'pie',
+                    radius: '60%',
+                    center: ['50%', '50%'],
+                    data: data,
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }]
+            });
+        },
+
         // ===== 通用 =====
         async refreshAll() {
             this.loading = true;
@@ -774,7 +1060,9 @@ function app() {
                     this.loadHistoryData(),
                     this.loadStats(),
                     this.loadCaveStats(),
-                    this.loadChallengeStats()
+                    this.loadChallengeStats(),
+                    this.loadRuneTicketStats(),
+                    this.loadUpgradePanaceaStats()
                 ]);
                 // 只更新当前显示的Tab图表
                 this.updateMmthCharts();
@@ -800,6 +1088,8 @@ function app() {
                 this.historyChart && this.historyChart.resize();
                 this.dailyChart && this.dailyChart.resize();
                 this.sourceChart && this.sourceChart.resize();
+                this.itemDailyChart && this.itemDailyChart.resize();
+                this.itemSourceChart && this.itemSourceChart.resize();
             });
         }
     };

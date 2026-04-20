@@ -186,3 +186,69 @@ func (s *ETLService) CombineAllChallengeStats() (map[string]interface{}, error) 
 
 	return result, nil
 }
+
+// CombineAllRuneTicketStats 合并所有服务器的饼干统计数据
+func (s *ETLService) CombineAllRuneTicketStats() (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+
+	entries, err := os.ReadDir(s.outputDir)
+	if err != nil {
+		return nil, fmt.Errorf("读取输出目录失败: %w", err)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		serverName := entry.Name()
+		statsPath := filepath.Join(s.outputDir, serverName, "rune_ticket_stats.json")
+
+		data, err := os.ReadFile(statsPath)
+		if err != nil {
+			continue
+		}
+
+		var stats map[string]interface{}
+		if err := json.Unmarshal(data, &stats); err != nil {
+			continue
+		}
+
+		result[serverName] = stats
+	}
+
+	return result, nil
+}
+
+// CombineAllUpgradePanaceaStats 合并所有服务器的红水统计数据
+func (s *ETLService) CombineAllUpgradePanaceaStats() (map[string]interface{}, error) {
+	result := make(map[string]interface{})
+
+	entries, err := os.ReadDir(s.outputDir)
+	if err != nil {
+		return nil, fmt.Errorf("读取输出目录失败: %w", err)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		serverName := entry.Name()
+		statsPath := filepath.Join(s.outputDir, serverName, "upgrade_panacea_stats.json")
+
+		data, err := os.ReadFile(statsPath)
+		if err != nil {
+			continue
+		}
+
+		var stats map[string]interface{}
+		if err := json.Unmarshal(data, &stats); err != nil {
+			continue
+		}
+
+		result[serverName] = stats
+	}
+
+	return result, nil
+}

@@ -6,16 +6,17 @@ import (
 
 // Router 路由注册器
 type Router struct {
-	statsHandler     *StatsHandler
-	scrapeHandler    *ScrapeHandler
-	historyHandler   *HistoryHandler
-	etlHandler       *ETLHandler
-	caveHandler      *CaveHandler
-	challengeHandler *ChallengeHandler
+	statsHandler        *StatsHandler
+	scrapeHandler       *ScrapeHandler
+	historyHandler      *HistoryHandler
+	etlHandler          *ETLHandler
+	caveHandler         *CaveHandler
+	challengeHandler    *ChallengeHandler
+	itemHandler         *ItemHandler
 }
 
 // NewRouter 创建路由注册器
-func NewRouter(stats *StatsHandler, scrape *ScrapeHandler, history *HistoryHandler, etl *ETLHandler, cave *CaveHandler, challenge *ChallengeHandler) *Router {
+func NewRouter(stats *StatsHandler, scrape *ScrapeHandler, history *HistoryHandler, etl *ETLHandler, cave *CaveHandler, challenge *ChallengeHandler, item *ItemHandler) *Router {
 	return &Router{
 		statsHandler:     stats,
 		scrapeHandler:    scrape,
@@ -23,6 +24,7 @@ func NewRouter(stats *StatsHandler, scrape *ScrapeHandler, history *HistoryHandl
 		etlHandler:       etl,
 		caveHandler:      cave,
 		challengeHandler: challenge,
+		itemHandler:      item,
 	}
 }
 
@@ -56,5 +58,9 @@ func (r *Router) Register(e *gin.Engine) {
 
 		// 挑战统计
 		api.GET("/challenge/stats", r.challengeHandler.GetChallengeStats)
+
+		// 物品统计
+		api.GET("/rune-ticket/stats", r.itemHandler.GetRuneTicketStats)
+		api.GET("/upgrade-panacea/stats", r.itemHandler.GetUpgradePanaceaStats)
 	}
 }
