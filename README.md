@@ -14,6 +14,7 @@ MMTH Analyzer 是 [mementomori-helper](https://github.com/moonheart/mementomori-
 - **ETL 处理**: 集成 mmth-etl 子模块，支持日志解析和钻石统计
 - **洞窟追踪**: 追踪时空洞窟任务执行状态（已完成/未完成/异常/未执行）
 - **战斗统计**: 统计主线关卡和塔挑战记录，展示尝试次数、通关状态和最后挑战时间
+- **物品统计**: 统计饼干(Rune Ticket)和红水(Upgrade Panacea)的获取/消耗情况，按来源追踪
 
 ## 快速开始
 
@@ -152,6 +153,8 @@ go build -o mmth-analyzer ./cmd/server
 | `/api/etl/process` | POST | 触发 ETL 处理日志 |
 | `/api/cave/stats` | GET | 获取时空洞窟统计数据 |
 | `/api/challenge/stats` | GET | 获取战斗日志统计数据 |
+| `/api/rune-ticket/stats` | GET | 获取饼干统计数据 |
+| `/api/upgrade-panacea/stats` | GET | 获取红水统计数据 |
 
 ### 项目结构
 
