@@ -1,0 +1,38 @@
+# MMTH Analyzer 独立部署
+
+version: '3.8'
+
+services:
+  mmth-analyzer:
+    image: hitazuki/mmth-analyzer:latest
+    container_name: mmth-analyzer
+    restart: unless-stopped
+    ports:
+      - "5391:5391"
+    environment:
+      - TZ=Asia/Shanghai
+    # Linux 兼容: 使 host.docker.internal 可用
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data:/app/data
+      - ./config:/app/config
+      # 日志目录 (读取 mmth 日志)
+      # 方式1: 挂载 mmth 的日志目录
+      - ../mmth/mmth-logs:/app/mmth-logs:ro
+      # 方式2: 使用环境变量指定路径
+      # - ${MMTH_LOGS_PATH:-./mmth-logs}:/app/mmth-logs:ro
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5391/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

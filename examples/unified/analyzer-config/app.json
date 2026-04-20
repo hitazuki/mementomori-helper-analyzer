@@ -1,0 +1,17 @@
+{
+  "_comment": "MMTH Analyzer 配置文件 - Docker 统一部署",
+  "_log_path_comment": "log_path 为目录，ETL 会遍历目录下所有 .log 文件",
+  "port": "5391",
+  "scrape_interval": "6h",
+  "mmth_servers": [
+    {
+      "name": "local",
+      "base_url": "http://mementomori-webui:8080",
+      "accounts": ["account1"],
+      "log_path": "/app/mmth-logs"
+    }
+  ],
+  "data_dir": "/app/data",
+  "etl_binary_path": "/app/mmth-etl/mmth_etl",
+  "etl_output_dir": "/app/data/etl"
+}

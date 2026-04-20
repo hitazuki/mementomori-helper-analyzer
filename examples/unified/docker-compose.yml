@@ -1,0 +1,76 @@
+# 单一 docker-compose 部署方案
+# mmth-analyzer 解析 mementomori-webui 的容器日志
+#
+# 使用方法:
+#   1. 复制配置文件
+#   2. 启动服务: docker-compose up -d
+#   3. 访问:
+#      - mmth-analyzer: http://localhost:5391
+#      - mementomori-webui: http://localhost:5290
+
+version: '3.8'
+
+services:
+  # ==================== MementoMori WebUI ====================
+  mementomori-webui:
+    image: moonheartmoon/mementomori-webui:latest
+    container_name: mementomori-webui
+    restart: unless-stopped
+    ports:
+      - "5290:8080"
+    environment:
+      - TZ=Asia/Shanghai
+      - LANG=zh_CN.UTF-8
+    volumes:
+      - ./mmth-data/Master:/app/Master/
+      - ./mmth-config/appsettings.user.json:/app/appsettings.user.json:rw
+      - ./mmth-logs:/app/Logs
+    # 日志持久化：重定向 stdout/stderr 到文件
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["mkdir -p /app/Logs && dotnet MementoMori.WebUI.dll 2>&1 | tee /app/Logs/app.log"]
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          memory: 256M
+    networks:
+      - mmth-network
+
+  # ==================== MMTH Analyzer ====================
+  mmth-analyzer:
+    image: hitazuki/mmth-analyzer:latest
+    container_name: mmth-analyzer
+    restart: unless-stopped
+    ports:
+      - "5391:5391"
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./analyzer-data:/app/data
+      - ./analyzer-config:/app/config
+      # 日志目录 (读取 mmth 日志)
+      - ./mmth-logs:/app/mmth-logs:ro
+    depends_on:
+      - mementomori-webui
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:5391/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - mmth-network
+
+networks:
+  mmth-network:
+    driver: bridge

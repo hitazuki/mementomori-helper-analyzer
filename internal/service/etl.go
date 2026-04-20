@@ -6,10 +6,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"mmth-analyzer/internal/scraper"
 )
+
+// logRotationPattern 匹配日志轮转文件名 (.log.1, .log.2, ...)
+var logRotationPattern = regexp.MustCompile(`\.log\.\d+$`)
 
 // ETLService ETL处理服务
 type ETLService struct {
@@ -72,8 +76,10 @@ func (s *ETLService) processLogDirectory(outputDir, dirPath string) error {
 			continue // 跳过子目录
 		}
 
-		// 只处理 .log 文件
-		if !strings.HasSuffix(strings.ToLower(entry.Name()), ".log") {
+		// 处理 .log 文件及其轮转文件 (.log.1, .log.2, ...)
+		name := entry.Name()
+		if !strings.HasSuffix(strings.ToLower(name), ".log") &&
+			!logRotationPattern.MatchString(strings.ToLower(name)) {
 			continue
 		}
 
