@@ -356,6 +356,23 @@ function app() {
         get caveRecentDates() {
             const dates = [];
             const today = new Date();
+
+            // caveDays 为 0 表示显示全部
+            if (this.caveDays === 0) {
+                // 从现有数据中提取所有日期
+                const allDates = new Set();
+                for (const serverName of Object.keys(this.caveStats || {})) {
+                    const serverData = this.caveStats[serverName];
+                    for (const charName of Object.keys(serverData || {})) {
+                        for (const date of Object.keys(serverData[charName] || {})) {
+                            allDates.add(date);
+                        }
+                    }
+                }
+                return Array.from(allDates).sort().reverse();
+            }
+
+            // 指定天数
             for (let i = 0; i < this.caveDays; i++) {
                 const d = new Date(today);
                 d.setDate(d.getDate() - i);
