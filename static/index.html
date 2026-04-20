@@ -367,9 +367,18 @@
 
         <!-- 物品日志统计 Tab -->
         <div x-show="activeTab === 'items'" x-cloak>
-            <!-- 角色选择 -->
+            <!-- 筛选条件 -->
             <div class="bg-white rounded-lg shadow p-6 mb-6">
                 <div class="mb-4 flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label class="block text-gray-700 mb-2">物品类型:</label>
+                        <select x-model="itemType"
+                                class="border rounded px-3 py-2 w-48"
+                                @change="updateItemCharts()">
+                            <option value="runeTicket">饼干 (Rune Ticket)</option>
+                            <option value="upgradePanacea">红水 (Upgrade Panacea)</option>
+                        </select>
+                    </div>
                     <div>
                         <label class="block text-gray-700 mb-2">选择角色:</label>
                         <select x-model="itemSelectedCharacter"
@@ -394,44 +403,25 @@
                 </div>
             </div>
 
-            <!-- 饼干统计 -->
+            <!-- 统计卡片 -->
             <div class="bg-white rounded-lg shadow p-6 mb-6">
-                <h2 class="text-xl font-semibold mb-4">饼干 (Rune Ticket)</h2>
+                <h2 class="text-xl font-semibold mb-4" x-text="itemTypeName"></h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div class="bg-blue-50 rounded p-4">
                         <div class="text-sm text-blue-600">总获取</div>
-                        <div class="text-2xl font-bold text-blue-800" x-text="itemTotalGain.toLocaleString()"></div>
+                        <div class="text-2xl font-bold text-blue-800" x-text="(itemType === 'upgradePanacea' ? upgradePanaceaTotalGain : itemTotalGain).toLocaleString()"></div>
                     </div>
                     <div class="bg-red-50 rounded p-4">
                         <div class="text-sm text-red-600">总消耗</div>
-                        <div class="text-2xl font-bold text-red-800" x-text="itemTotalConsume.toLocaleString()"></div>
+                        <div class="text-2xl font-bold text-red-800" x-text="(itemType === 'upgradePanacea' ? upgradePanaceaTotalConsume : itemTotalConsume).toLocaleString()"></div>
                     </div>
                     <div class="bg-green-50 rounded p-4">
                         <div class="text-sm text-green-600">净变化</div>
-                        <div class="text-2xl font-bold text-green-800" x-text="itemTotalNetChange.toLocaleString()"></div>
+                        <div class="text-2xl font-bold text-green-800" x-text="(itemType === 'upgradePanacea' ? upgradePanaceaTotalNetChange : itemTotalNetChange).toLocaleString()"></div>
                     </div>
                 </div>
                 <div id="itemDailyChart" style="width: 100%; height: 350px;" class="mb-4"></div>
                 <div id="itemSourceChart" style="width: 100%; height: 280px;"></div>
-            </div>
-
-            <!-- 红水统计 -->
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
-                <h2 class="text-xl font-semibold mb-4">红水 (Upgrade Panacea)</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-blue-50 rounded p-4">
-                        <div class="text-sm text-blue-600">总获取</div>
-                        <div class="text-2xl font-bold text-blue-800" x-text="upgradePanaceaTotalGain.toLocaleString()"></div>
-                    </div>
-                    <div class="bg-red-50 rounded p-4">
-                        <div class="text-sm text-red-600">总消耗</div>
-                        <div class="text-2xl font-bold text-red-800" x-text="upgradePanaceaTotalConsume.toLocaleString()"></div>
-                    </div>
-                    <div class="bg-green-50 rounded p-4">
-                        <div class="text-sm text-green-600">净变化</div>
-                        <div class="text-2xl font-bold text-green-800" x-text="upgradePanaceaTotalNetChange.toLocaleString()"></div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

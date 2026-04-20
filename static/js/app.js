@@ -36,6 +36,7 @@ function app() {
         upgradePanaceaStats: {},
         itemSelectedCharacter: '',
         itemTimeGroup: 'day',
+        itemType: 'runeTicket', // runeTicket or upgradePanacea
         itemDailyChart: null,
         itemSourceChart: null,
 
@@ -699,6 +700,16 @@ function app() {
             return this.itemTotalGain - this.itemTotalConsume;
         },
 
+        // 当前选中物品类型的统计数据
+        get currentItemStats() {
+            return this.itemType === 'upgradePanacea' ? this.upgradePanaceaStats : this.runeTicketStats;
+        },
+
+        // 当前物品类型名称
+        get itemTypeName() {
+            return this.itemType === 'upgradePanacea' ? '红水 (Upgrade Panacea)' : '饼干 (Rune Ticket)';
+        },
+
         get upgradePanaceaTotalGain() {
             const characters = this.itemSelectedCharacter
                 ? [this.itemSelectedCharacter]
@@ -918,11 +929,13 @@ function app() {
                 return;
             }
 
-            // 合并所有服务器的饼干数据
+            const itemStats = this.currentItemStats;
+
+            // 合并所有服务器的物品数据
             const combinedStats = {};
             characters.forEach(charName => {
-                for (const serverName of Object.keys(this.runeTicketStats || {})) {
-                    const serverData = this.runeTicketStats[serverName];
+                for (const serverName of Object.keys(itemStats || {})) {
+                    const serverData = itemStats[serverName];
                     if (serverData && serverData[charName]) {
                         if (!combinedStats[charName]) {
                             combinedStats[charName] = { daily: {} };
@@ -978,7 +991,7 @@ function app() {
             });
 
             this.itemDailyChart.setOption({
-                title: { text: '饼干净变动统计', left: 'center' },
+                title: { text: this.itemTypeName + ' 净变动统计', left: 'center' },
                 tooltip: {
                     trigger: 'axis',
                     axisPointer: { type: 'shadow' },
@@ -1009,11 +1022,12 @@ function app() {
                 ? [this.itemSelectedCharacter]
                 : this.itemCharacterNames;
 
+            const itemStats = this.currentItemStats;
             const sources = {};
 
             characters.forEach(charName => {
-                for (const serverName of Object.keys(this.runeTicketStats || {})) {
-                    const serverData = this.runeTicketStats[serverName];
+                for (const serverName of Object.keys(itemStats || {})) {
+                    const serverData = itemStats[serverName];
                     if (serverData && serverData[charName] && serverData[charName].total) {
                         const totalSources = serverData[charName].total.sources || {};
                         Object.entries(totalSources).forEach(([sourceName, sourceData]) => {
