@@ -13,6 +13,7 @@ MMTH Analyzer 是 [mementomori-helper](https://github.com/moonheart/mementomori-
 - **多账号支持**: 支持配置多个服务器和账号批量抓取
 - **ETL 处理**: 集成 mmth-etl 子模块，支持日志解析和钻石统计
 - **洞窟追踪**: 追踪时空洞窟任务执行状态（已完成/未完成/异常/未执行）
+- **战斗统计**: 统计主线关卡和塔挑战记录，展示尝试次数、通关状态和最后挑战时间
 
 ## 快速开始
 
@@ -150,6 +151,7 @@ go build -o mmth-analyzer ./cmd/server
 | `/api/scrape/all` | POST | 手动触发全部账号抓取 |
 | `/api/etl/process` | POST | 触发 ETL 处理日志 |
 | `/api/cave/stats` | GET | 获取时空洞窟统计数据 |
+| `/api/challenge/stats` | GET | 获取战斗日志统计数据 |
 
 ### 项目结构
 
