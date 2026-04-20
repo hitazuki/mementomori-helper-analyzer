@@ -220,17 +220,19 @@ function app() {
                     });
                 } else {
                     // 聚合模式（天/周/月）：每组保留最晚的有效点
+                    // 每个账号独立跟踪最新时间戳
                     history.forEach(item => {
                         const key = this.getTimeKey(item.timestamp, this.mmthTimeGroup);
                         if (!grouped[key]) {
                             grouped[key] = {};
                         }
 
-                        // 比较时间戳，保留更晚的点
-                        const existingTime = grouped[key]._timestamp;
+                        // 为每个账号独立跟踪最新时间戳
+                        const timestampKey = `_ts_${account}`;
+                        const existingTime = grouped[key][timestampKey];
                         if (!existingTime || item.timestamp > existingTime) {
                             grouped[key][account] = item[this.dataType] || 0;
-                            grouped[key]._timestamp = item.timestamp;
+                            grouped[key][timestampKey] = item.timestamp;
                         }
                     });
                 }
@@ -256,7 +258,6 @@ function app() {
             // 构建系列数据
             const series = accounts.map(account => {
                 const data = groupKeys.map(key => grouped[key][account] ?? null);
-
                 return {
                     name: account,
                     type: 'line',
