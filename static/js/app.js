@@ -26,12 +26,18 @@ function app() {
         caveStats: {},
         caveDays: 7,
 
+        // 挑战统计数据
+        challengeStats: {},
+        challengeSelectedCharacter: '',
+        challengeSelectedType: 'all', // all, quest, Infinity, Azure, Crimson, Emerald, Amber
+
         async init() {
             await Promise.all([
                 this.loadLatestData(),
                 this.loadHistoryData(),
                 this.loadStats(),
-                this.loadCaveStats()
+                this.loadCaveStats(),
+                this.loadChallengeStats()
             ]);
             // 延长延迟确保 Alpine.js 完成初始渲染
             setTimeout(() => this.initCharts(), 300);
@@ -153,7 +159,8 @@ function app() {
                 if (res.ok) {
                     await Promise.all([
                         this.loadStats(),
-                        this.loadCaveStats()
+                        this.loadCaveStats(),
+                        this.loadChallengeStats()
                     ]);
                     if (this.activeTab === 'logs') {
                         this.updateLogsCharts();
@@ -434,6 +441,189 @@ function app() {
             }
         },
 
+        // ===== 挑战统计相关 =====
+        get challengeCharacterNames() {
+            const chars = new Set();
+            for (const serverName of Object.keys(this.challengeStats || {})) {
+                const serverData = this.challengeStats[serverName];
+                for (const charName of Object.keys(serverData || {})) {
+                    chars.add(charName);
+                }
+            }
+            return Array.from(chars).sort();
+        },
+
+        get challengeQuestStats() {
+            const characters = this.challengeSelectedCharacter
+                ? [this.challengeSelectedCharacter]
+                : this.challengeCharacterNames;
+
+            // 如果关卡类型筛选不是全部且不是主线，返回空
+            if (this.challengeSelectedType !== 'all' && this.challengeSelectedType !== 'quest') {
+                return [];
+            }
+
+            // 如果选择全部角色，显示每个角色的最后挑战关卡记录
+            if (!this.challengeSelectedCharacter && characters.length > 0) {
+                const lastLevels = [];
+                characters.forEach(charName => {
+                    let lastLevel = null;
+                    let lastTime = '';
+                    for (const serverName of Object.keys(this.challengeStats || {})) {
+                        const serverData = this.challengeStats[serverName];
+                        if (serverData && serverData[charName]) {
+                            const quest = serverData[charName].quest || {};
+                            for (const [level, levelStats] of Object.entries(quest)) {
+                                // 找最后挑战时间的关卡
+                                const levelTime = levelStats.last_time || '';
+                                if (levelTime && levelTime > lastTime) {
+                                    lastTime = levelTime;
+                                    lastLevel = {
+                                        level,
+                                        attempts: levelStats.attempts || 0,
+                                        success: levelStats.success || false,
+                                        last_time: levelTime,
+                                        character: charName
+                                    };
+                                }
+                            }
+                        }
+                    }
+                    if (lastLevel) {
+                        lastLevels.push(lastLevel);
+                    }
+                });
+                // 按最后挑战时间倒序排序
+                return lastLevels.sort((a, b) => (b.last_time || '').localeCompare(a.last_time || ''));
+            }
+
+            // 选择单个角色时，显示该角色的所有关卡
+            const stats = {};
+            characters.forEach(charName => {
+                for (const serverName of Object.keys(this.challengeStats || {})) {
+                    const serverData = this.challengeStats[serverName];
+                    if (serverData && serverData[charName]) {
+                        const quest = serverData[charName].quest || {};
+                        for (const [level, levelStats] of Object.entries(quest)) {
+                            if (!stats[level]) {
+                                stats[level] = { level, attempts: 0, success: false, last_time: '' };
+                            }
+                            stats[level].attempts += levelStats.attempts || 0;
+                            if (levelStats.success) {
+                                stats[level].success = true;
+                            }
+                            // 保留最新的挑战时间
+                            if (levelStats.last_time && (!stats[level].last_time || levelStats.last_time > stats[level].last_time)) {
+                                stats[level].last_time = levelStats.last_time;
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 按最后挑战时间倒序排序
+            const sortedLevels = Object.keys(stats).sort((a, b) => (stats[b].last_time || '').localeCompare(stats[a].last_time || ''));
+            return sortedLevels.map(l => stats[l]);
+        },
+
+        challengeTowerTypes: ['Infinity', 'Azure', 'Crimson', 'Emerald', 'Amber'],
+
+        challengeTypeOptions: [
+            { value: 'all', label: '全部' },
+            { value: 'quest', label: '主线' },
+            { value: 'Infinity', label: '塔 - Infinity' },
+            { value: 'Azure', label: '塔 - Azure' },
+            { value: 'Crimson', label: '塔 - Crimson' },
+            { value: 'Emerald', label: '塔 - Emerald' },
+            { value: 'Amber', label: '塔 - Amber' }
+        ],
+
+        getChallengeTowerStats(towerType) {
+            const characters = this.challengeSelectedCharacter
+                ? [this.challengeSelectedCharacter]
+                : this.challengeCharacterNames;
+
+            // 如果关卡类型筛选不是全部且不是当前塔，返回空
+            if (this.challengeSelectedType !== 'all' && this.challengeSelectedType !== towerType) {
+                return [];
+            }
+
+            // 如果选择全部角色，显示每个角色的最后挑战关卡记录
+            if (!this.challengeSelectedCharacter && characters.length > 0) {
+                const lastLevels = [];
+                characters.forEach(charName => {
+                    let lastLevel = null;
+                    let lastTime = '';
+                    for (const serverName of Object.keys(this.challengeStats || {})) {
+                        const serverData = this.challengeStats[serverName];
+                        if (serverData && serverData[charName]) {
+                            const towers = serverData[charName].towers || {};
+                            const tower = towers[towerType] || {};
+                            for (const [level, levelStats] of Object.entries(tower)) {
+                                // 找最后挑战时间的关卡
+                                const levelTime = levelStats.last_time || '';
+                                if (levelTime && levelTime > lastTime) {
+                                    lastTime = levelTime;
+                                    lastLevel = {
+                                        level,
+                                        attempts: levelStats.attempts || 0,
+                                        success: levelStats.success || false,
+                                        last_time: levelTime,
+                                        character: charName
+                                    };
+                                }
+                            }
+                        }
+                    }
+                    if (lastLevel) {
+                        lastLevels.push(lastLevel);
+                    }
+                });
+                // 按最后挑战时间倒序排序
+                return lastLevels.sort((a, b) => (b.last_time || '').localeCompare(a.last_time || ''));
+            }
+
+            // 选择单个角色时，显示该角色的所有关卡
+            const stats = {};
+            characters.forEach(charName => {
+                for (const serverName of Object.keys(this.challengeStats || {})) {
+                    const serverData = this.challengeStats[serverName];
+                    if (serverData && serverData[charName]) {
+                        const towers = serverData[charName].towers || {};
+                        const tower = towers[towerType] || {};
+                        for (const [level, levelStats] of Object.entries(tower)) {
+                            if (!stats[level]) {
+                                stats[level] = { level, attempts: 0, success: false, last_time: '' };
+                            }
+                            stats[level].attempts += levelStats.attempts || 0;
+                            if (levelStats.success) {
+                                stats[level].success = true;
+                            }
+                            // 保留最新的挑战时间
+                            if (levelStats.last_time && (!stats[level].last_time || levelStats.last_time > stats[level].last_time)) {
+                                stats[level].last_time = levelStats.last_time;
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 按最后挑战时间倒序排序
+            const sortedLevels = Object.keys(stats).sort((a, b) => (stats[b].last_time || '').localeCompare(stats[a].last_time || ''));
+            return sortedLevels.map(l => stats[l]);
+        },
+
+        async loadChallengeStats() {
+            try {
+                const res = await fetch('/api/challenge/stats');
+                if (res.ok) {
+                    this.challengeStats = await res.json();
+                }
+            } catch (e) {
+                console.error('Failed to load challenge stats:', e);
+            }
+        },
+
         updateLogsCharts() {
             this.updateDailyChart();
             this.updateSourceChart();
@@ -583,7 +773,8 @@ function app() {
                     this.loadLatestData(),
                     this.loadHistoryData(),
                     this.loadStats(),
-                    this.loadCaveStats()
+                    this.loadCaveStats(),
+                    this.loadChallengeStats()
                 ]);
                 // 只更新当前显示的Tab图表
                 this.updateMmthCharts();

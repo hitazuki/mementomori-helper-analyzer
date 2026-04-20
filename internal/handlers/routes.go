@@ -6,21 +6,23 @@ import (
 
 // Router 路由注册器
 type Router struct {
-	statsHandler   *StatsHandler
-	scrapeHandler  *ScrapeHandler
-	historyHandler *HistoryHandler
-	etlHandler     *ETLHandler
-	caveHandler    *CaveHandler
+	statsHandler     *StatsHandler
+	scrapeHandler    *ScrapeHandler
+	historyHandler   *HistoryHandler
+	etlHandler       *ETLHandler
+	caveHandler      *CaveHandler
+	challengeHandler *ChallengeHandler
 }
 
 // NewRouter 创建路由注册器
-func NewRouter(stats *StatsHandler, scrape *ScrapeHandler, history *HistoryHandler, etl *ETLHandler, cave *CaveHandler) *Router {
+func NewRouter(stats *StatsHandler, scrape *ScrapeHandler, history *HistoryHandler, etl *ETLHandler, cave *CaveHandler, challenge *ChallengeHandler) *Router {
 	return &Router{
-		statsHandler:   stats,
-		scrapeHandler:  scrape,
-		historyHandler: history,
-		etlHandler:     etl,
-		caveHandler:    cave,
+		statsHandler:     stats,
+		scrapeHandler:    scrape,
+		historyHandler:   history,
+		etlHandler:       etl,
+		caveHandler:      cave,
+		challengeHandler: challenge,
 	}
 }
 
@@ -51,5 +53,8 @@ func (r *Router) Register(e *gin.Engine) {
 
 		// 洞穴统计
 		api.GET("/cave/stats", r.caveHandler.GetCaveStats)
+
+		// 挑战统计
+		api.GET("/challenge/stats", r.challengeHandler.GetChallengeStats)
 	}
 }
