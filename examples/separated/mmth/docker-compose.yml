@@ -20,6 +20,12 @@ services:
     # 日志持久化：重定向 stdout/stderr 到文件
     entrypoint: ["/bin/sh", "-c"]
     command: ["mkdir -p /app/Logs && dotnet MementoMori.WebUI.dll 2>&1 | tee /app/Logs/app.log"]
+    # Docker 日志轮转（tee 会产生双重日志，限制 Docker 日志大小）
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "1"
     deploy:
       resources:
         limits:
