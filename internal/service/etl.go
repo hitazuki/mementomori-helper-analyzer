@@ -84,6 +84,7 @@ func (s *ETLService) processLogDirectory(outputDir, dirPath string) error {
 		}
 
 		logFile := filepath.Join(dirPath, entry.Name())
+		fmt.Printf("处理日志文件: %s\n", logFile)
 		if err := s.processLogFile(outputDir, logFile); err != nil {
 			fmt.Printf("处理日志文件失败 %s: %v\n", logFile, err)
 			hasError = true
@@ -99,9 +100,10 @@ func (s *ETLService) processLogDirectory(outputDir, dirPath string) error {
 // processLogFile 处理单个日志文件
 func (s *ETLService) processLogFile(outputDir, logFile string) error {
 	cmd := exec.Command(s.binaryPath, "-output", outputDir, logFile)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("ETL处理失败: %w, output: %s", err, string(output))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("ETL处理失败: %w", err)
 	}
 	return nil
 }
@@ -114,27 +116,36 @@ func (s *ETLService) ProcessAllServers(servers []scraper.ServerConfig) (*Process
 		ProcessDetails: make([]string, 0),
 	}
 
+	fmt.Printf("开始 ETL 处理 %d 个服务器\n", len(servers))
+
 	for _, server := range servers {
 		if server.LogPath == "" {
 			result.FailedCount++
 			result.FailedFiles = append(result.FailedFiles, server.Name)
 			result.ProcessDetails = append(result.ProcessDetails,
 				fmt.Sprintf("[%s] 跳过: 未配置 log_path", server.Name))
+			fmt.Printf("[%s] 跳过: 未配置 log_path\n", server.Name)
 			continue
 		}
 
+		fmt.Printf("[%s] 开始处理: %s\n", server.Name, server.LogPath)
 		err := s.ProcessServerLogs(server.Name, server.LogPath)
 		if err != nil {
 			result.FailedCount++
 			result.FailedFiles = append(result.FailedFiles, server.Name)
 			result.ProcessDetails = append(result.ProcessDetails,
 				fmt.Sprintf("[%s] 失败: %v", server.Name, err))
+			fmt.Printf("[%s] 失败: %v\n", server.Name, err)
 		} else {
 			result.SuccessCount++
 			result.ProcessDetails = append(result.ProcessDetails,
 				fmt.Sprintf("[%s] 成功处理: %s", server.Name, server.LogPath))
+			fmt.Printf("[%s] 成功处理完成\n", server.Name)
 		}
 	}
+
+	fmt.Printf("ETL 处理完成: 总计 %d, 成功 %d, 失败 %d\n",
+		result.TotalFiles, result.SuccessCount, result.FailedCount)
 
 	return result, nil
 }
