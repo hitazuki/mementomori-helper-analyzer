@@ -84,7 +84,7 @@ cp analyzer-config/app.json analyzer-config/app.json
   "mmth_servers": [{
     "name": "local",
     "base_url": "http://mementomori-webui:8080",
-    "accounts": ["account1"],
+    "accounts": ["account1"],  // mmth 账号名（需与 mmth 下拉菜单一致）
     "log_path": "/app/mmth-logs"
   }]
 }

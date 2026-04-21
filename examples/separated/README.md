@@ -76,7 +76,7 @@ mmth-analyzer 的 `config/app.json`:
   "mmth_servers": [{
     "name": "server1",
     "base_url": "http://host.docker.internal:5290",
-    "accounts": ["account1", "account2"],
+    "accounts": ["account1"],  // mmth 账号名（需与 mmth 下拉菜单一致）
     "log_path": "/app/mmth-logs"
   }]
 }

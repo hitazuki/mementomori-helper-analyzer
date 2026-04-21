@@ -18,6 +18,11 @@ MMTH Analyzer 是 [mementomori-helper](https://github.com/moonheart/mementomori-
 
 ## 快速开始
 
+### 部署方案
+
+- **统一部署**: [examples/unified/](examples/unified/) - mmth-analyzer 和 mementomori-webui 在同一 docker-compose
+- **分离部署**: [examples/separated/](examples/separated/) - mmth-analyzer 和 mementomori-webui 独立部署
+
 ### 方式一：Docker 部署（推荐）
 
 提供两个版本的镜像：
@@ -95,13 +100,14 @@ docker-compose up -d
 
 **主要配置项：**
 
-| 配置项           | 说明               | 默认值   |
-|------------------|--------------------|----------|
-| `port`           | 服务端口           | `5391`   |
-| `data_dir`       | 数据存储目录       | `./data` |
-| `scrape_interval`| 抓取间隔           | `6h`     |
-| `mmth_servers`   | 服务器配置数组     | -        |
-| `log_path`       | 日志文件/目录路径  | -        |
+| 配置项           | 说明                                   | 默认值   |
+|------------------|----------------------------------------|----------|
+| `port`           | 服务端口                               | `5391`   |
+| `data_dir`       | 数据存储目录                           | `./data` |
+| `scrape_interval`| 抓取间隔                               | `6h`     |
+| `mmth_servers`   | 服务器配置数组                         | -        |
+| `accounts`       | mmth 账号名（需与 mmth 下拉菜单一致）  | -        |
+| `log_path`       | 日志文件/目录路径                      | -        |
 
 > **log_path 说明**：可以是单个日志文件路径（如 `./data/logs/server1.log`）或目录路径（如 `./data/logs/server1`）。为目录时将自动遍历处理目录下所有 `.log` 文件。
 

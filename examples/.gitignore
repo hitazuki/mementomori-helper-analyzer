@@ -1,0 +1,18 @@
+# 忽略所有内容
+*
+
+# 保留目录结构（必须先启用目录才能访问子文件）
+!*/
+
+# 保留文档
+!*.md
+
+# 保留 Docker 配置
+!**/docker-compose.yml
+
+# 保留配置文件
+!**/app.json
+
+# 保留 gitignore 自身
+!.gitignore
+
