@@ -347,9 +347,14 @@ func saveAccountHistories(dataDir string, result MultiScrapeResult) error {
 	return nil
 }
 
-// parseDiamonds 从 HTML 解析钻石数据
+// parseDiamonds 从 HTML 解析钻石数据（支持英文、繁体中文、日语、韩语）
 func parseDiamonds(html string) (total, free, paid int, err error) {
-	re := regexp.MustCompile(`Diamonds\s*:\s*(\d+)\s*,\s*Free Diamonds\s+(\d+)\s*,\s*Paid Diamonds\s+(\d+)`)
+	// 支持四种语言格式：
+	// 英文：Diamonds : X, Free Diamonds Y, Paid Diamonds Z
+	// 繁中：鑽石 : X, 免費鑽石 Y, 付費鑽石 Z
+	// 日语：ダイヤ : X, 無償ダイヤ Y, 有償ダイヤ Z
+	// 韩语：다이아 : X, 무료 다이아 Y, 유료 다이아 Z
+	re := regexp.MustCompile(`(?:Diamonds|鑽石|ダイヤ|다이아)\s*:\s*(\d+)\s*,\s*(?:Free Diamonds|免費鑽石|無償ダイヤ|무료 다이아)\s+(\d+)\s*,\s*(?:Paid Diamonds|付費鑽石|有償ダイヤ|유료 다이아)\s+(\d+)`)
 	matches := re.FindStringSubmatch(html)
 
 	if len(matches) < 4 {
