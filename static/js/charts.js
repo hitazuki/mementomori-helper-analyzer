@@ -22,7 +22,7 @@ const Charts = {
             },
             legend: { data: (options.series || []).map(s => s.name), bottom: 0, type: 'scroll' },
             grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
-            toolbox: { feature: { saveAsImage: { title: '保存图片' } }, right: 20 },
+            toolbox: { feature: { saveAsImage: { title: I18n.t('chart.saveAsImage') } }, right: 20 },
             dataZoom: [
                 { type: 'inside', start: 0, end: 100 },
                 { type: 'slider', start: 0, end: 100, bottom: 40, height: 20 }
@@ -89,10 +89,10 @@ const Charts = {
     },
 
     // 空图表
-    showEmpty(chart, message = '暂无数据') {
+    showEmpty(chart, message) {
         if (!chart) return;
         chart.setOption({
-            title: { text: message, left: 'center', top: 'center' }
+            title: { text: message || I18n.t('chart.noData'), left: 'center', top: 'center' }
         }, true);
     },
 

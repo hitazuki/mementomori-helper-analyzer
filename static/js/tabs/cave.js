@@ -44,10 +44,10 @@ const CaveTab = {
     getStatusText(instance, charName, date) {
         const status = this.getStatus(instance, charName, date);
         switch (status) {
-            case 'finished': return '已完成';
-            case 'started': return '未完成';
-            case 'error': return '异常';
-            default: return '未执行';
+            case 'finished': return I18n.t('cave.finished');
+            case 'started': return I18n.t('cave.unfinished');
+            case 'error': return I18n.t('cave.error');
+            default: return I18n.t('cave.notStarted');
         }
     },
 

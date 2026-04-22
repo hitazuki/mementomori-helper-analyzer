@@ -15,8 +15,22 @@
     <div x-data="app()" x-init="init()" class="container mx-auto px-4 py-8">
         <!-- 头部 -->
         <header class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">MMTH Analyzer</h1>
-            <p class="text-gray-600">钻石监控 · 洞窟追踪 · 战斗统计</p>
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800" x-text="t('app.title')"></h1>
+                    <p class="text-gray-600" x-text="t('app.subtitle')"></p>
+                </div>
+                <!-- 语言选择器 -->
+                <div class="flex items-center gap-2">
+                    <select x-model="currentLang"
+                            @change="setLanguage($event.target.value)"
+                            class="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="zh-CN">简体中文</option>
+                        <option value="zh-TW">繁體中文</option>
+                        <option value="en-US">English</option>
+                    </select>
+                </div>
+            </div>
         </header>
 
         <!-- 操作按钮 -->
@@ -25,21 +39,21 @@
                 <button @click="refreshAll()"
                         :disabled="loading"
                         class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 transition"
-                        x-text="loading ? '加载中...' : '刷新数据'">
+                        x-text="loading ? t('status.loading') : t('btn.refresh')">
                 </button>
                 <button @click="triggerScrape()"
                         :disabled="scraping"
                         class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 transition"
-                        x-text="scraping ? '抓取中...' : '抓取MMTH钻石'">
+                        x-text="scraping ? t('status.scraping') : t('btn.scrape')">
                 </button>
                 <button @click="triggerETL()"
                         :disabled="etlProcessing"
                         class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 transition"
-                        x-text="etlProcessing ? '处理中...' : '更新日志数据'">
+                        x-text="etlProcessing ? t('status.processing') : t('btn.etl')">
                 </button>
             </div>
             <p class="mt-2 text-sm text-gray-500">
-                <span class="text-amber-600">⚠️</span> 抓取功能需要 Chrome/Chromium 浏览器（Docker 镜像已内置）
+                <span class="text-amber-600">⚠️</span> <span x-text="t('warn.scrape')"></span>
             </p>
         </div>
 
@@ -48,51 +62,51 @@
             <nav class="flex space-x-8">
                 <button @click="switchTab('mmth')"
                         :class="activeTab === 'mmth' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                        class="py-4 px-1 border-b-2 font-medium text-sm">
-                    MMTH 钻石监控
+                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                        x-text="t('tab.mmth')">
                 </button>
                 <button @click="switchTab('logs')"
                         :class="activeTab === 'logs' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                        class="py-4 px-1 border-b-2 font-medium text-sm">
-                    钻石日志统计
+                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                        x-text="t('tab.logs')">
                 </button>
                 <button @click="switchTab('cave')"
                         :class="activeTab === 'cave' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                        class="py-4 px-1 border-b-2 font-medium text-sm">
-                    洞窟日志统计
+                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                        x-text="t('tab.cave')">
                 </button>
                 <button @click="switchTab('challenge')"
                         :class="activeTab === 'challenge' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                        class="py-4 px-1 border-b-2 font-medium text-sm">
-                    战斗日志统计
+                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                        x-text="t('tab.challenge')">
                 </button>
                 <button @click="switchTab('items')"
                         :class="activeTab === 'items' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
-                        class="py-4 px-1 border-b-2 font-medium text-sm">
-                    物品日志统计
+                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                        x-text="t('tab.items')">
                 </button>
             </nav>
         </div>
 
         <!-- MMTH 钻石监控 Tab -->
         <div x-show="activeTab === 'mmth'" x-cloak>
-            <p class="text-sm text-gray-500 mb-4" x-show="lastScrapeTime" x-text="'最后抓取时间: ' + lastScrapeTime"></p>
+            <p class="text-sm text-gray-500 mb-4" x-show="lastScrapeTime" x-text="t('mmth.lastScrapeTime', {time: lastScrapeTime})"></p>
 
             <!-- 最新抓取数据 -->
             <div class="bg-white rounded-lg shadow p-6 mb-6">
-                <h2 class="text-xl font-semibold mb-4">最新钻石数据</h2>
-                <div x-show="latestData.length === 0" class="text-gray-500">暂无数据</div>
+                <h2 class="text-xl font-semibold mb-4" x-text="t('mmth.latestData')"></h2>
+                <div x-show="latestData.length === 0" class="text-gray-500" x-text="t('status.noData')"></div>
                 <div x-show="latestData.length > 0" class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
                             <tr class="border-b bg-gray-50">
-                                <th class="text-left py-3 px-4">服务器</th>
-                                <th class="text-left py-3 px-4">账号</th>
-                                <th class="text-right py-3 px-4">总钻石</th>
-                                <th class="text-right py-3 px-4">免费钻石</th>
-                                <th class="text-right py-3 px-4">付费钻石</th>
-                                <th class="text-left py-3 px-4">状态</th>
-                                <th class="text-left py-3 px-4">时间</th>
+                                <th class="text-left py-3 px-4" x-text="t('col.server')"></th>
+                                <th class="text-left py-3 px-4" x-text="t('col.account')"></th>
+                                <th class="text-right py-3 px-4" x-text="t('col.totalDiamond')"></th>
+                                <th class="text-right py-3 px-4" x-text="t('col.freeDiamond')"></th>
+                                <th class="text-right py-3 px-4" x-text="t('col.paidDiamond')"></th>
+                                <th class="text-left py-3 px-4" x-text="t('col.status')"></th>
+                                <th class="text-left py-3 px-4" x-text="t('col.time')"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -104,7 +118,7 @@
                                     <td class="py-3 px-4 text-right font-mono text-blue-600" x-text="item.free.toLocaleString()"></td>
                                     <td class="py-3 px-4 text-right font-mono text-purple-600" x-text="item.paid.toLocaleString()"></td>
                                     <td class="py-3 px-4">
-                                        <span x-show="!item.error" class="text-green-600">正常</span>
+                                        <span x-show="!item.error" class="text-green-600" x-text="t('status.normal')"></span>
                                         <span x-show="item.error" class="text-red-600" x-text="item.error"></span>
                                     </td>
                                     <td class="py-3 px-4 text-sm text-gray-500" x-text="item.timestamp"></td>
@@ -117,38 +131,38 @@
 
             <!-- 历史趋势图 -->
             <div class="bg-white rounded-lg shadow p-6 mb-6">
-                <h2 class="text-xl font-semibold mb-4">历史趋势</h2>
+                <h2 class="text-xl font-semibold mb-4" x-text="t('mmth.historyTrend')"></h2>
                 <div class="mb-4 flex flex-wrap gap-4 items-end">
                     <div>
-                        <label class="block text-gray-700 mb-1 text-sm">选择账号:</label>
+                        <label class="block text-gray-700 mb-1 text-sm" x-text="t('mmth.selectAccount')"></label>
                         <select x-model="selectedAccount"
                                 class="border rounded px-3 py-2 w-48"
                                 @change="updateMmthCharts()">
-                            <option value="">全部账号</option>
+                            <option value="" x-text="t('mmth.allAccounts')"></option>
                             <template x-for="name in mmthAccountNames" :key="name">
                                 <option :value="name" x-text="name"></option>
                             </template>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-gray-700 mb-1 text-sm">数据类型:</label>
+                        <label class="block text-gray-700 mb-1 text-sm" x-text="t('mmth.dataType')"></label>
                         <select x-model="dataType"
                                 class="border rounded px-3 py-2 w-32"
                                 @change="updateMmthCharts()">
-                            <option value="total">总钻石</option>
-                            <option value="free">免费钻石</option>
-                            <option value="paid">付费钻石</option>
+                            <option value="total" x-text="t('mmth.total')"></option>
+                            <option value="free" x-text="t('mmth.free')"></option>
+                            <option value="paid" x-text="t('mmth.paid')"></option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-gray-700 mb-1 text-sm">时间维度:</label>
+                        <label class="block text-gray-700 mb-1 text-sm" x-text="t('mmth.timeGroup')"></label>
                         <select x-model="mmthTimeGroup"
                                 class="border rounded px-3 py-2 w-32"
                                 @change="updateMmthCharts()">
-                            <option value="raw">原始</option>
-                            <option value="day">按天</option>
-                            <option value="week">按周</option>
-                            <option value="month">按月</option>
+                            <option value="raw" x-text="t('mmth.raw')"></option>
+                            <option value="day" x-text="t('mmth.day')"></option>
+                            <option value="week" x-text="t('mmth.week')"></option>
+                            <option value="month" x-text="t('mmth.month')"></option>
                         </select>
                     </div>
                 </div>
@@ -162,8 +176,8 @@
                         <div class="text-sm text-gray-600" x-text="item.account"></div>
                         <div class="text-2xl font-bold text-blue-600" x-text="item.total.toLocaleString()"></div>
                         <div class="text-xs text-gray-400 mt-1">
-                            免费: <span x-text="item.free.toLocaleString()"></span> |
-                            付费: <span x-text="item.paid.toLocaleString()"></span>
+                            <span x-text="t('logs.free')"></span>: <span x-text="item.free.toLocaleString()"></span> |
+                            <span x-text="t('logs.paid')"></span>: <span x-text="item.paid.toLocaleString()"></span>
                         </div>
                     </div>
                 </template>
@@ -176,24 +190,24 @@
             <div class="bg-white rounded-lg shadow p-6 mb-6">
                 <div class="mb-4 flex flex-wrap gap-4 items-end">
                     <div>
-                        <label class="block text-gray-700 mb-2">选择角色:</label>
+                        <label class="block text-gray-700 mb-2" x-text="t('logs.selectCharacter')"></label>
                         <select x-model="selectedCharacter"
                                 class="border rounded px-3 py-2 w-full md:w-64"
                                 @change="updateLogsCharts()">
-                            <option value="">全部</option>
+                            <option value="" x-text="t('logs.all')"></option>
                             <template x-for="name in characterNames" :key="name">
                                 <option :value="name" x-text="name"></option>
                             </template>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-gray-700 mb-2">时间维度:</label>
+                        <label class="block text-gray-700 mb-2" x-text="t('mmth.timeGroup')"></label>
                         <select x-model="logsTimeGroup"
                                 class="border rounded px-3 py-2 w-32"
                                 @change="updateLogsCharts()">
-                            <option value="day">按天</option>
-                            <option value="week">按周</option>
-                            <option value="month">按月</option>
+                            <option value="day" x-text="t('mmth.day')"></option>
+                            <option value="week" x-text="t('mmth.week')"></option>
+                            <option value="month" x-text="t('mmth.month')"></option>
                         </select>
                     </div>
                 </div>
@@ -201,15 +215,15 @@
                 <!-- 汇总卡片 -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-blue-50 rounded p-4">
-                        <div class="text-sm text-blue-600">总获取</div>
+                        <div class="text-sm text-blue-600" x-text="t('logs.totalGain')"></div>
                         <div class="text-2xl font-bold text-blue-800" x-text="totalGain.toLocaleString()"></div>
                     </div>
                     <div class="bg-red-50 rounded p-4">
-                        <div class="text-sm text-red-600">总消耗</div>
+                        <div class="text-sm text-red-600" x-text="t('logs.totalConsume')"></div>
                         <div class="text-2xl font-bold text-red-800" x-text="totalConsume.toLocaleString()"></div>
                     </div>
                     <div class="bg-green-50 rounded p-4">
-                        <div class="text-sm text-green-600">净变化</div>
+                        <div class="text-sm text-green-600" x-text="t('logs.netChange')"></div>
                         <div class="text-2xl font-bold text-green-800" x-text="totalNetChange.toLocaleString()"></div>
                     </div>
                 </div>
@@ -226,24 +240,24 @@
         <div x-show="activeTab === 'cave'" x-cloak>
             <div class="bg-white rounded-lg shadow p-6 mb-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-xl font-semibold">时空洞窟状态</h2>
+                    <h2 class="text-xl font-semibold" x-text="t('cave.title')"></h2>
                     <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-600">显示天数:</label>
+                        <label class="text-sm text-gray-600" x-text="t('cave.displayDays')"></label>
                         <select x-model.number="caveDays" class="border rounded px-2 py-1 text-sm w-20">
-                            <option value="5">5天</option>
-                            <option value="7">7天</option>
-                            <option value="14">14天</option>
-                            <option value="30">30天</option>
-                            <option value="0">全部</option>
+                            <option value="5" x-text="t('cave.days', {n: 5})"></option>
+                            <option value="7" x-text="t('cave.days', {n: 7})"></option>
+                            <option value="14" x-text="t('cave.days', {n: 14})"></option>
+                            <option value="30" x-text="t('cave.days', {n: 30})"></option>
+                            <option value="0" x-text="t('cave.all')"></option>
                         </select>
                     </div>
                 </div>
-                <div x-show="caveCharacters.length === 0" class="text-gray-500">暂无数据</div>
+                <div x-show="caveCharacters.length === 0" class="text-gray-500" x-text="t('status.noData')"></div>
                 <div x-show="caveCharacters.length > 0" class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
                             <tr class="border-b bg-gray-50">
-                                <th class="text-left py-2 px-3 font-medium">角色</th>
+                                <th class="text-left py-2 px-3 font-medium" x-text="t('col.character')"></th>
                                 <template x-for="date in caveRecentDates" :key="date">
                                     <th class="text-center py-2 px-2 font-medium whitespace-nowrap" x-text="date.substring(5)"></th>
                                 </template>
@@ -275,17 +289,17 @@
             <div class="bg-white rounded-lg shadow p-6 mb-6">
                 <div class="flex flex-wrap gap-4 items-end">
                     <div>
-                        <label class="block text-gray-700 mb-2">选择角色:</label>
+                        <label class="block text-gray-700 mb-2" x-text="t('challenge.selectCharacter')"></label>
                         <select x-model="challengeSelectedCharacter"
                                 class="border rounded px-3 py-2 w-full md:w-64">
-                            <option value="">全部</option>
+                            <option value="" x-text="t('challenge.all')"></option>
                             <template x-for="name in challengeCharacterNames" :key="name">
                                 <option :value="name" x-text="name"></option>
                             </template>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-gray-700 mb-2">关卡类型:</label>
+                        <label class="block text-gray-700 mb-2" x-text="t('challenge.levelType')"></label>
                         <select x-model="challengeSelectedType"
                                 class="border rounded px-3 py-2 w-40">
                             <template x-for="opt in challengeTypeOptions" :key="opt.value">
@@ -299,16 +313,16 @@
             <!-- 主线关卡统计 -->
             <div x-show="challengeQuestStats.length > 0"
                  class="bg-white rounded-lg shadow p-6 mb-6">
-                <h2 class="text-xl font-semibold mb-4">主线关卡</h2>
+                <h2 class="text-xl font-semibold mb-4" x-text="t('challenge.quest')"></h2>
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
                             <tr class="border-b bg-gray-50">
-                                <th class="text-left py-3 px-4">关卡</th>
-                                <th x-show="!challengeSelectedCharacter" class="text-left py-3 px-4">角色</th>
-                                <th class="text-right py-3 px-4">尝试次数</th>
-                                <th class="text-left py-3 px-4">状态</th>
-                                <th class="text-left py-3 px-4">最后挑战</th>
+                                <th class="text-left py-3 px-4" x-text="t('col.level')"></th>
+                                <th x-show="!challengeSelectedCharacter" class="text-left py-3 px-4" x-text="t('col.character')"></th>
+                                <th class="text-right py-3 px-4" x-text="t('col.attempts')"></th>
+                                <th class="text-left py-3 px-4" x-text="t('col.status')"></th>
+                                <th class="text-left py-3 px-4" x-text="t('col.lastChallenge')"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -319,7 +333,7 @@
                                     <td class="py-3 px-4 text-right" x-text="item.attempts"></td>
                                     <td class="py-3 px-4">
                                         <span :class="item.success ? 'text-green-600' : 'text-red-600'"
-                                              x-text="item.success ? '已通关' : '未通关'"></span>
+                                              x-text="item.success ? t('status.cleared') : t('status.notCleared')"></span>
                                     </td>
                                     <td class="py-3 px-4 text-sm text-gray-500" x-text="item.last_time || '-'"></td>
                                 </tr>
@@ -333,16 +347,16 @@
             <template x-for="tower in challengeTowerTypes" :key="tower">
                 <div x-show="getChallengeTowerStats(tower).length > 0"
                      class="bg-white rounded-lg shadow p-6 mb-6">
-                    <h2 class="text-xl font-semibold mb-4" x-text="'塔 - ' + tower"></h2>
+                    <h2 class="text-xl font-semibold mb-4" x-text="t('challenge.tower', {name: tower})"></h2>
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
                                 <tr class="border-b bg-gray-50">
-                                    <th class="text-left py-3 px-4">层数</th>
-                                    <th x-show="!challengeSelectedCharacter" class="text-left py-3 px-4">角色</th>
-                                    <th class="text-right py-3 px-4">尝试次数</th>
-                                    <th class="text-left py-3 px-4">状态</th>
-                                    <th class="text-left py-3 px-4">最后挑战</th>
+                                    <th class="text-left py-3 px-4" x-text="t('col.floor')"></th>
+                                    <th x-show="!challengeSelectedCharacter" class="text-left py-3 px-4" x-text="t('col.character')"></th>
+                                    <th class="text-right py-3 px-4" x-text="t('col.attempts')"></th>
+                                    <th class="text-left py-3 px-4" x-text="t('col.status')"></th>
+                                    <th class="text-left py-3 px-4" x-text="t('col.lastChallenge')"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -353,7 +367,7 @@
                                         <td class="py-3 px-4 text-right" x-text="item.attempts"></td>
                                         <td class="py-3 px-4">
                                             <span :class="item.success ? 'text-green-600' : 'text-red-600'"
-                                                  x-text="item.success ? '已通关' : '未通关'"></span>
+                                                  x-text="item.success ? t('status.cleared') : t('status.notCleared')"></span>
                                         </td>
                                         <td class="py-3 px-4 text-sm text-gray-500" x-text="item.last_time || '-'"></td>
                                     </tr>
@@ -371,33 +385,33 @@
             <div class="bg-white rounded-lg shadow p-6 mb-6">
                 <div class="mb-4 flex flex-wrap gap-4 items-end">
                     <div>
-                        <label class="block text-gray-700 mb-2">物品类型:</label>
+                        <label class="block text-gray-700 mb-2" x-text="t('items.itemType')"></label>
                         <select x-model="itemType"
                                 class="border rounded px-3 py-2 w-48"
                                 @change="updateItemCharts()">
-                            <option value="runeTicket">饼干 (Rune Ticket)</option>
-                            <option value="upgradePanacea">红水 (Upgrade Panacea)</option>
+                            <option value="runeTicket" x-text="t('items.runeTicket')"></option>
+                            <option value="upgradePanacea" x-text="t('items.upgradePanacea')"></option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-gray-700 mb-2">选择角色:</label>
+                        <label class="block text-gray-700 mb-2" x-text="t('items.selectCharacter')"></label>
                         <select x-model="itemSelectedCharacter"
                                 class="border rounded px-3 py-2 w-full md:w-64"
                                 @change="updateItemCharts()">
-                            <option value="">全部</option>
+                            <option value="" x-text="t('items.all')"></option>
                             <template x-for="name in itemCharacterNames" :key="name">
                                 <option :value="name" x-text="name"></option>
                             </template>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-gray-700 mb-2">时间维度:</label>
+                        <label class="block text-gray-700 mb-2" x-text="t('items.timeGroup')"></label>
                         <select x-model="itemTimeGroup"
                                 class="border rounded px-3 py-2 w-32"
                                 @change="updateItemCharts()">
-                            <option value="day">按天</option>
-                            <option value="week">按周</option>
-                            <option value="month">按月</option>
+                            <option value="day" x-text="t('mmth.day')"></option>
+                            <option value="week" x-text="t('mmth.week')"></option>
+                            <option value="month" x-text="t('mmth.month')"></option>
                         </select>
                     </div>
                 </div>
@@ -408,15 +422,15 @@
                 <h2 class="text-xl font-semibold mb-4" x-text="itemTypeName"></h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                     <div class="bg-blue-50 rounded p-4">
-                        <div class="text-sm text-blue-600">总获取</div>
+                        <div class="text-sm text-blue-600" x-text="t('logs.totalGain')"></div>
                         <div class="text-2xl font-bold text-blue-800" x-text="(itemType === 'upgradePanacea' ? upgradePanaceaTotalGain : itemTotalGain).toLocaleString()"></div>
                     </div>
                     <div class="bg-red-50 rounded p-4">
-                        <div class="text-sm text-red-600">总消耗</div>
+                        <div class="text-sm text-red-600" x-text="t('logs.totalConsume')"></div>
                         <div class="text-2xl font-bold text-red-800" x-text="(itemType === 'upgradePanacea' ? upgradePanaceaTotalConsume : itemTotalConsume).toLocaleString()"></div>
                     </div>
                     <div class="bg-green-50 rounded p-4">
-                        <div class="text-sm text-green-600">净变化</div>
+                        <div class="text-sm text-green-600" x-text="t('logs.netChange')"></div>
                         <div class="text-2xl font-bold text-green-800" x-text="(itemType === 'upgradePanacea' ? upgradePanaceaTotalNetChange : itemTotalNetChange).toLocaleString()"></div>
                     </div>
                 </div>
@@ -426,15 +440,18 @@
         </div>
     </div>
 
-    <!-- 模块加载顺序: 工具 -> API -> 图表 -> Tab模块 -> 主入口 -->
-    <script src="js/utils.js?v=27"></script>
-    <script src="js/api.js?v=27"></script>
-    <script src="js/charts.js?v=27"></script>
-    <script src="js/tabs/mmth.js?v=27"></script>
-    <script src="js/tabs/logs.js?v=27"></script>
-    <script src="js/tabs/cave.js?v=27"></script>
-    <script src="js/tabs/challenge.js?v=27"></script>
-    <script src="js/tabs/items.js?v=27"></script>
-    <script src="js/app.js?v=27"></script>
+    <!-- 模块加载顺序: i18n -> 工具 -> API -> 图表 -> Tab模块 -> 主入口 -->
+    <script src="js/i18n/translations.js?v=30"></script>
+    <script src="js/i18n/glossary.js?v=30"></script>
+    <script src="js/i18n/i18n.js?v=30"></script>
+    <script src="js/utils.js?v=30"></script>
+    <script src="js/api.js?v=30"></script>
+    <script src="js/charts.js?v=30"></script>
+    <script src="js/tabs/mmth.js?v=30"></script>
+    <script src="js/tabs/logs.js?v=30"></script>
+    <script src="js/tabs/cave.js?v=30"></script>
+    <script src="js/tabs/challenge.js?v=30"></script>
+    <script src="js/tabs/items.js?v=30"></script>
+    <script src="js/app.js?v=30"></script>
 </body>
 </html>

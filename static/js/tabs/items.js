@@ -72,7 +72,7 @@ const ItemsTab = {
         }));
 
         Charts.createBarChart(instance.itemDailyChart, {
-            title: this.getTypeName(instance) + ' 净变动统计',
+            title: this.getTypeName(instance) + ' ' + I18n.t('chart.dailyChange'),
             xAxis: groupKeys,
             legends: characters,
             series
@@ -108,7 +108,7 @@ const ItemsTab = {
             .sort((a, b) => b.value - a.value);
 
         Charts.createPieChart(instance.itemSourceChart, {
-            title: '来源分布',
+            title: I18n.t('chart.sourceDistribution'),
             data
         });
     },
@@ -123,7 +123,7 @@ const ItemsTab = {
     },
 
     getTypeName(instance) {
-        return instance.itemType === 'upgradePanacea' ? '红水 (Upgrade Panacea)' : '饼干 (Rune Ticket)';
+        return instance.itemType === 'upgradePanacea' ? I18n.t('items.upgradePanacea') : I18n.t('items.runeTicket');
     },
 
     getTotalGain(instance) {

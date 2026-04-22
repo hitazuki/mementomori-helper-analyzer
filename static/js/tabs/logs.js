@@ -67,7 +67,7 @@ const LogsTab = {
         }));
 
         Charts.createBarChart(instance.dailyChart, {
-            title: '钻石净变动统计',
+            title: I18n.t('chart.dailyChange'),
             xAxis: groupKeys,
             legends: characters,
             series
@@ -100,7 +100,7 @@ const LogsTab = {
             .sort((a, b) => b.value - a.value);
 
         Charts.createPieChart(instance.sourceChart, {
-            title: '来源分布',
+            title: I18n.t('chart.sourceDistribution'),
             data
         });
     },

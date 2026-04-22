@@ -86,7 +86,7 @@ const MmthTab = {
         }));
 
         Charts.createLineChart(instance.historyChart, {
-            title: '钻石历史趋势',
+            title: I18n.t('chart.diamondTrend'),
             xAxis: xAxisData,
             legends: accounts,
             series
@@ -102,11 +102,11 @@ const MmthTab = {
             instance.historyData = loaded.historyData;
             instance.lastScrapeTime = loaded.lastScrapeTime;
             this.updateChart(instance);
-            alert('抓取成功');
+            alert(I18n.t('status.success'));
         } else if (data.chrome_needed) {
-            alert('⚠️ ' + data.error + '\n\n请安装 Chrome/Chromium 浏览器后再使用抓取功能。');
+            alert('⚠️ ' + data.error + '\n\n' + I18n.t('warn.scrape'));
         } else {
-            alert('抓取失败: ' + (data.error || '未知错误'));
+            alert(I18n.t('status.failed') + ': ' + (data.error || 'Unknown error'));
         }
         return data.success;
     }

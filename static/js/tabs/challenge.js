@@ -3,6 +3,20 @@ const ChallengeTab = {
     // 塔类型
     towerTypes: ['Infinity', 'Azure', 'Crimson', 'Emerald', 'Amber'],
 
+    // 获取类型选项（支持国际化）
+    getTypeOptions() {
+        return [
+            { value: 'all', label: I18n.t('challenge.all') },
+            { value: 'quest', label: I18n.t('challenge.quest') },
+            { value: 'Infinity', label: I18n.t('challenge.tower', {name: 'Infinity'}) },
+            { value: 'Azure', label: I18n.t('challenge.tower', {name: 'Azure'}) },
+            { value: 'Crimson', label: I18n.t('challenge.tower', {name: 'Crimson'}) },
+            { value: 'Emerald', label: I18n.t('challenge.tower', {name: 'Emerald'}) },
+            { value: 'Amber', label: I18n.t('challenge.tower', {name: 'Amber'}) }
+        ];
+    },
+
+    // 兼容旧代码的静态属性
     typeOptions: [
         { value: 'all', label: '全部' },
         { value: 'quest', label: '主线' },

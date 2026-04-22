@@ -7,6 +7,9 @@ function app() {
         etlProcessing: false,
         activeTab: 'mmth',
 
+        // i18n 状态
+        currentLang: 'zh-CN',
+
         // MMTH 数据
         ...MmthTab.initialData,
 
@@ -22,8 +25,24 @@ function app() {
         // 物品统计数据
         ...ItemsTab.initialData,
 
+        // ===== i18n 方法 =====
+        t(key, params) {
+            return I18n.t(key, params);
+        },
+
+        setLanguage(lang) {
+            I18n.setLanguage(lang);
+            this.currentLang = lang;
+            // 更新 HTML lang 属性
+            document.documentElement.lang = lang;
+        },
+
         // ===== 初始化 =====
         async init() {
+            // 初始化 i18n
+            this.currentLang = I18n.init();
+            document.documentElement.lang = this.currentLang;
+
             await Promise.all([
                 this.loadMmth(),
                 this.loadLogs(),
@@ -131,12 +150,12 @@ function app() {
                     if (this.activeTab === 'logs') {
                         this.initOrUpdateLogsCharts();
                     }
-                    alert(`ETL处理完成: 处理 ${data.total_files} 个文件，成功 ${data.success} 个`);
+                    alert(`ETL ${this.t('status.success')}: ${data.total_files} files, ${data.success} ${this.t('status.success').toLowerCase()}`);
                 } else {
-                    alert('ETL处理失败: ' + (data.error || '未知错误'));
+                    alert('ETL ' + this.t('status.failed') + ': ' + (data.error || 'Unknown error'));
                 }
             } catch (e) {
-                alert('请求失败: ' + e.message);
+                alert(this.t('status.failed') + ': ' + e.message);
             } finally {
                 this.etlProcessing = false;
             }
@@ -283,6 +302,8 @@ function app() {
 
         // 塔类型常量
         challengeTowerTypes: ChallengeTab.towerTypes,
-        challengeTypeOptions: ChallengeTab.typeOptions
+        get challengeTypeOptions() {
+            return ChallengeTab.getTypeOptions();
+        }
     };
 }
