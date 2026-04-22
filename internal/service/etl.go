@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"mmth-analyzer/internal/scraper"
@@ -64,13 +65,15 @@ func (s *ETLService) ProcessServerLogs(serverName, logPath string) error {
 }
 
 // processLogDirectory 处理目录下的所有日志文件
+// 按文件修改时间排序（旧的先处理），确保检查点机制正确工作
 func (s *ETLService) processLogDirectory(outputDir, dirPath string) error {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return fmt.Errorf("读取目录失败: %w", err)
 	}
 
-	hasError := false
+	// 收集日志文件
+	var logFiles []os.DirEntry
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue // 跳过子目录
@@ -83,6 +86,21 @@ func (s *ETLService) processLogDirectory(outputDir, dirPath string) error {
 			continue
 		}
 
+		logFiles = append(logFiles, entry)
+	}
+
+	// 按修改时间排序（旧的先处理）
+	sort.Slice(logFiles, func(i, j int) bool {
+		infoI, errI := logFiles[i].Info()
+		infoJ, errJ := logFiles[j].Info()
+		if errI != nil || errJ != nil {
+			return false
+		}
+		return infoI.ModTime().Before(infoJ.ModTime())
+	})
+
+	hasError := false
+	for _, entry := range logFiles {
 		logFile := filepath.Join(dirPath, entry.Name())
 		fmt.Printf("处理日志文件: %s\n", logFile)
 		if err := s.processLogFile(outputDir, logFile); err != nil {
