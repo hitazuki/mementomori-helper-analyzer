@@ -7,114 +7,134 @@ const glossary = {
   'item.diamond': {
     'zh-CN': '钻石',
     'zh-TW': '鑽石',
-    'en-US': 'Diamonds'
+    'en-US': 'Diamonds',
+    'ja-JP': 'ダイヤ'
   },
   'item.runeTicket': {
     'zh-CN': '符石兑换券',
     'zh-TW': '符石兌換券',
-    'en-US': 'Rune Ticket'
+    'en-US': 'Rune Ticket',
+    'ja-JP': 'ルーンチケット'
   },
   'item.upgradePanacea': {
     'zh-CN': '强化秘药',
     'zh-TW': '強化秘藥',
-    'en-US': 'Upgrade Panacea'
+    'en-US': 'Upgrade Panacea',
+    'ja-JP': '強化秘薬'
   },
 
   // ==================== 塔名称 ====================
   'tower.infinity': {
     'zh-CN': '无穷之塔',
     'zh-TW': '無窮之塔',
-    'en-US': 'Infinity'
+    'en-US': 'Infinity',
+    'ja-JP': '無窮の塔'
   },
   'tower.azure': {
     'zh-CN': '忧蓝之塔',
     'zh-TW': '憂藍之塔',
-    'en-US': 'Azure'
+    'en-US': 'Azure',
+    'ja-JP': '藍の塔'
   },
   'tower.crimson': {
     'zh-CN': '业红之塔',
     'zh-TW': '業紅之塔',
-    'en-US': 'Crimson'
+    'en-US': 'Crimson',
+    'ja-JP': '紅の塔'
   },
   'tower.emerald': {
     'zh-CN': '苍翠之塔',
     'zh-TW': '蒼翠之塔',
-    'en-US': 'Emerald'
+    'en-US': 'Emerald',
+    'ja-JP': '翠の塔'
   },
   'tower.amber': {
     'zh-CN': '流金之塔',
     'zh-TW': '流金之塔',
-    'en-US': 'Amber'
+    'en-US': 'Amber',
+    'ja-JP': '黄の塔'
   },
 
   // 塔名简称（用于表格显示）
   'tower.infinity.short': {
     'zh-CN': '无穷',
     'zh-TW': '無窮',
-    'en-US': 'Infinity'
+    'en-US': 'Infinity',
+    'ja-JP': '無窮'
   },
   'tower.azure.short': {
     'zh-CN': '忧蓝',
     'zh-TW': '憂藍',
-    'en-US': 'Azure'
+    'en-US': 'Azure',
+    'ja-JP': '藍'
   },
   'tower.crimson.short': {
     'zh-CN': '业红',
     'zh-TW': '業紅',
-    'en-US': 'Crimson'
+    'en-US': 'Crimson',
+    'ja-JP': '紅'
   },
   'tower.emerald.short': {
     'zh-CN': '苍翠',
     'zh-TW': '蒼翠',
-    'en-US': 'Emerald'
+    'en-US': 'Emerald',
+    'ja-JP': '翠'
   },
   'tower.amber.short': {
     'zh-CN': '流金',
     'zh-TW': '流金',
-    'en-US': 'Amber'
+    'en-US': 'Amber',
+    'ja-JP': '黄'
   },
 
   // ==================== 洞窟 ====================
   'cave.spaceTime': {
     'zh-CN': '时空洞窟',
     'zh-TW': '時空洞窟',
-    'en-US': 'Cave of Space-Time'
+    'en-US': 'Cave of Space-Time',
+    'ja-JP': '時空の洞窟'
   },
 
   // ==================== 挑战结果 ====================
   'result.victory': {
     'zh-CN': '胜利',
     'zh-TW': '勝利',
-    'en-US': 'Victory'
+    'en-US': 'Victory',
+    'ja-JP': '勝利'
   },
   'result.defeat': {
     'zh-CN': '败北',
     'zh-TW': '敗北',
-    'en-US': 'Defeat'
+    'en-US': 'Defeat',
+    'ja-JP': '敗北'
   },
   'result.challenge': {
     'zh-CN': '挑战',
     'zh-TW': '挑戰',
-    'en-US': 'Challenge'
+    'en-US': 'Challenge',
+    'ja-JP': '挑戦'
   },
 
   // ==================== 层级单位 ====================
   'unit.floor': {
     'zh-CN': '层',
     'zh-TW': '層',
-    'en-US': 'F'
+    'en-US': 'F',
+    'ja-JP': '階層'
   },
 
   // ==================== 品质/稀有度 ====================
   'rarity.none': {
     'zh-CN': '无',
     'zh-TW': '無',
-    'en-US': 'None'
+    'en-US': 'None',
+    'ja-JP': '無'
   },
   'rarity.sr': {
     'zh-CN': 'SR',
     'zh-TW': 'SR',
-    'en-US': 'SR'
+    'en-US': 'SR',
+    'ja-JP': 'SR'
   }
 };
 

@@ -1,6 +1,6 @@
 /**
  * UI 文本翻译
- * 支持简体中文、繁体中文、英文
+ * 支持简体中文、繁体中文、英文、日文
  */
 const translations = {
   'zh-CN': {
@@ -322,5 +322,112 @@ const translations = {
     'chart.dailyChange': 'Daily Change Statistics',
     'chart.saveAsImage': 'Save as Image',
     'chart.noData': 'No data'
+  },
+
+  'ja-JP': {
+    // タイトル
+    'app.title': 'MMTH Analyzer',
+    'app.subtitle': 'ダイヤ監視 · 洞窟追跡 · バトル統計',
+
+    // ボタン
+    'btn.refresh': 'データ更新',
+    'btn.scrape': 'MMTHダイヤ取得',
+    'btn.etl': 'ログデータ更新',
+
+    // 読み込み状態
+    'status.loading': '読み込み中...',
+    'status.scraping': '取得中...',
+    'status.processing': '処理中...',
+
+    // 警告
+    'warn.scrape': '取得機能には Chrome/Chromium ブラウザが必要です（Dockerイメージに内蔵）',
+
+    // タブラベル
+    'tab.mmth': 'MMTH ダイヤ監視',
+    'tab.logs': 'ダイヤログ統計',
+    'tab.cave': '洞窟ログ統計',
+    'tab.challenge': 'バトルログ統計',
+    'tab.items': 'アイテムログ統計',
+
+    // MMTHタブ
+    'mmth.lastScrapeTime': '最終取得時間: {time}',
+    'mmth.latestData': '最新ダイヤデータ',
+    'mmth.historyTrend': '履歴トレンド',
+    'mmth.selectAccount': 'アカウント選択:',
+    'mmth.allAccounts': '全アカウント',
+    'mmth.dataType': 'データタイプ:',
+    'mmth.timeGroup': '時間単位:',
+    'mmth.total': '合計ダイヤ',
+    'mmth.free': '無料ダイヤ',
+    'mmth.paid': '有料ダイヤ',
+    'mmth.raw': 'RAW',
+    'mmth.day': '日別',
+    'mmth.week': '週別',
+    'mmth.month': '月別',
+
+    // テーブル列
+    'col.server': 'サーバー',
+    'col.account': 'アカウント',
+    'col.totalDiamond': '合計ダイヤ',
+    'col.freeDiamond': '無料ダイヤ',
+    'col.paidDiamond': '有料ダイヤ',
+    'col.status': 'ステータス',
+    'col.time': '時間',
+    'col.character': 'キャラクター',
+    'col.level': 'レベル',
+    'col.attempts': '試行回数',
+    'col.lastChallenge': '最終挑戦',
+    'col.floor': '階層',
+    'col.date': '日付',
+
+    // ステータス
+    'status.normal': '通常',
+    'status.noData': 'データなし',
+    'status.success': '成功',
+    'status.failed': '失敗',
+    'status.cleared': 'クリア',
+    'status.notCleared': '未クリア',
+
+    // ログ統計タブ
+    'logs.selectCharacter': 'キャラクター選択:',
+    'logs.all': '全て',
+    'logs.totalGain': '合計獲得',
+    'logs.totalConsume': '合計消費',
+    'logs.netChange': '純増減',
+    'logs.free': '無料',
+    'logs.paid': '有料',
+
+    // 洞窟タブ
+    'cave.title': '時空の洞窟ステータス',
+    'cave.displayDays': '表示日数:',
+    'cave.days': '{n}日',
+    'cave.all': '全て',
+    'cave.finished': '完了',
+    'cave.unfinished': '未完了',
+    'cave.error': 'エラー',
+    'cave.notStarted': '未開始',
+
+    // チャレンジタブ
+    'challenge.selectCharacter': 'キャラクター選択:',
+    'challenge.all': '全て',
+    'challenge.levelType': 'レベルタイプ:',
+    'challenge.quest': 'クエストレベル',
+    'challenge.tower': '塔 - {name}',
+    'challenge.towerAll': '全ての塔',
+
+    // アイテムタブ
+    'items.itemType': 'アイテムタイプ:',
+    'items.runeTicket': 'ルーンチケット',
+    'items.upgradePanacea': '強化秘薬',
+    'items.selectCharacter': 'キャラクター選択:',
+    'items.all': '全て',
+    'items.timeGroup': '時間単位:',
+
+    // チャートタイトル
+    'chart.diamondTrend': 'ダイヤ履歴トレンド',
+    'chart.sourceDistribution': '入手元分布',
+    'chart.dailyChange': '日次変動統計',
+    'chart.saveAsImage': '画像保存',
+    'chart.noData': 'データなし'
   }
 };

@@ -3,7 +3,7 @@
  * 支持简体中文、繁体中文、英文
  */
 const I18n = {
-  supportedLanguages: ['zh-CN', 'zh-TW', 'en-US'],
+  supportedLanguages: ['zh-CN', 'zh-TW', 'en-US', 'ja-JP'],
   currentLang: 'zh-CN',
 
   // 存储键名
@@ -24,6 +24,8 @@ const I18n = {
         this.currentLang = browserLang === 'zh-TW' || browserLang === 'zh-HK' ? 'zh-TW' : 'zh-CN';
       } else if (browserLang.startsWith('en')) {
         this.currentLang = 'en-US';
+      } else if (browserLang.startsWith('ja')) {
+        this.currentLang = 'ja-JP';
       }
     }
     return this.currentLang;
@@ -118,7 +120,8 @@ const I18n = {
     const names = {
       'zh-CN': '简体中文',
       'zh-TW': '繁體中文',
-      'en-US': 'English'
+      'en-US': 'English',
+      'ja-JP': '日本語'
     };
     return names[lang] || lang;
   }
