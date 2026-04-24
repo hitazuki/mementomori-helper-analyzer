@@ -48,11 +48,11 @@ var sourceDefinitions = map[SourceID]SourceTranslation{
 	SourceIDFountainOfPrayers: {
 		Alias: "Fountain of Prayers",
 		Translations: map[string]string{
-			"en-US": "Fountain of Prayers:",
-			"zh-TW": "祈願之泉:",
-			"zh-CN": "祈愿之泉:",
-			"ja-JP": "祈りの泉:",
-			"ko-KR": "기원의 샘:",
+			"en-US": "Fountain of Prayers",
+			"zh-TW": "祈願之泉",
+			"zh-CN": "祈愿之泉",
+			"ja-JP": "祈りの泉",
+			"ko-KR": "기원의 샘",
 		},
 	},
 	SourceIDPresentsBox: {
@@ -78,11 +78,11 @@ var sourceDefinitions = map[SourceID]SourceTranslation{
 	SourceIDTotalLogins: {
 		Alias: "Total Logins This Month",
 		Translations: map[string]string{
-			"en-US": "Total Logins This Month:",
-			"zh-TW": "本月累計簽到天數：",
-			"zh-CN": "本月累计签到天数：",
-			"ja-JP": "今月の合計ログイン日数：",
-			"ko-KR": "이번 달 보상 수령:",
+			"en-US": "Total Logins This Month",
+			"zh-TW": "本月累計簽到天數",
+			"zh-CN": "本月累计签到天数",
+			"ja-JP": "今月の合計ログイン日数",
+			"ko-KR": "이번 달 보상 수령",
 		},
 	},
 	SourceIDWorldClears: {
@@ -168,11 +168,11 @@ var sourceDefinitions = map[SourceID]SourceTranslation{
 	SourceIDTowerInfinity: {
 		Alias: "Tower of Infinity",
 		Translations: map[string]string{
-			"en-US": "Tower of Infinity:",
-			"zh-TW": "無窮之塔:",
-			"zh-CN": "无穷之塔:",
-			"ja-JP": "無窮の塔:",
-			"ko-KR": "무한의 탑:",
+			"en-US": "Tower of Infinity",
+			"zh-TW": "無窮之塔",
+			"zh-CN": "无穷之塔",
+			"ja-JP": "無窮の塔",
+			"ko-KR": "무한의 탑",
 		},
 	},
 	SourceIDTempleIllusions: {
