@@ -48,6 +48,7 @@ func main() {
 	caveHandler := handlers.NewCaveHandler(etlService)
 	challengeHandler := handlers.NewChallengeHandler(etlService)
 	itemHandler := handlers.NewItemHandler(etlService)
+	sourcesHandler := handlers.NewSourcesHandler()
 
 	// 启动定时任务
 	if cfg.ScrapeCfg != nil && len(cfg.ScrapeCfg.Servers) > 0 {
@@ -73,7 +74,7 @@ func main() {
 	})
 
 	// 注册 API 路由
-	router := handlers.NewRouter(statsHandler, scrapeHandler, historyHandler, etlHandler, caveHandler, challengeHandler, itemHandler)
+	router := handlers.NewRouter(statsHandler, scrapeHandler, historyHandler, etlHandler, caveHandler, challengeHandler, itemHandler, sourcesHandler)
 	router.Register(r)
 
 	// 启动服务器

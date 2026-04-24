@@ -6,17 +6,18 @@ import (
 
 // Router 路由注册器
 type Router struct {
-	statsHandler        *StatsHandler
-	scrapeHandler       *ScrapeHandler
-	historyHandler      *HistoryHandler
-	etlHandler          *ETLHandler
-	caveHandler         *CaveHandler
-	challengeHandler    *ChallengeHandler
-	itemHandler         *ItemHandler
+	statsHandler     *StatsHandler
+	scrapeHandler    *ScrapeHandler
+	historyHandler   *HistoryHandler
+	etlHandler       *ETLHandler
+	caveHandler      *CaveHandler
+	challengeHandler *ChallengeHandler
+	itemHandler      *ItemHandler
+	sourcesHandler   *SourcesHandler
 }
 
 // NewRouter 创建路由注册器
-func NewRouter(stats *StatsHandler, scrape *ScrapeHandler, history *HistoryHandler, etl *ETLHandler, cave *CaveHandler, challenge *ChallengeHandler, item *ItemHandler) *Router {
+func NewRouter(stats *StatsHandler, scrape *ScrapeHandler, history *HistoryHandler, etl *ETLHandler, cave *CaveHandler, challenge *ChallengeHandler, item *ItemHandler, sources *SourcesHandler) *Router {
 	return &Router{
 		statsHandler:     stats,
 		scrapeHandler:    scrape,
@@ -25,6 +26,7 @@ func NewRouter(stats *StatsHandler, scrape *ScrapeHandler, history *HistoryHandl
 		caveHandler:      cave,
 		challengeHandler: challenge,
 		itemHandler:      item,
+		sourcesHandler:   sources,
 	}
 }
 
@@ -62,5 +64,8 @@ func (r *Router) Register(e *gin.Engine) {
 		// 物品统计
 		api.GET("/rune-ticket/stats", r.itemHandler.GetRuneTicketStats)
 		api.GET("/upgrade-panacea/stats", r.itemHandler.GetUpgradePanaceaStats)
+
+		// 来源翻译
+		api.GET("/sources", r.sourcesHandler.GetSources)
 	}
 }

@@ -93,17 +93,21 @@ const ItemsTab = {
             for (const serverData of Object.values(itemStats || {})) {
                 if (serverData && serverData[charName] && serverData[charName].total) {
                     const totalSources = serverData[charName].total.sources || {};
-                    Object.entries(totalSources).forEach(([sourceName, sourceData]) => {
-                        if (!sources[sourceName]) sources[sourceName] = { gain: 0, consume: 0 };
-                        sources[sourceName].gain += sourceData.gain || 0;
-                        sources[sourceName].consume += sourceData.consume || 0;
+                    Object.entries(totalSources).forEach(([sourceKey, sourceData]) => {
+                        if (!sources[sourceKey]) sources[sourceKey] = { gain: 0, consume: 0 };
+                        sources[sourceKey].gain += sourceData.gain || 0;
+                        sources[sourceKey].consume += sourceData.consume || 0;
                     });
                 }
             }
         });
 
+        const lang = I18n.getLanguage();
         const data = Object.entries(sources)
-            .map(([name, val]) => ({ name, value: val.gain + val.consume }))
+            .map(([key, val]) => ({
+                name: SourceI18n.translate(key, lang),
+                value: val.gain + val.consume
+            }))
             .filter(d => d.value > 0)
             .sort((a, b) => b.value - a.value);
 

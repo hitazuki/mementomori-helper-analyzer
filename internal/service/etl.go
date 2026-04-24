@@ -117,7 +117,7 @@ func (s *ETLService) processLogDirectory(outputDir, dirPath string) error {
 
 // processLogFile 处理单个日志文件
 func (s *ETLService) processLogFile(outputDir, logFile string) error {
-	cmd := exec.Command(s.binaryPath, "-output", outputDir, logFile)
+	cmd := exec.Command(s.binaryPath, "-output", outputDir, "-records=true", logFile)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {

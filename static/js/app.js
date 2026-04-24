@@ -43,6 +43,9 @@ function app() {
             this.currentLang = I18n.init();
             document.documentElement.lang = this.currentLang;
 
+            // 初始化来源翻译
+            await SourceI18n.init();
+
             await Promise.all([
                 this.loadMmth(),
                 this.loadLogs(),
