@@ -86,13 +86,13 @@ var sourceDefinitions = map[SourceID]SourceTranslation{
 		},
 	},
 	SourceIDWorldClears: {
-		Alias: "World Player Clears",
+		Alias: "World First Achievement",
 		Translations: map[string]string{
-			"en-US": "A player in your World clears",
-			"zh-TW": "本世界首次有玩家",
-			"zh-CN": "本世界首次有玩家",
-			"ja-JP": "ワールド内のプレイヤーが初めて",
-			"ko-KR": "월드 내 플레이어가 최초로",
+			"en-US": "First player in world achieves/clears",
+			"zh-TW": "本世界首次有玩家達成成就/通關",
+			"zh-CN": "本世界首次有玩家达成成就/通关",
+			"ja-JP": "ワールド内のプレイヤーが初めて達成/クリア",
+			"ko-KR": "월드 내 플레이어가 최초로 달성/클리어",
 		},
 	},
 	MissionGroupDailyID: {
