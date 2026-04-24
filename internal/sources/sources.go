@@ -17,6 +17,7 @@ type SourceTranslation struct {
 // Game built-in source IDs from TextResource
 const (
 	SourceIDFountainOfPrayers SourceID = 140   // Fountain of Prayers
+	SourceIDOpen              SourceID = 67    // Open (開啟)
 	SourceIDLoginBonus        SourceID = 719   // Login Bonus (签到奖励)
 	SourceIDPresentsBox       SourceID = 21308 // Presents Box
 	SourceIDMonthlyBoost      SourceID = 21332 // Monthly Boost
@@ -37,7 +38,6 @@ const (
 	SourceIDExpectedValue   SourceID = 100003
 	SourceIDMissionsClaimed SourceID = 100004
 	SourceIDGacha           SourceID = 100005
-	SourceIDOpen            SourceID = 100006
 	SourceIDTowerInfinity   SourceID = 100007
 	SourceIDTempleIllusions SourceID = 100008
 )
@@ -133,6 +133,26 @@ var sourceDefinitions = map[SourceID]SourceTranslation{
 			"zh-CN": "签到奖励",
 			"ja-JP": "ログインボーナス",
 			"ko-KR": "로그인 보너스",
+		},
+	},
+	SourceIDOpen: {
+		Alias: "Open",
+		Translations: map[string]string{
+			"en-US": "Open",
+			"zh-TW": "開啟",
+			"zh-CN": "开启",
+			"ja-JP": "開く",
+			"ko-KR": "열기",
+		},
+	},
+	SourceIDGacha: {
+		Alias: "Gacha",
+		Translations: map[string]string{
+			"en-US": "Gacha",
+			"zh-TW": "抽卡",
+			"zh-CN": "抽卡",
+			"ja-JP": "ガチャ",
+			"ko-KR": "가챠",
 		},
 	},
 	SourceIDAutoBuyStore: {
