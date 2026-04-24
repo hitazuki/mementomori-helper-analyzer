@@ -38,6 +38,18 @@ const SourceI18n = {
     }
     if (!lang) lang = 'zh-CN';
 
+    // "none" 显示为 "未知"
+    if (sourceKey === 'none') {
+      const unknownTexts = {
+        'zh-CN': '未知',
+        'zh-TW': '未知',
+        'en-US': 'Unknown',
+        'ja-JP': '不明',
+        'ko-KR': '알 수 없음'
+      };
+      return unknownTexts[lang] || 'Unknown';
+    }
+
     // 自动判断：key 格式为 "id:XXX" 时翻译
     if (sourceKey.startsWith('id:')) {
       const id = sourceKey.substring(3);
