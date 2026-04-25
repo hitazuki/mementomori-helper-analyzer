@@ -19,6 +19,8 @@ const (
 	SourceIDFountainOfPrayers SourceID = 140   // Fountain of Prayers
 	SourceIDOpen              SourceID = 67    // Open (開啟)
 	SourceIDLoginBonus        SourceID = 719   // Login Bonus (签到奖励)
+	SourceIDTempleIllusions   SourceID = 2766  // Temple of Illusions (勝利)
+	SourceIDTowerInfinity     SourceID = 138   // Tower of Infinity (無窮之塔)
 	SourceIDPresentsBox       SourceID = 21308 // Presents Box
 	SourceIDMonthlyBoost      SourceID = 21332 // Monthly Boost
 	SourceIDTotalLogins       SourceID = 3331  // Total Logins
@@ -35,11 +37,8 @@ const (
 // Helper custom source IDs
 const (
 	SourceIDAutoBuyStore    SourceID = 100002
-	SourceIDExpectedValue   SourceID = 100003
 	SourceIDMissionsClaimed SourceID = 100004
 	SourceIDGacha           SourceID = 100005
-	SourceIDTowerInfinity   SourceID = 100007
-	SourceIDTempleIllusions SourceID = 100008
 )
 
 // sourceDefinitions contains all source translations
@@ -165,24 +164,14 @@ var sourceDefinitions = map[SourceID]SourceTranslation{
 			"ko-KR": "자동으로 상점 아이템 구매",
 		},
 	},
-	SourceIDExpectedValue: {
-		Alias: "Expected Value Below 20",
-		Translations: map[string]string{
-			"en-US": "Expected Diamond Value",
-			"zh-TW": "當前任務的鑽石數量期望值",
-			"zh-CN": "当前任务的钻石数量期望值",
-			"ja-JP": "現在のタスクのダイヤの期待値",
-			"ko-KR": "현재 작업의 다이아몬드 예상 값",
-		},
-	},
 	SourceIDMissionsClaimed: {
 		Alias: "Missions Claim All",
 		Translations: map[string]string{
 			"en-US": "Missions Claim All",
-			"zh-TW": "剩餘挑戰次數不足",
-			"zh-CN": "剩余挑战次数不足",
-			"ja-JP": "残り挑戦回数がありません",
-			"ko-KR": "시공의 동굴 완료",
+			"zh-TW": "任務全部領取",
+			"zh-CN": "任务全部领取",
+			"ja-JP": "ミッション一括受け取り",
+			"ko-KR": "미션 일괄 수령",
 		},
 	},
 	SourceIDTowerInfinity: {
