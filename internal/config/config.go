@@ -5,39 +5,41 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"time"
 
 	"mmth-analyzer/internal/scraper"
 )
 
 // AppConfig 应用配置
 type AppConfig struct {
-	Port           string                 `json:"port"`
-	DataDir        string                 `json:"data_dir"`
-	ScrapeInterval string                 `json:"scrape_interval"`
-	MmthServers    []scraper.ServerConfig `json:"mmth_servers,omitempty"`
-	EtlBinaryPath  string                 `json:"etl_binary_path"`
-	EtlOutputDir   string                 `json:"etl_output_dir"`
+	Port          string                 `json:"port"`
+	DataDir       string                 `json:"data_dir"`
+	CronScrape    string                 `json:"cron_scrape,omitempty"` // 抓取任务的 Cron 表达式
+	CronETL       string                 `json:"cron_etl,omitempty"`    // ETL 任务的 Cron 表达式
+	MmthServers   []scraper.ServerConfig `json:"mmth_servers,omitempty"`
+	EtlBinaryPath string                 `json:"etl_binary_path"`
+	EtlOutputDir  string                 `json:"etl_output_dir"`
 }
 
 // Config 运行时配置
 type Config struct {
-	Port           string
-	DataDir        string
-	ScrapeInterval time.Duration
-	ScrapeCfg      *scraper.ScrapeConfig
-	EtlBinaryPath  string
-	EtlOutputDir   string
+	Port          string
+	DataDir       string
+	CronScrape    string // 抓取任务的 Cron 表达式
+	CronETL       string // ETL 任务的 Cron 表达式
+	ScrapeCfg     *scraper.ScrapeConfig
+	EtlBinaryPath string
+	EtlOutputDir  string
 }
 
 // defaultConfig 默认配置（本地测试用）
 func defaultConfig() *Config {
 	return &Config{
-		Port:           "5391",
-		DataDir:        "./data",
-		ScrapeInterval: 6 * time.Hour,
-		EtlBinaryPath:  "./mmth-etl/mmth_etl.exe",
-		EtlOutputDir:   "./data/etl",
+		Port:          "5391",
+		DataDir:       "./data",
+		CronScrape:    "0 0 2,14 * * *", // 每天2点和14点执行
+		CronETL:       "0 0 1 * * *",    // 每天凌晨1点执行
+		EtlBinaryPath: "./mmth-etl/mmth_etl.exe",
+		EtlOutputDir:  "./data/etl",
 	}
 }
 
@@ -100,6 +102,8 @@ func (ac *AppConfig) ToRuntimeConfig() *Config {
 		DataDir:       defaults.DataDir,
 		EtlBinaryPath: defaults.EtlBinaryPath,
 		EtlOutputDir:  defaults.EtlOutputDir,
+		CronScrape:    defaults.CronScrape,
+		CronETL:       defaults.CronETL,
 		ScrapeCfg: &scraper.ScrapeConfig{
 			Servers: ac.MmthServers,
 		},
@@ -123,16 +127,12 @@ func (ac *AppConfig) ToRuntimeConfig() *Config {
 		cfg.Port = "5391"
 	}
 
-	// 解析时间间隔
-	if ac.ScrapeInterval != "" {
-		duration, err := time.ParseDuration(ac.ScrapeInterval)
-		if err == nil {
-			cfg.ScrapeInterval = duration
-		} else {
-			cfg.ScrapeInterval = 6 * time.Hour
-		}
-	} else {
-		cfg.ScrapeInterval = 6 * time.Hour
+	// 解析 Cron 表达式
+	if ac.CronScrape != "" {
+		cfg.CronScrape = ac.CronScrape
+	}
+	if ac.CronETL != "" {
+		cfg.CronETL = ac.CronETL
 	}
 
 	return cfg
@@ -141,11 +141,12 @@ func (ac *AppConfig) ToRuntimeConfig() *Config {
 // SaveExampleConfig 保存示例配置到文件
 func SaveExampleConfig(path string) error {
 	example := &AppConfig{
-		Port:           "5391",
-		DataDir:        "./data",
-		ScrapeInterval: "6h",
-		EtlBinaryPath:  "./mmth-etl/mmth_etl.exe",
-		EtlOutputDir:   "./data/etl",
+		Port:          "5391",
+		DataDir:       "./data",
+		CronScrape:    "0 0 2,14 * * *", // 每天2点和14点执行
+		CronETL:       "0 0 1 * * *",    // 每天凌晨1点执行
+		EtlBinaryPath: "./mmth-etl/mmth_etl.exe",
+		EtlOutputDir:  "./data/etl",
 		MmthServers: []scraper.ServerConfig{
 			{
 				Name:     "server1",

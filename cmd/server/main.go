@@ -51,9 +51,10 @@ func main() {
 	sourcesHandler := handlers.NewSourcesHandler()
 
 	// 启动定时任务
-	if cfg.ScrapeCfg != nil && len(cfg.ScrapeCfg.Servers) > 0 {
-		sch := scheduler.NewScheduler(cfg.ScrapeInterval, cfg.ScrapeCfg.Servers, cfg.DataDir, scrapeMutex)
-		sch.Start()
+	sch := scheduler.NewScheduler(cfg.CronScrape, cfg.CronETL, cfg.Port, scrapeMutex)
+	if err := sch.Start(); err != nil {
+		fmt.Printf("⚠️  启动定时任务失败: %v\n", err)
+	} else {
 		defer sch.Stop()
 	}
 
@@ -84,7 +85,8 @@ func main() {
 func printConfig(cfg *config.Config) {
 	fmt.Printf("Port: %s\n", cfg.Port)
 	fmt.Printf("DataDir: %s\n", cfg.DataDir)
-	fmt.Printf("ScrapeInterval: %v\n", cfg.ScrapeInterval)
+	fmt.Printf("CronScrape: %s\n", cfg.CronScrape)
+	fmt.Printf("CronETL: %s\n", cfg.CronETL)
 	if cfg.ScrapeCfg != nil {
 		fmt.Printf("ScrapeServers: %d\n", len(cfg.ScrapeCfg.Servers))
 	}
