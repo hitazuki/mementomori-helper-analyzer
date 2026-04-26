@@ -21,7 +21,7 @@ http://localhost:5290
 日志通过 stdout 重定向持久化到 `./mmth-logs/app.log`：
 
 ```yaml
-command: /bin/sh -c "mkdir -p /app/Logs && exec dotnet MementoMori.WebUI.dll 2>&1 | tee /app/Logs/app.log"
+command: /bin/sh -c "mkdir -p /app/Logs && exec dotnet MementoMori.WebUI.dll 2>&1 | tee -a /app/Logs/app.log"
 volumes:
   - ./mmth-logs:/app/Logs
 ```
