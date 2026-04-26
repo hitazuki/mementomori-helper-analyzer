@@ -48,8 +48,17 @@ func (r *Router) Register(e *gin.Engine) {
 		api.GET("/mmth-diamonds/history/:server/:account", r.historyHandler.GetAccountHistory)
 
 		// 抓取
-		api.POST("/scrape/all", r.scrapeHandler.ScrapeAll)
-		api.POST("/scrape/account", r.scrapeHandler.ScrapeAccount)
+		if r.scrapeHandler != nil {
+			api.POST("/scrape/all", r.scrapeHandler.ScrapeAll)
+			api.POST("/scrape/account", r.scrapeHandler.ScrapeAccount)
+		} else {
+			api.POST("/scrape/all", func(c *gin.Context) {
+				c.JSON(400, gin.H{"error": "no servers configured"})
+			})
+			api.POST("/scrape/account", func(c *gin.Context) {
+				c.JSON(400, gin.H{"error": "no servers configured"})
+			})
+		}
 
 		// ETL处理
 		api.POST("/etl/process", r.etlHandler.ProcessServers)

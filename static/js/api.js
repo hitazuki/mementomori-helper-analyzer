@@ -26,7 +26,11 @@ const API = {
     async post(endpoint) {
         try {
             const res = await fetch(endpoint, { method: 'POST' });
-            return await res.json();
+            const text = await res.text();
+            if (!text) {
+                return { success: res.ok, status: res.status };
+            }
+            return JSON.parse(text);
         } catch (e) {
             console.error(`POST error: ${endpoint}`, e);
             return { error: e.message };
