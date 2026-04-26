@@ -68,13 +68,6 @@ func (s *Scheduler) Stop() {
 
 // performScrape 执行抓取任务（调用 API）
 func (s *Scheduler) performScrape() {
-	// 获取锁，防止与API并发执行
-	if !s.mutex.TryLock() {
-		fmt.Println("[定时任务] 抓取任务正在执行中，跳过本次")
-		return
-	}
-	defer s.mutex.Unlock()
-
 	url := fmt.Sprintf("http://localhost:%s/api/scrape/all", s.port)
 	fmt.Printf("[定时任务] 开始执行抓取: %s\n", url)
 
@@ -92,9 +85,12 @@ func (s *Scheduler) performScrape() {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusOK {
+	switch resp.StatusCode {
+	case http.StatusOK:
 		fmt.Println("[定时任务] 抓取任务执行成功")
-	} else {
+	case http.StatusConflict:
+		fmt.Println("[定时任务] 抓取任务正在执行中，跳过本次")
+	default:
 		fmt.Printf("[定时任务] 抓取任务执行失败，状态码: %d\n", resp.StatusCode)
 	}
 }

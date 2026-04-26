@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"mmth-analyzer/internal/service"
 	"strings"
 
@@ -29,6 +30,14 @@ func isChromeNotFoundError(err error) bool {
 func (h *ScrapeHandler) ScrapeAll(c *gin.Context) {
 	err := h.scrapeService.ScrapeAll()
 	if err != nil {
+		// 检查是否是任务正在执行
+		if errors.Is(err, service.ErrScrapeInProgress) {
+			c.JSON(409, gin.H{
+				"error":   err.Error(),
+				"retry":   true,
+			})
+			return
+		}
 		// 检查是否是 Chrome 未找到错误
 		if isChromeNotFoundError(err) {
 			c.JSON(500, gin.H{

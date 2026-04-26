@@ -1,9 +1,13 @@
 package service
 
 import (
+	"errors"
 	"mmth-analyzer/internal/scraper"
 	"sync"
 )
+
+// ErrScrapeInProgress 抓取任务正在执行中
+var ErrScrapeInProgress = errors.New("抓取任务正在执行中，请稍后重试")
 
 // ScrapeService 抓取服务
 type ScrapeService struct {
@@ -28,7 +32,7 @@ func (s *ScrapeService) ScrapeAll() error {
 	}
 
 	if !s.mutex.TryLock() {
-		return nil // 已在执行
+		return ErrScrapeInProgress
 	}
 	defer s.mutex.Unlock()
 
