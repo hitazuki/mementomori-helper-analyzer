@@ -5,7 +5,16 @@ function app() {
         loading: false,
         scraping: false,
         etlProcessing: false,
+        scheduleSaving: false,
+        scheduleStatus: '',
+        scheduleError: '',
         activeTab: 'mmth',
+
+        schedule: {
+            cronScrape: '',
+            cronETL: '',
+            configPath: ''
+        },
 
         // i18n 状态
         currentLang: 'zh-CN',
@@ -47,6 +56,7 @@ function app() {
             await SourceI18n.init();
 
             await Promise.all([
+                this.loadSchedule(),
                 this.loadMmth(),
                 this.loadLogs(),
                 this.loadCave(),
@@ -130,7 +140,39 @@ function app() {
             this.upgradePanaceaStats = data.upgradePanaceaStats;
         },
 
+        async loadSchedule() {
+            const data = await API.loadSchedule();
+            if (!data) return;
+            this.schedule.cronScrape = data.cron_scrape || '';
+            this.schedule.cronETL = data.cron_etl || '';
+            this.schedule.configPath = data.config_path || '';
+        },
+
         // ===== 操作 =====
+        async saveSchedule() {
+            this.scheduleSaving = true;
+            this.scheduleStatus = '';
+            this.scheduleError = '';
+            try {
+                const data = await API.saveSchedule(this.schedule.cronScrape, this.schedule.cronETL);
+                if (data.error) {
+                    this.scheduleError = data.error;
+                    return;
+                }
+                this.schedule.cronScrape = data.cron_scrape || '';
+                this.schedule.cronETL = data.cron_etl || '';
+                this.schedule.configPath = data.config_path || this.schedule.configPath;
+                this.scheduleStatus = this.t('schedule.saved');
+                setTimeout(() => {
+                    if (this.scheduleStatus === this.t('schedule.saved')) {
+                        this.scheduleStatus = '';
+                    }
+                }, 3000);
+            } finally {
+                this.scheduleSaving = false;
+            }
+        },
+
         async triggerScrape() {
             this.scraping = true;
             try {

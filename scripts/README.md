@@ -50,6 +50,7 @@ PowerShell script to restart the mmth-analyzer service.
 - Builds the project (optional)
 - Starts the service
 - Waits for successful startup
+- Starts the service in a visible console window so runtime logs can be watched
 
 **Usage:**
 
@@ -92,3 +93,9 @@ PowerShell script to restart the mmth-analyzer service.
 6. Builds the project (unless `-NoBuild`/`-n`)
 7. Starts the service with config if specified
 8. Verifies startup success
+
+**Notes:**
+
+- If a previous service was started from an elevated PowerShell session, run this script from an elevated session too so it can stop that process.
+- The service window is intentionally visible on Windows to make logs easy to inspect.
+- The restart scripts read the port from the selected config file. Without `-Config`/`-c`, they use `config/app.json`.

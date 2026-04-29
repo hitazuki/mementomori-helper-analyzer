@@ -141,7 +141,8 @@ cp config/app.example.json config/app.json
 {
   "port": "5391",
   "data_dir": "./data",
-  "scrape_interval": "6h",
+  "cron_scrape": "0 0 2,14 * * *",
+  "cron_etl": "0 0 1 * * *",
   "mmth_servers": [
     {
       "name": "server1",
@@ -159,12 +160,15 @@ cp config/app.example.json config/app.json
 | -------- | ------ | -------- |
 | `port` | Web 服务端口 | `5391` |
 | `data_dir` | 数据存储目录 | `./data` |
-| `scrape_interval` | 抓取间隔 | `6h` |
+| `cron_scrape` | 抓取任务 Cron 表达式（秒 分 时 日 月 周） | `0 0 2,14 * * *` |
+| `cron_etl` | ETL 任务 Cron 表达式（秒 分 时 日 月 周） | `0 0 1 * * *` |
 | `mmth_servers` | 服务器配置数组 | - |
 | `mmth_servers[].name` | 服务器名称 | - |
 | `mmth_servers[].base_url` | MMTH 服务地址 | - |
 | `mmth_servers[].accounts` | 账号列表 | - |
 | `mmth_servers[].log_path` | 该服务器日志路径 | - |
+
+`cron_scrape` 和 `cron_etl` 可以在 Web 前端动态修改。保存后调度器立即生效，并写回当前启动使用的配置文件：默认 `config/app.json`，使用 `-config` 启动时写回指定文件。保存为空字符串表示禁用对应定时任务。
 
 ## 4. 目录结构
 
@@ -238,6 +242,8 @@ mmth-analyzer/
 | `/api/mmth-diamonds/history` | GET | 历史数据 |
 | `/api/scrape/all` | POST | 手动抓取 |
 | `/api/etl/process` | POST | 手动 ETL |
+| `/api/config/schedule` | GET | 获取当前抓取/ETL 定时 cron |
+| `/api/config/schedule` | PUT | 动态更新并持久化定时 cron |
 
 ## 8. 注意事项
 

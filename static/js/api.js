@@ -9,7 +9,8 @@ const API = {
         runeTicket: '/api/rune-ticket/stats',
         upgradePanacea: '/api/upgrade-panacea/stats',
         scrape: '/api/scrape/all',
-        etl: '/api/etl/process'
+        etl: '/api/etl/process',
+        schedule: '/api/config/schedule'
     },
 
     async fetch(endpoint) {
@@ -33,6 +34,25 @@ const API = {
             return JSON.parse(text);
         } catch (e) {
             console.error(`POST error: ${endpoint}`, e);
+            return { error: e.message };
+        }
+    },
+
+    async put(endpoint, body) {
+        try {
+            const res = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const text = await res.text();
+            const data = text ? JSON.parse(text) : {};
+            if (!res.ok) {
+                return { error: data.error || `HTTP ${res.status}` };
+            }
+            return data;
+        } catch (e) {
+            console.error(`PUT error: ${endpoint}`, e);
             return { error: e.message };
         }
     },
@@ -72,6 +92,17 @@ const API = {
 
     async triggerETL() {
         return await this.post(this.endpoints.etl);
+    },
+
+    async loadSchedule() {
+        return await this.fetch(this.endpoints.schedule);
+    },
+
+    async saveSchedule(cronScrape, cronETL) {
+        return await this.put(this.endpoints.schedule, {
+            cron_scrape: cronScrape,
+            cron_etl: cronETL
+        });
     },
 
     // Stats

@@ -112,6 +112,8 @@ docker-compose up -d
 | `accounts`     | mmth 账号名（需与 mmth 下拉菜单一致）     | -                |
 | `log_path`     | 日志文件/目录路径                         | -                |
 
+`cron_scrape` 和 `cron_etl` 支持在 Web 前端顶部的“定时配置”区域动态修改。保存后会立即热更新调度器，并写回当前启动使用的配置文件：默认是 `config/app.json`，如果使用 `-config` 启动则写回指定文件。将值保存为空字符串可禁用对应定时任务。
+
 **Cron 表达式示例：**
 
 | 表达式              | 说明                |
@@ -172,6 +174,8 @@ go build -o mmth-analyzer ./cmd/server
 | `/api/mmth-diamonds/history`   | GET  | 获取所有账号历史数据         |
 | `/api/scrape/all`              | POST | 手动触发全部账号抓取         |
 | `/api/etl/process`             | POST | 触发 ETL 处理日志            |
+| `/api/config/schedule`         | GET  | 获取当前抓取/ETL 定时 cron   |
+| `/api/config/schedule`         | PUT  | 动态更新并持久化定时 cron    |
 | `/api/cave/stats`              | GET  | 获取时空洞窟统计数据         |
 | `/api/challenge/stats`         | GET  | 获取战斗日志统计数据         |
 | `/api/rune-ticket/stats`       | GET  | 获取饼干统计数据             |

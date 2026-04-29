@@ -66,6 +66,9 @@ get_config_port() {
   elif [ -f "config/app.json" ]; then
     if command -v jq &> /dev/null; then
       port=$(jq -r '.port // "5391"' "config/app.json" 2>/dev/null || echo "5391")
+    else
+      port=$(grep -o '"port"[[:space:]]*:[[:space:]]*"[^"]*"' "config/app.json" 2>/dev/null | grep -o '"[0-9]*"' | tr -d '"' | head -1)
+      [ -z "$port" ] && port="5391"
     fi
   fi
 
@@ -116,7 +119,7 @@ if check_running; then
   echo "Stopping service..."
 
   # Kill by port
-  local pid=$(lsof -ti:$PORT 2>/dev/null)
+  pid=$(lsof -ti:$PORT 2>/dev/null)
   if [ -n "$pid" ]; then
     echo "  Killing process on port $PORT (PID: $pid)"
     kill -9 "$pid" 2>/dev/null || true
@@ -127,7 +130,7 @@ if check_running; then
 
   # Wait for stop
   echo "Waiting for stop (max ${MAX_WAIT}s)..."
-  local waited=0
+  waited=0
   while check_running && [ $waited -lt $MAX_WAIT ]; do
     sleep 1
     ((waited++))

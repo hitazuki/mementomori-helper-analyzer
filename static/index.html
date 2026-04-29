@@ -53,6 +53,35 @@
                         x-text="etlProcessing ? t('status.processing') : t('btn.etl')">
                 </button>
             </div>
+            <div class="mt-4 bg-white rounded-lg shadow p-4">
+                <div class="flex flex-wrap items-end gap-3">
+                    <div class="min-w-0 flex-1 basis-64">
+                        <label class="block text-gray-700 mb-1 text-sm" x-text="t('schedule.scrape')"></label>
+                        <input x-model="schedule.cronScrape"
+                               type="text"
+                               class="border rounded px-3 py-2 w-full font-mono text-sm"
+                               :placeholder="t('schedule.placeholder')">
+                    </div>
+                    <div class="min-w-0 flex-1 basis-64">
+                        <label class="block text-gray-700 mb-1 text-sm" x-text="t('schedule.etl')"></label>
+                        <input x-model="schedule.cronETL"
+                               type="text"
+                               class="border rounded px-3 py-2 w-full font-mono text-sm"
+                               :placeholder="t('schedule.placeholder')">
+                    </div>
+                    <button @click="saveSchedule()"
+                            :disabled="scheduleSaving"
+                            class="px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-800 disabled:opacity-50 transition"
+                            x-text="scheduleSaving ? t('status.processing') : t('schedule.save')">
+                    </button>
+                </div>
+                <div class="mt-2 text-xs text-gray-500">
+                    <span x-text="t('schedule.hint')"></span>
+                    <span x-show="schedule.configPath"> · <span x-text="schedule.configPath"></span></span>
+                </div>
+                <div x-show="scheduleStatus" class="mt-2 text-sm text-green-600" x-text="scheduleStatus"></div>
+                <div x-show="scheduleError" class="mt-2 text-sm text-red-600" x-text="scheduleError"></div>
+            </div>
             <p class="mt-2 text-sm text-gray-500">
                 <span class="text-amber-600">⚠️</span> <span x-text="t('warn.scrape')"></span>
             </p>
@@ -442,18 +471,18 @@
     </div>
 
     <!-- 模块加载顺序: i18n -> 工具 -> API -> 图表 -> Tab模块 -> 主入口 -->
-    <script src="js/i18n/translations.js?v=30"></script>
+    <script src="js/i18n/translations.js?v=32"></script>
     <script src="js/i18n/glossary.js?v=30"></script>
     <script src="js/i18n/i18n.js?v=30"></script>
     <script src="js/i18n/sources.js?v=31"></script>
     <script src="js/utils.js?v=30"></script>
-    <script src="js/api.js?v=30"></script>
+    <script src="js/api.js?v=32"></script>
     <script src="js/charts.js?v=30"></script>
     <script src="js/tabs/mmth.js?v=30"></script>
     <script src="js/tabs/logs.js?v=30"></script>
     <script src="js/tabs/cave.js?v=30"></script>
     <script src="js/tabs/challenge.js?v=30"></script>
     <script src="js/tabs/items.js?v=30"></script>
-    <script src="js/app.js?v=30"></script>
+    <script src="js/app.js?v=32"></script>
 </body>
 </html>

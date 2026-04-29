@@ -1,8 +1,8 @@
 {
-  "_comment": "MMTH Analyzer 配置文件 - 修改后重启服务生效",
+  "_comment": "MMTH Analyzer 配置文件 - 大多数配置修改后重启服务生效；cron_scrape/cron_etl 可在前端动态修改并写回本文件",
   "_accounts_comment": "accounts 为 mmth 账号名（需与 mmth 下拉菜单显示一致）",
   "_log_path_comment": "log_path 可以是文件路径或目录路径，为目录时将遍历处理目录下所有 .log 文件",
-  "_cron_comment": "Cron 表达式格式: 秒 分 时 日 月 周（6字段，秒可为0）",
+  "_cron_comment": "Cron 表达式格式: 秒 分 时 日 月 周（6字段，秒可为0）；cron_scrape/cron_etl 留空字符串可禁用对应定时任务",
   "_cron_examples": {
     "每天2点和14点": "0 0 2,14 * * *",
     "每天凌晨1点": "0 0 1 * * *",

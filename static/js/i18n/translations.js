@@ -431,3 +431,39 @@ const translations = {
     'chart.noData': 'データなし'
   }
 };
+
+Object.assign(translations['zh-CN'], {
+  'schedule.scrape': '抓取 Cron',
+  'schedule.etl': 'ETL Cron',
+  'schedule.save': '保存定时配置',
+  'schedule.saved': '定时配置已保存',
+  'schedule.placeholder': '留空表示禁用',
+  'schedule.hint': 'Cron 格式: 秒 分 时 日 月 周；留空表示禁用'
+});
+
+Object.assign(translations['zh-TW'], {
+  'schedule.scrape': '抓取 Cron',
+  'schedule.etl': 'ETL Cron',
+  'schedule.save': '保存定時配置',
+  'schedule.saved': '定時配置已保存',
+  'schedule.placeholder': '留空表示停用',
+  'schedule.hint': 'Cron 格式: 秒 分 時 日 月 週；留空表示停用'
+});
+
+Object.assign(translations['en-US'], {
+  'schedule.scrape': 'Scrape Cron',
+  'schedule.etl': 'ETL Cron',
+  'schedule.save': 'Save Schedule',
+  'schedule.saved': 'Schedule saved',
+  'schedule.placeholder': 'Blank disables the job',
+  'schedule.hint': 'Cron format: second minute hour day month weekday; blank disables the job'
+});
+
+Object.assign(translations['ja-JP'], {
+  'schedule.scrape': '取得 Cron',
+  'schedule.etl': 'ETL Cron',
+  'schedule.save': 'スケジュール保存',
+  'schedule.saved': 'スケジュールを保存しました',
+  'schedule.placeholder': '空欄で無効化',
+  'schedule.hint': 'Cron 形式: 秒 分 時 日 月 曜日；空欄で無効化'
+});

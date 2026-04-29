@@ -9,60 +9,56 @@ import (
 	"mmth-analyzer/internal/scraper"
 )
 
-// AppConfig 应用配置
+// AppConfig is the JSON file shape.
 type AppConfig struct {
 	Port          string                 `json:"port"`
 	DataDir       string                 `json:"data_dir"`
-	CronScrape    string                 `json:"cron_scrape,omitempty"` // 抓取任务的 Cron 表达式
-	CronETL       string                 `json:"cron_etl,omitempty"`    // ETL 任务的 Cron 表达式
+	CronScrape    string                 `json:"cron_scrape,omitempty"`
+	CronETL       string                 `json:"cron_etl,omitempty"`
 	MmthServers   []scraper.ServerConfig `json:"mmth_servers,omitempty"`
 	EtlBinaryPath string                 `json:"etl_binary_path"`
 	EtlOutputDir  string                 `json:"etl_output_dir"`
+	cronScrapeSet bool
+	cronETLSet    bool
 }
 
-// Config 运行时配置
+// Config is the runtime configuration.
 type Config struct {
 	Port          string
 	DataDir       string
-	CronScrape    string // 抓取任务的 Cron 表达式
-	CronETL       string // ETL 任务的 Cron 表达式
+	ConfigPath    string
+	CronScrape    string
+	CronETL       string
 	ScrapeCfg     *scraper.ScrapeConfig
 	EtlBinaryPath string
 	EtlOutputDir  string
 }
 
-// defaultConfig 默认配置（本地测试用）
 func defaultConfig() *Config {
 	return &Config{
 		Port:          "5391",
 		DataDir:       "./data",
-		CronScrape:    "0 0 2,14 * * *", // 每天2点和14点执行
-		CronETL:       "0 0 1 * * *",    // 每天凌晨1点执行
+		CronScrape:    "0 0 2,14 * * *",
+		CronETL:       "0 0 1 * * *",
 		EtlBinaryPath: "./mmth-etl/mmth_etl.exe",
 		EtlOutputDir:  "./data/etl",
 	}
 }
 
-// LoadConfig 加载配置
-// 优先级：命令行参数 > config/app.json > 默认配置
+// LoadConfig loads configuration from -config, config/app.json, or defaults.
 func LoadConfig() *Config {
-	// 解析命令行参数
-	configPath := flag.String("config", "", "配置文件路径（可选，默认使用 config/app.json）")
+	configPath := flag.String("config", "", "config file path")
 	flag.Parse()
 
-	// 默认使用本地测试配置
 	cfg := defaultConfig()
 
-	// 确定配置文件路径
 	path := *configPath
 	if path == "" {
-		// 尝试加载默认配置文件
 		if _, err := os.Stat("config/app.json"); err == nil {
 			path = "config/app.json"
 		}
 	}
 
-	// 如果找到配置文件，从文件加载
 	if path != "" {
 		appCfg, err := LoadAppConfig(path)
 		if err != nil {
@@ -70,6 +66,7 @@ func LoadConfig() *Config {
 			fmt.Println("Falling back to default config")
 		} else {
 			cfg = appCfg.ToRuntimeConfig()
+			cfg.ConfigPath = path
 			fmt.Printf("Loaded config from: %s\n", path)
 		}
 	}
@@ -77,7 +74,7 @@ func LoadConfig() *Config {
 	return cfg
 }
 
-// LoadAppConfig 从 JSON 文件加载完整应用配置
+// LoadAppConfig loads the application config from a JSON file.
 func LoadAppConfig(path string) (*AppConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -85,20 +82,58 @@ func LoadAppConfig(path string) (*AppConfig, error) {
 	}
 
 	var cfg AppConfig
-	err = json.Unmarshal(data, &cfg)
-	if err != nil {
+	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return nil, err
+	}
+	_, cfg.cronScrapeSet = raw["cron_scrape"]
+	_, cfg.cronETLSet = raw["cron_etl"]
 
 	return &cfg, nil
 }
 
-// ToRuntimeConfig 转换为运行时配置
+// SaveScheduleConfig updates only the persisted schedule fields.
+func SaveScheduleConfig(path, cronScrape, cronETL string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	scrapeData, err := json.Marshal(cronScrape)
+	if err != nil {
+		return err
+	}
+	etlData, err := json.Marshal(cronETL)
+	if err != nil {
+		return err
+	}
+
+	raw["cron_scrape"] = scrapeData
+	raw["cron_etl"] = etlData
+
+	out, err := json.MarshalIndent(raw, "", "  ")
+	if err != nil {
+		return err
+	}
+	out = append(out, '\n')
+
+	return os.WriteFile(path, out, 0644)
+}
+
+// ToRuntimeConfig converts file config to runtime config with defaults.
 func (ac *AppConfig) ToRuntimeConfig() *Config {
-	// 默认值
 	defaults := defaultConfig()
 
 	cfg := &Config{
+		Port:          defaults.Port,
 		DataDir:       defaults.DataDir,
 		EtlBinaryPath: defaults.EtlBinaryPath,
 		EtlOutputDir:  defaults.EtlOutputDir,
@@ -109,7 +144,9 @@ func (ac *AppConfig) ToRuntimeConfig() *Config {
 		},
 	}
 
-	// 配置文件中的值覆盖默认值
+	if ac.Port != "" {
+		cfg.Port = ac.Port
+	}
 	if ac.DataDir != "" {
 		cfg.DataDir = ac.DataDir
 	}
@@ -119,32 +156,23 @@ func (ac *AppConfig) ToRuntimeConfig() *Config {
 	if ac.EtlOutputDir != "" {
 		cfg.EtlOutputDir = ac.EtlOutputDir
 	}
-
-	// 设置端口
-	if ac.Port != "" {
-		cfg.Port = ac.Port
-	} else {
-		cfg.Port = "5391"
-	}
-
-	// 解析 Cron 表达式
-	if ac.CronScrape != "" {
+	if ac.cronScrapeSet {
 		cfg.CronScrape = ac.CronScrape
 	}
-	if ac.CronETL != "" {
+	if ac.cronETLSet {
 		cfg.CronETL = ac.CronETL
 	}
 
 	return cfg
 }
 
-// SaveExampleConfig 保存示例配置到文件
+// SaveExampleConfig writes an example config file.
 func SaveExampleConfig(path string) error {
 	example := &AppConfig{
 		Port:          "5391",
 		DataDir:       "./data",
-		CronScrape:    "0 0 2,14 * * *", // 每天2点和14点执行
-		CronETL:       "0 0 1 * * *",    // 每天凌晨1点执行
+		CronScrape:    "0 0 2,14 * * *",
+		CronETL:       "0 0 1 * * *",
 		EtlBinaryPath: "./mmth-etl/mmth_etl.exe",
 		EtlOutputDir:  "./data/etl",
 		MmthServers: []scraper.ServerConfig{

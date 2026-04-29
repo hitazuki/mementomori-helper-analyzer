@@ -57,12 +57,13 @@ func main() {
 	} else {
 		defer sch.Stop()
 	}
+	scheduleHandler := handlers.NewScheduleHandler(cfg.ConfigPath, sch)
 
 	// 初始化 Gin
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
@@ -75,7 +76,7 @@ func main() {
 	})
 
 	// 注册 API 路由
-	router := handlers.NewRouter(statsHandler, scrapeHandler, historyHandler, etlHandler, caveHandler, challengeHandler, itemHandler, sourcesHandler)
+	router := handlers.NewRouter(statsHandler, scrapeHandler, historyHandler, etlHandler, caveHandler, challengeHandler, itemHandler, sourcesHandler, scheduleHandler)
 	router.Register(r)
 
 	// 启动服务器
@@ -85,6 +86,7 @@ func main() {
 func printConfig(cfg *config.Config) {
 	fmt.Printf("Port: %s\n", cfg.Port)
 	fmt.Printf("DataDir: %s\n", cfg.DataDir)
+	fmt.Printf("ConfigPath: %s\n", cfg.ConfigPath)
 	fmt.Printf("CronScrape: %s\n", cfg.CronScrape)
 	fmt.Printf("CronETL: %s\n", cfg.CronETL)
 	if cfg.ScrapeCfg != nil {
