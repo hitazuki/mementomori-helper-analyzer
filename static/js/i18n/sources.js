@@ -1,17 +1,48 @@
 /**
- * 来源翻译模块
- * 根据 source_id 翻译物品变动来源名称
+ * Source translation module.
+ * Translates item/diamond source keys such as "id:140".
  */
 const SourceI18n = {
   // source_id -> { alias, translations: { lang: text } }
   mapping: {},
 
-  // 是否已初始化
   initialized: false,
 
-  /**
-   * 初始化，从 API 加载来源映射
-   */
+  rewardMissionFactor: 1000000,
+
+  rewardMissionLabels: {
+    111: {
+      alias: "Get Guild Mission Reward",
+      translations: {
+        'zh-CN': '领取 Guild 任务奖励',
+        'zh-TW': '領取 Guild 任務獎勵',
+        'en-US': 'Get Guild Mission Reward',
+        'ja-JP': 'Guild ミッション報酬を受け取る',
+        'ko-KR': 'Guild 미션 보상을 수령합니다'
+      }
+    },
+    23214: {
+      alias: "Get Daily Mission Reward",
+      translations: {
+        'zh-CN': '领取 Daily 任务奖励',
+        'zh-TW': '領取 Daily 任務獎勵',
+        'en-US': 'Get Daily Mission Reward',
+        'ja-JP': 'Daily ミッション報酬を受け取る',
+        'ko-KR': 'Daily 미션 보상을 수령합니다'
+      }
+    },
+    23215: {
+      alias: "Get Weekly Mission Reward",
+      translations: {
+        'zh-CN': '领取 Weekly 任务奖励',
+        'zh-TW': '領取 Weekly 任務獎勵',
+        'en-US': 'Get Weekly Mission Reward',
+        'ja-JP': 'Weekly ミッション報酬を受け取る',
+        'ko-KR': 'Weekly 미션 보상을 수령합니다'
+      }
+    }
+  },
+
   async init() {
     try {
       const res = await fetch('/api/sources');
@@ -24,21 +55,19 @@ const SourceI18n = {
   },
 
   /**
-   * 翻译来源名称
-   * @param {string} sourceKey - 来源 key（可能是 "id:140" 或原始字符串）
-   * @param {string} lang - 目标语言（可选，默认使用 I18n 当前语言）
-   * @returns {string} 翻译后的名称
+   * Translate source name.
+   * @param {string} sourceKey - Source key, usually "id:140" or raw text.
+   * @param {string} lang - Target language; defaults to I18n current language.
+   * @returns {string}
    */
   translate(sourceKey, lang) {
     if (!sourceKey) return sourceKey;
 
-    // 默认使用 I18n 当前语言
     if (!lang && typeof I18n !== 'undefined') {
       lang = I18n.getLanguage();
     }
     if (!lang) lang = 'zh-CN';
 
-    // "none" 显示为 "未知"
     if (sourceKey === 'none') {
       const unknownTexts = {
         'zh-CN': '未知',
@@ -50,9 +79,12 @@ const SourceI18n = {
       return unknownTexts[lang] || 'Unknown';
     }
 
-    // 自动判断：key 格式为 "id:XXX" 时翻译
     if (sourceKey.startsWith('id:')) {
       const id = sourceKey.substring(3);
+
+      const compositeText = this.translateRewardMissionComposite(id, lang);
+      if (compositeText) return compositeText;
+
       const entry = this.mapping[id];
       if (entry) {
         if (entry.translations && entry.translations[lang]) {
@@ -62,39 +94,57 @@ const SourceI18n = {
       }
     }
 
-    // 非 "id:XXX" 格式：直接返回原始内容
     return sourceKey;
   },
 
-  /**
-   * 批量翻译来源名称
-   * @param {Array<string>} sourceKeys - 来源 key 数组
-   * @param {string} lang - 目标语言
-   * @returns {Array<string>} 翻译后的名称数组
-   */
   translateAll(sourceKeys, lang) {
     return sourceKeys.map(key => this.translate(key, lang));
   },
 
-  /**
-   * 获取来源的 alias
-   * @param {string} sourceKey - 来源 key
-   * @returns {string} alias 或原始 key
-   */
   getAlias(sourceKey) {
     if (!sourceKey) return sourceKey;
 
     if (sourceKey.startsWith('id:')) {
       const id = sourceKey.substring(3);
+
+      const composite = this.parseRewardMissionComposite(id);
+      if (composite) {
+        return composite.definition.alias;
+      }
+
       const entry = this.mapping[id];
       if (entry && entry.alias) return entry.alias;
     }
 
     return sourceKey;
+  },
+
+  parseRewardMissionComposite(id) {
+    const numericId = Number(id);
+    if (!Number.isSafeInteger(numericId) || numericId < this.rewardMissionFactor) {
+      return null;
+    }
+
+    const textResourceId = Math.floor(numericId / this.rewardMissionFactor);
+    const amount = numericId % this.rewardMissionFactor;
+    const definition = this.rewardMissionLabels[textResourceId];
+    if (!definition || amount < 0) return null;
+
+    return { textResourceId, amount, definition };
+  },
+
+  translateRewardMissionComposite(id, lang) {
+    const composite = this.parseRewardMissionComposite(id);
+    if (!composite) return '';
+
+    const template = composite.definition.translations[lang]
+      || composite.definition.translations['en-US']
+      || composite.definition.alias;
+
+    return template;
   }
 };
 
-// 导出模块
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = SourceI18n;
 }

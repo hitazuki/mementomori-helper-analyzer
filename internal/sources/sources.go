@@ -14,10 +14,13 @@ type SourceTranslation struct {
 	Translations map[string]string `json:"translations"`
 }
 
+const rewardMissionCompositeFactor SourceID = 1000000
+
 // Game built-in source IDs from TextResource
 const (
 	SourceIDFountainOfPrayers SourceID = 140   // Fountain of Prayers
 	SourceIDOpen              SourceID = 67    // Open (開啟)
+	SourceIDGuild             SourceID = 111   // Guild
 	SourceIDLoginBonus        SourceID = 719   // Login Bonus (签到奖励)
 	SourceIDTempleIllusions   SourceID = 2766  // Temple of Illusions (勝利)
 	SourceIDTowerInfinity     SourceID = 138   // Tower of Infinity (無窮之塔)
@@ -36,9 +39,12 @@ const (
 
 // Helper custom source IDs
 const (
-	SourceIDAutoBuyStore    SourceID = 100002
-	SourceIDMissionsClaimed SourceID = 100004
-	SourceIDGacha           SourceID = 100005
+	SourceIDAutoBuyStore        SourceID = 100002
+	SourceIDMissionsClaimed     SourceID = 100004
+	SourceIDGacha               SourceID = 100005
+	SourceIDDailyMissionReward  SourceID = MissionGroupDailyID*rewardMissionCompositeFactor + 60
+	SourceIDWeeklyMissionReward SourceID = MissionGroupWeeklyID*rewardMissionCompositeFactor + 80
+	SourceIDGuildMissionReward  SourceID = SourceIDGuild*rewardMissionCompositeFactor + 2000
 )
 
 // sourceDefinitions contains all source translations
@@ -94,31 +100,31 @@ var sourceDefinitions = map[SourceID]SourceTranslation{
 			"ko-KR": "월드 내 플레이어가 최초로 달성/클리어",
 		},
 	},
-	MissionGroupDailyID: {
-		Alias: "Daily Mission Reward",
+	SourceIDDailyMissionReward: {
+		Alias: "Get Daily Mission Reward",
 		Translations: map[string]string{
-			"en-US": "Get Daily Reward",
-			"zh-TW": "领取 Daily 奖励",
-			"zh-CN": "领取 Daily 奖励",
-			"ja-JP": "Daily の報酬",
-			"ko-KR": "일일 보상",
+			"en-US": "Get Daily Mission Reward",
+			"zh-TW": "領取 Daily 任務獎勵",
+			"zh-CN": "领取 Daily 任务奖励",
+			"ja-JP": "Daily ミッション報酬を受け取る",
+			"ko-KR": "Daily 미션 보상을 수령합니다",
 		},
 	},
-	MissionGroupWeeklyID: {
-		Alias: "Weekly Mission Reward",
+	SourceIDWeeklyMissionReward: {
+		Alias: "Get Weekly Mission Reward",
 		Translations: map[string]string{
-			"en-US": "Get Weekly Reward",
-			"zh-TW": "领取 Weekly 奖励",
-			"zh-CN": "领取 Weekly 奖励",
-			"ja-JP": "Weekly の報酬",
-			"ko-KR": "주간 보상",
+			"en-US": "Get Weekly Mission Reward",
+			"zh-TW": "領取 Weekly 任務獎勵",
+			"zh-CN": "领取 Weekly 任务奖励",
+			"ja-JP": "Weekly ミッション報酬を受け取る",
+			"ko-KR": "Weekly 미션 보상을 수령합니다",
 		},
 	},
 	MissionGroupMainID: {
 		Alias: "Main Mission Reward",
 		Translations: map[string]string{
 			"en-US": "Get Main Reward",
-			"zh-TW": "领取 Main 奖励",
+			"zh-TW": "領取 Main 獎勵",
 			"zh-CN": "领取 Main 奖励",
 			"ja-JP": "Main の報酬",
 			"ko-KR": "메인 보상",
@@ -172,6 +178,16 @@ var sourceDefinitions = map[SourceID]SourceTranslation{
 			"zh-CN": "任务全部领取",
 			"ja-JP": "ミッション一括受け取り",
 			"ko-KR": "미션 일괄 수령",
+		},
+	},
+	SourceIDGuildMissionReward: {
+		Alias: "Get Guild Mission Reward",
+		Translations: map[string]string{
+			"en-US": "Get Guild Mission Reward",
+			"zh-TW": "領取 Guild 任務獎勵",
+			"zh-CN": "领取 Guild 任务奖励",
+			"ja-JP": "Guild ミッション報酬を受け取る",
+			"ko-KR": "Guild 미션 보상을 수령합니다",
 		},
 	},
 	SourceIDTowerInfinity: {
