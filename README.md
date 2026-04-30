@@ -9,7 +9,7 @@ MMTH Analyzer 是 [mementomori-helper](https://github.com/moonheart/mementomori-
 
 - **数据展示**: 可视化展示 diamond_stats.json 中的统计数据
 - **自动抓取**: 定时从 mmth 网页抓取角色钻石数量
-- **图表分析**: 使用 ECharts 生成每日变动和来源分布图表
+- **图表分析**: 使用 ECharts 生成每日变动和来源分布图表；来源分布按净变化（获取 - 消耗）展示
 - **多账号支持**: 支持配置多个服务器和账号批量抓取
 - **ETL 处理**: 集成 mmth-etl 子模块，支持日志解析和钻石统计
 - **多语言支持**: ETL 支持英文/繁中/日文/韩文日志解析，可动态检测语言切换，详见 [SOURCE_MAPPING.md](mmth-etl/SOURCE_MAPPING.md)

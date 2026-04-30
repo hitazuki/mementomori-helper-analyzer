@@ -106,7 +106,7 @@ const ItemsTab = {
         const data = Object.entries(sources)
             .map(([key, val]) => ({
                 name: SourceI18n.translate(key, lang),
-                value: val.gain + val.consume
+                value: val.gain - val.consume
             }))
             .filter(d => d.value > 0)
             .sort((a, b) => b.value - a.value);
