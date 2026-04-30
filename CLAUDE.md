@@ -21,6 +21,10 @@ go build -o mmth-analyzer.exe ./cmd/server
 http://localhost:5391
 ```
 
+## 项目协作记忆
+
+- 后续新增或修改代码注释时，尽量使用中文；仅在需要满足 Go 导出注释、第三方约定或引用原文时保留英文。
+
 ## 规范
 
 ### Git Commit
