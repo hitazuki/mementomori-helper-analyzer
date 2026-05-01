@@ -5,6 +5,8 @@ function app() {
         loading: false,
         scraping: false,
         etlProcessing: false,
+        etlStatus: null, // ETL 任务状态
+        etlPollInterval: null, // 轮询定时器
         scheduleSaving: false,
         scheduleStatus: '',
         scheduleError: '',
@@ -64,6 +66,9 @@ function app() {
                 this.loadItems()
             ]);
             setTimeout(() => this.initCharts(), 300);
+
+            // 检查是否有进行中的 ETL 任务
+            await this.checkETLStatus();
         },
 
         // ===== Tab 切换 =====
@@ -183,10 +188,67 @@ function app() {
         },
 
         async triggerETL() {
-            this.etlProcessing = true;
-            try {
-                const data = await API.triggerETL();
-                if (data.total_files !== undefined) {
+            if (this.etlProcessing) return;
+
+            const data = await API.triggerETL();
+            console.log('ETL trigger response:', data);
+
+            // 根据HTTP状态码判断结果
+            // 202 Accepted: 任务启动成功
+            // 409 Conflict: 任务已在运行
+            if (data._httpStatus === 202 || data.status === 'running') {
+                this.etlProcessing = true;
+                this.etlStatus = await API.getETLStatus();
+                this.pollETLStatus();
+            } else if (data._httpStatus === 409 || data.error === 'ETL task already running') {
+                // 任务已在运行（可能是定时任务或其他人触发），进入轮询状态
+                this.etlProcessing = true;
+                this.etlStatus = await API.getETLStatus();
+                console.log('ETL task already running, polling status...');
+                this.pollETLStatus();
+            } else if (data.error) {
+                alert('ETL ' + this.t('status.failed') + ': ' + data.error);
+            } else {
+                console.warn('Unexpected ETL response, checking status...');
+                const status = await API.getETLStatus();
+                if (status.status === 'running') {
+                    this.etlProcessing = true;
+                    this.etlStatus = status;
+                    this.pollETLStatus();
+                } else {
+                    alert('ETL ' + this.t('status.failed') + ': Unexpected response');
+                }
+            }
+        },
+
+        // 检查 ETL 状态（用于页面刷新后恢复）
+        async checkETLStatus() {
+            const status = await API.getETLStatus();
+            if (status.status === 'running') {
+                this.etlProcessing = true;
+                this.etlStatus = status;
+                this.pollETLStatus();
+            }
+        },
+
+        // 轮询 ETL 状态
+        pollETLStatus() {
+            // 清除之前的轮询
+            if (this.etlPollInterval) {
+                clearInterval(this.etlPollInterval);
+            }
+
+            this.etlPollInterval = setInterval(async () => {
+                const status = await API.getETLStatus();
+                this.etlStatus = status;
+
+                if (status.status !== 'running') {
+                    // 任务完成，停止轮询
+                    clearInterval(this.etlPollInterval);
+                    this.etlPollInterval = null;
+                    this.etlProcessing = false;
+
+                    // 刷新数据
                     await Promise.all([
                         this.loadLogs(),
                         this.loadCave(),
@@ -195,15 +257,20 @@ function app() {
                     if (this.activeTab === 'logs') {
                         this.initOrUpdateLogsCharts();
                     }
-                    alert(`ETL ${this.t('status.success')}: ${data.total_files} files, ${data.success} ${this.t('status.success').toLowerCase()}`);
-                } else {
-                    alert('ETL ' + this.t('status.failed') + ': ' + (data.error || 'Unknown error'));
+
+                    // 显示结果
+                    if (status.status === 'completed') {
+                        const msg = `ETL ${this.t('status.success')}: ${status.total_servers} servers, ${status.success_count} ${this.t('status.success').toLowerCase()}`;
+                        if (status.failed_count > 0) {
+                            alert(msg + `, ${status.failed_count} failed: ${status.failed_files.join(', ')}`);
+                        } else {
+                            alert(msg);
+                        }
+                    } else if (status.status === 'failed') {
+                        alert('ETL ' + this.t('status.failed') + ': ' + (status.error || 'Unknown error'));
+                    }
                 }
-            } catch (e) {
-                alert(this.t('status.failed') + ': ' + e.message);
-            } finally {
-                this.etlProcessing = false;
-            }
+            }, 2000); // 每 2 秒轮询一次
         },
 
         async refreshAll() {

@@ -18,16 +18,23 @@ var logRotationPattern = regexp.MustCompile(`\.log\.\d+$`)
 
 // ETLService ETL处理服务
 type ETLService struct {
-	binaryPath string
-	outputDir  string
+	binaryPath  string
+	outputDir   string
+	taskManager *ETLTaskManager
 }
 
 // NewETLService 创建ETL服务实例
 func NewETLService(binaryPath, outputDir string) *ETLService {
 	return &ETLService{
-		binaryPath: binaryPath,
-		outputDir:  outputDir,
+		binaryPath:  binaryPath,
+		outputDir:   outputDir,
+		taskManager: NewETLTaskManager(),
 	}
+}
+
+// GetTaskManager 获取任务管理器
+func (s *ETLService) GetTaskManager() *ETLTaskManager {
+	return s.taskManager
 }
 
 // ProcessResult 处理结果
@@ -134,15 +141,22 @@ func (s *ETLService) ProcessAllServers(servers []scraper.ServerConfig) (*Process
 		ProcessDetails: make([]string, 0),
 	}
 
+	// 初始化任务状态
+	s.taskManager.Start(len(servers))
+
 	fmt.Printf("开始 ETL 处理 %d 个服务器\n", len(servers))
 
-	for _, server := range servers {
+	for i, server := range servers {
+		// 更新进度
+		s.taskManager.UpdateProgress(i+1, server.Name)
+
 		if server.LogPath == "" {
 			result.FailedCount++
 			result.FailedFiles = append(result.FailedFiles, server.Name)
 			result.ProcessDetails = append(result.ProcessDetails,
 				fmt.Sprintf("[%s] 跳过: 未配置 log_path", server.Name))
 			fmt.Printf("[%s] 跳过: 未配置 log_path\n", server.Name)
+			s.taskManager.IncrementFailed(server.Name)
 			continue
 		}
 
@@ -154,16 +168,21 @@ func (s *ETLService) ProcessAllServers(servers []scraper.ServerConfig) (*Process
 			result.ProcessDetails = append(result.ProcessDetails,
 				fmt.Sprintf("[%s] 失败: %v", server.Name, err))
 			fmt.Printf("[%s] 失败: %v\n", server.Name, err)
+			s.taskManager.IncrementFailed(server.Name)
 		} else {
 			result.SuccessCount++
 			result.ProcessDetails = append(result.ProcessDetails,
 				fmt.Sprintf("[%s] 成功处理: %s", server.Name, server.LogPath))
 			fmt.Printf("[%s] 成功处理完成\n", server.Name)
+			s.taskManager.IncrementSuccess()
 		}
 	}
 
 	fmt.Printf("ETL 处理完成: 总计 %d, 成功 %d, 失败 %d\n",
 		result.TotalFiles, result.SuccessCount, result.FailedCount)
+
+	// 标记任务完成
+	s.taskManager.Complete()
 
 	return result, nil
 }

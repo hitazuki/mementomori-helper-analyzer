@@ -10,6 +10,7 @@ const API = {
         upgradePanacea: '/api/upgrade-panacea/stats',
         scrape: '/api/scrape/all',
         etl: '/api/etl/process',
+        etlStatus: '/api/etl/status',
         schedule: '/api/config/schedule'
     },
 
@@ -31,7 +32,10 @@ const API = {
             if (!text) {
                 return { success: res.ok, status: res.status };
             }
-            return JSON.parse(text);
+            const data = JSON.parse(text);
+            // 添加 HTTP 状态码信息
+            data._httpStatus = res.status;
+            return data;
         } catch (e) {
             console.error(`POST error: ${endpoint}`, e);
             return { error: e.message };
@@ -92,6 +96,10 @@ const API = {
 
     async triggerETL() {
         return await this.post(this.endpoints.etl);
+    },
+
+    async getETLStatus() {
+        return await this.fetch(this.endpoints.etlStatus) || { status: 'idle' };
     },
 
     async loadSchedule() {

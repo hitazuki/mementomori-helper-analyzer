@@ -54,6 +54,7 @@ func (r *Router) Register(e *gin.Engine) {
 		}
 
 		api.POST("/etl/process", r.etlHandler.ProcessServers)
+		api.GET("/etl/status", r.etlHandler.GetStatus)
 		api.GET("/etl/stats", r.etlHandler.GetCombinedStats)
 
 		api.GET("/cave/stats", r.caveHandler.GetCaveStats)
