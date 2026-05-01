@@ -55,13 +55,6 @@ func (m *ETLTaskManager) GetState() ETLTaskState {
 	return m.state
 }
 
-// IsRunning 检查是否正在运行（用于外部状态查询）
-func (m *ETLTaskManager) IsRunning() bool {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.state.Status == TaskRunning
-}
-
 // TryStart 尝试开始任务（原子操作，如果已在运行则返回错误）
 func (m *ETLTaskManager) TryStart(totalServers int) error {
 	m.mu.Lock()
