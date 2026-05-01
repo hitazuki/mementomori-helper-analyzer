@@ -37,15 +37,6 @@ func (s *ETLService) GetTaskManager() *ETLTaskManager {
 	return s.taskManager
 }
 
-// ProcessResult 处理结果
-type ProcessResult struct {
-	TotalFiles     int      `json:"total_files"`
-	SuccessCount   int      `json:"success_count"`
-	FailedCount    int      `json:"failed_count"`
-	FailedFiles    []string `json:"failed_files,omitempty"`
-	ProcessDetails []string `json:"process_details,omitempty"`
-}
-
 // ProcessServerLogs 处理指定服务器的日志文件
 // logPath 可以是文件路径或目录路径
 // 如果是目录，将遍历目录下的所有 .log 文件进行处理
@@ -134,15 +125,13 @@ func (s *ETLService) processLogFile(outputDir, logFile string) error {
 }
 
 // ProcessAllServers 遍历所有服务器配置，独立处理每个服务器的日志
-func (s *ETLService) ProcessAllServers(servers []scraper.ServerConfig) (*ProcessResult, error) {
-	result := &ProcessResult{
-		TotalFiles:     len(servers),
-		FailedFiles:    make([]string, 0),
-		ProcessDetails: make([]string, 0),
+// 包含并发控制，如果任务已在运行则返回 ErrTaskAlreadyRunning
+// 处理结果通过 TaskManager 状态追踪，前端轮询获取
+func (s *ETLService) ProcessAllServers(servers []scraper.ServerConfig) error {
+	// 原子性检查并开始任务
+	if err := s.taskManager.TryStart(len(servers)); err != nil {
+		return err
 	}
-
-	// 初始化任务状态
-	s.taskManager.Start(len(servers))
 
 	fmt.Printf("开始 ETL 处理 %d 个服务器\n", len(servers))
 
@@ -151,10 +140,6 @@ func (s *ETLService) ProcessAllServers(servers []scraper.ServerConfig) (*Process
 		s.taskManager.UpdateProgress(i+1, server.Name)
 
 		if server.LogPath == "" {
-			result.FailedCount++
-			result.FailedFiles = append(result.FailedFiles, server.Name)
-			result.ProcessDetails = append(result.ProcessDetails,
-				fmt.Sprintf("[%s] 跳过: 未配置 log_path", server.Name))
 			fmt.Printf("[%s] 跳过: 未配置 log_path\n", server.Name)
 			s.taskManager.IncrementFailed(server.Name)
 			continue
@@ -163,28 +148,22 @@ func (s *ETLService) ProcessAllServers(servers []scraper.ServerConfig) (*Process
 		fmt.Printf("[%s] 开始处理: %s\n", server.Name, server.LogPath)
 		err := s.ProcessServerLogs(server.Name, server.LogPath)
 		if err != nil {
-			result.FailedCount++
-			result.FailedFiles = append(result.FailedFiles, server.Name)
-			result.ProcessDetails = append(result.ProcessDetails,
-				fmt.Sprintf("[%s] 失败: %v", server.Name, err))
 			fmt.Printf("[%s] 失败: %v\n", server.Name, err)
 			s.taskManager.IncrementFailed(server.Name)
 		} else {
-			result.SuccessCount++
-			result.ProcessDetails = append(result.ProcessDetails,
-				fmt.Sprintf("[%s] 成功处理: %s", server.Name, server.LogPath))
 			fmt.Printf("[%s] 成功处理完成\n", server.Name)
 			s.taskManager.IncrementSuccess()
 		}
 	}
 
+	state := s.taskManager.GetState()
 	fmt.Printf("ETL 处理完成: 总计 %d, 成功 %d, 失败 %d\n",
-		result.TotalFiles, result.SuccessCount, result.FailedCount)
+		state.TotalServers, state.SuccessCount, state.FailedCount)
 
 	// 标记任务完成
 	s.taskManager.Complete()
 
-	return result, nil
+	return nil
 }
 
 // CombineAllStats 合并所有服务器的统计数据（带服务器标识）

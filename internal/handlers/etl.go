@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"sync"
 
 	"mmth-analyzer/internal/scraper"
 	"mmth-analyzer/internal/service"
@@ -14,7 +13,6 @@ import (
 type ETLHandler struct {
 	etlService *service.ETLService
 	servers    []scraper.ServerConfig
-	mu         *sync.Mutex // 防止并发执行
 }
 
 // NewETLHandler 创建ETL处理器实例
@@ -22,7 +20,6 @@ func NewETLHandler(etlService *service.ETLService, servers []scraper.ServerConfi
 	return &ETLHandler{
 		etlService: etlService,
 		servers:    servers,
-		mu:         &sync.Mutex{},
 	}
 }
 
@@ -36,19 +33,9 @@ func (h *ETLHandler) ProcessServers(c *gin.Context) {
 		return
 	}
 
-	// 检查是否已有任务在运行
-	if h.etlService.GetTaskManager().IsRunning() {
-		c.JSON(http.StatusConflict, gin.H{
-			"error": "ETL task already running",
-		})
-		return
-	}
-
-	// 异步执行 ETL 处理
+	// 异步执行，并发控制由 ProcessAllServers 内部处理
 	go func() {
-		h.mu.Lock()
-		defer h.mu.Unlock()
-		_, _ = h.etlService.ProcessAllServers(h.servers)
+		_ = h.etlService.ProcessAllServers(h.servers)
 	}()
 
 	c.JSON(http.StatusAccepted, gin.H{

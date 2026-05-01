@@ -2,9 +2,10 @@ package scheduler
 
 import (
 	"fmt"
-	"net/http"
 	"sync"
-	"time"
+
+	"mmth-analyzer/internal/scraper"
+	"mmth-analyzer/internal/service"
 
 	"github.com/robfig/cron/v3"
 )
@@ -17,25 +18,34 @@ type Config struct {
 
 // Scheduler manages scrape and ETL cron jobs.
 type Scheduler struct {
-	cronScrape string
-	cronETL    string
-	port       string
-	client     *http.Client
-	cron       *cron.Cron
-	scrapeID   cron.EntryID
-	etlID      cron.EntryID
-	mu         sync.Mutex
+	cronScrape   string
+	cronETL      string
+	cron         *cron.Cron
+	scrapeID     cron.EntryID
+	etlID        cron.EntryID
+	mu           sync.Mutex
+	scrapeService *service.ScrapeService
+	etlService   *service.ETLService
+	servers      []scraper.ServerConfig
 }
 
-func NewScheduler(cronScrape, cronETL, port string, _ *sync.Mutex) *Scheduler {
+// NewScheduler 创建调度器实例
+func NewScheduler(cronScrape, cronETL, _ string, _ *sync.Mutex) *Scheduler {
 	return &Scheduler{
 		cronScrape: cronScrape,
 		cronETL:    cronETL,
-		port:       port,
-		client: &http.Client{
-			Timeout: 5 * time.Minute,
-		},
 	}
+}
+
+// SetScrapeService 设置抓取服务
+func (s *Scheduler) SetScrapeService(scrapeService *service.ScrapeService) {
+	s.scrapeService = scrapeService
+}
+
+// SetETLService 设置 ETL 服务
+func (s *Scheduler) SetETLService(etlService *service.ETLService, servers []scraper.ServerConfig) {
+	s.etlService = etlService
+	s.servers = servers
 }
 
 func StartParser() cron.Parser {
@@ -172,55 +182,50 @@ func (s *Scheduler) removeLocked() {
 	}
 }
 
+// performScrape 执行定时抓取（异步执行，不阻塞调度器）
 func (s *Scheduler) performScrape() {
-	url := fmt.Sprintf("http://localhost:%s/api/scrape/all", s.port)
-	fmt.Printf("[scheduler] start scrape: %s\n", url)
-
-	req, err := http.NewRequest(http.MethodPost, url, nil)
-	if err != nil {
-		fmt.Printf("[scheduler] create scrape request failed: %v\n", err)
+	if s.scrapeService == nil {
+		fmt.Println("[scheduler] scrape service not configured")
 		return
 	}
-	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := s.client.Do(req)
-	if err != nil {
-		fmt.Printf("[scheduler] scrape request failed: %v\n", err)
-		return
-	}
-	defer resp.Body.Close()
+	fmt.Printf("[scheduler] start scrape: %d servers\n", len(s.scrapeService.GetServers()))
 
-	switch resp.StatusCode {
-	case http.StatusOK:
+	// 异步执行，并发控制由 ScrapeAll() 内部处理
+	go func() {
+		err := s.scrapeService.ScrapeAll()
+		if err != nil {
+			if err == service.ErrScrapeInProgress {
+				fmt.Println("[scheduler] scrape already running, skipped")
+			} else {
+				fmt.Printf("[scheduler] scrape failed: %v\n", err)
+			}
+			return
+		}
 		fmt.Println("[scheduler] scrape succeeded")
-	case http.StatusConflict:
-		fmt.Println("[scheduler] scrape already running, skipped")
-	default:
-		fmt.Printf("[scheduler] scrape failed, status: %d\n", resp.StatusCode)
-	}
+	}()
 }
 
+// performETL 执行定时 ETL（异步执行，不阻塞调度器）
 func (s *Scheduler) performETL() {
-	url := fmt.Sprintf("http://localhost:%s/api/etl/process", s.port)
-	fmt.Printf("[scheduler] start ETL: %s\n", url)
-
-	req, err := http.NewRequest(http.MethodPost, url, nil)
-	if err != nil {
-		fmt.Printf("[scheduler] create ETL request failed: %v\n", err)
+	if s.etlService == nil {
+		fmt.Println("[scheduler] ETL service not configured")
 		return
 	}
-	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := s.client.Do(req)
-	if err != nil {
-		fmt.Printf("[scheduler] ETL request failed: %v\n", err)
-		return
-	}
-	defer resp.Body.Close()
+	fmt.Printf("[scheduler] start ETL: %d servers\n", len(s.servers))
 
-	if resp.StatusCode == http.StatusOK {
-		fmt.Println("[scheduler] ETL succeeded")
-	} else {
-		fmt.Printf("[scheduler] ETL failed, status: %d\n", resp.StatusCode)
-	}
+	// 异步执行，并发控制由 ProcessAllServers() 内部处理
+	go func() {
+		err := s.etlService.ProcessAllServers(s.servers)
+		if err != nil {
+			if err == service.ErrTaskAlreadyRunning {
+				fmt.Println("[scheduler] ETL already running, skipped")
+			} else {
+				fmt.Printf("[scheduler] ETL failed: %v\n", err)
+			}
+		}
+	}()
+
+	fmt.Println("[scheduler] ETL started")
 }

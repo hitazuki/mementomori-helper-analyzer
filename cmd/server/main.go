@@ -52,6 +52,10 @@ func main() {
 
 	// 启动定时任务
 	sch := scheduler.NewScheduler(cfg.CronScrape, cfg.CronETL, cfg.Port, scrapeMutex)
+	if scrapeService != nil {
+		sch.SetScrapeService(scrapeService)
+	}
+	sch.SetETLService(etlService, servers)
 	if err := sch.Start(); err != nil {
 		fmt.Printf("⚠️  启动定时任务失败: %v\n", err)
 	} else {

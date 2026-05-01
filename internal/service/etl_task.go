@@ -1,9 +1,13 @@
 package service
 
 import (
+	"errors"
 	"sync"
 	"time"
 )
+
+// ErrTaskAlreadyRunning 任务已在运行
+var ErrTaskAlreadyRunning = errors.New("任务已在运行中")
 
 // TaskStatus 任务状态
 type TaskStatus string
@@ -51,23 +55,29 @@ func (m *ETLTaskManager) GetState() ETLTaskState {
 	return m.state
 }
 
-// IsRunning 检查是否正在运行
+// IsRunning 检查是否正在运行（用于外部状态查询）
 func (m *ETLTaskManager) IsRunning() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	return m.state.Status == TaskRunning
 }
 
-// Start 开始任务
-func (m *ETLTaskManager) Start(totalServers int) {
+// TryStart 尝试开始任务（原子操作，如果已在运行则返回错误）
+func (m *ETLTaskManager) TryStart(totalServers int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
+	if m.state.Status == TaskRunning {
+		return ErrTaskAlreadyRunning
+	}
+
 	m.state = ETLTaskState{
 		Status:       TaskRunning,
 		StartTime:    time.Now(),
 		TotalServers: totalServers,
 		FailedFiles:  make([]string, 0),
 	}
+	return nil
 }
 
 // UpdateProgress 更新进度
