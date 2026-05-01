@@ -17,6 +17,20 @@ MMTH Analyzer 是 [mementomori-helper](https://github.com/moonheart/mementomori-
 - **战斗统计**: 统计主线关卡和塔挑战记录，展示尝试次数、通关状态和最后挑战时间
 - **物品统计**: 统计饼干(Rune Ticket)和红水(Upgrade Panacea)的获取/消耗情况，按来源追踪
 
+## 预览
+
+| 预览 1 | 预览 2 |
+|:------:|:------:|
+| ![预览1](images/intro1.png) | ![预览2](images/intro2.png) |
+
+| 预览 3 | 预览 4 |
+|:------:|:------:|
+| ![预览3](images/intro3.png) | ![预览4](images/intro4.png) |
+
+| 预览 5 | 预览 6 |
+|:------:|:------:|
+| ![预览5](images/intro5.png) | ![预览6](images/intro6.png) |
+
 ## 快速开始
 
 ### 部署方案

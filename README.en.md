@@ -17,6 +17,20 @@ MMTH Analyzer is a web dashboard and data processing service for [mementomori-he
 - **Challenge statistics**: Analyze campaign and tower challenge records, attempts, completion status, and last challenge time.
 - **Item statistics**: Track Rune Ticket and Upgrade Panacea gains and spending by source.
 
+## Preview
+
+| Preview 1 | Preview 2 |
+|:---------:|:---------:|
+| ![Preview1](images/intro1.png) | ![Preview2](images/intro2.png) |
+
+| Preview 3 | Preview 4 |
+|:---------:|:---------:|
+| ![Preview3](images/intro3.png) | ![Preview4](images/intro4.png) |
+
+| Preview 5 | Preview 6 |
+|:---------:|:---------:|
+| ![Preview5](images/intro5.png) | ![Preview6](images/intro6.png) |
+
 ## Quick Start
 
 ### Deployment Examples
