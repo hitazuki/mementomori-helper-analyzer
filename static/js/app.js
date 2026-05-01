@@ -4,9 +4,11 @@ function app() {
         // 通用状态
         loading: false,
         scraping: false,
+        scrapeStatus: null, // 抓取任务状态
+        scrapePollInterval: null, // 抓取轮询定时器
         etlProcessing: false,
         etlStatus: null, // ETL 任务状态
-        etlPollInterval: null, // 轮询定时器
+        etlPollInterval: null, // ETL 轮询定时器
         scheduleSaving: false,
         scheduleStatus: '',
         scheduleError: '',
@@ -67,7 +69,8 @@ function app() {
             ]);
             setTimeout(() => this.initCharts(), 300);
 
-            // 检查是否有进行中的 ETL 任务
+            // 检查是否有进行中的任务
+            await this.checkScrapeStatus();
             await this.checkETLStatus();
         },
 
@@ -179,12 +182,77 @@ function app() {
         },
 
         async triggerScrape() {
-            this.scraping = true;
-            try {
-                await MmthTab.scrape(this);
-            } finally {
-                this.scraping = false;
+            if (this.scraping) return;
+
+            const data = await API.triggerScrape();
+            console.log('Scrape trigger response:', data);
+
+            // 根据HTTP状态码判断结果
+            // 202 Accepted: 任务启动成功
+            // 409 Conflict: 任务已在运行
+            if (data._httpStatus === 202 || data.status === 'running') {
+                this.scraping = true;
+                this.scrapeStatus = await API.getScrapeStatus();
+                this.pollScrapeStatus();
+            } else if (data._httpStatus === 409 || data.error === '任务已在运行中') {
+                // 任务已在运行，进入轮询状态
+                this.scraping = true;
+                this.scrapeStatus = await API.getScrapeStatus();
+                this.pollScrapeStatus();
+            } else if (data.error) {
+                alert('Scrape ' + this.t('status.failed') + ': ' + data.error);
+            } else {
+                console.warn('Unexpected scrape response, checking status...');
+                const status = await API.getScrapeStatus();
+                if (status.status === 'running') {
+                    this.scraping = true;
+                    this.scrapeStatus = status;
+                    this.pollScrapeStatus();
+                } else {
+                    alert('Scrape ' + this.t('status.failed') + ': Unexpected response');
+                }
             }
+        },
+
+        // 检查抓取状态（用于页面刷新后恢复）
+        async checkScrapeStatus() {
+            const status = await API.getScrapeStatus();
+            if (status.status === 'running') {
+                this.scraping = true;
+                this.scrapeStatus = status;
+                this.pollScrapeStatus();
+            }
+        },
+
+        // 轮询抓取状态
+        pollScrapeStatus() {
+            // 清除之前的轮询
+            if (this.scrapePollInterval) {
+                clearInterval(this.scrapePollInterval);
+            }
+
+            this.scrapePollInterval = setInterval(async () => {
+                const status = await API.getScrapeStatus();
+                this.scrapeStatus = status;
+
+                if (status.status !== 'running') {
+                    // 任务完成，停止轮询
+                    clearInterval(this.scrapePollInterval);
+                    this.scrapePollInterval = null;
+                    this.scraping = false;
+
+                    // 刷新数据
+                    await this.loadMmth();
+                    MmthTab.updateChart(this);
+
+                    // 显示结果
+                    if (status.status === 'completed') {
+                        alert(`Scrape ${this.t('status.success')}: ${status.total_servers} servers`);
+                    } else if (status.status === 'failed') {
+                        alert('Scrape ' + this.t('status.failed') + ': ' + (status.error || 'Unknown error'));
+                    }
+                }
+            }, 2000); // 每 2 秒轮询一次
         },
 
         async triggerETL() {

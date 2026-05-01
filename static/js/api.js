@@ -9,6 +9,7 @@ const API = {
         runeTicket: '/api/rune-ticket/stats',
         upgradePanacea: '/api/upgrade-panacea/stats',
         scrape: '/api/scrape/all',
+        scrapeStatus: '/api/scrape/status',
         etl: '/api/etl/process',
         etlStatus: '/api/etl/status',
         schedule: '/api/config/schedule'
@@ -92,6 +93,10 @@ const API = {
 
     async triggerScrape() {
         return await this.post(this.endpoints.scrape);
+    },
+
+    async getScrapeStatus() {
+        return await this.fetch(this.endpoints.scrapeStatus) || { status: 'idle' };
     },
 
     async triggerETL() {

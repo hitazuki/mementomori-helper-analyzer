@@ -1,30 +1,33 @@
 package service
 
 import (
-	"errors"
+	"fmt"
 	"sync"
 
 	"mmth-analyzer/internal/scraper"
 )
 
-// ErrScrapeInProgress 抓取任务正在执行中
-var ErrScrapeInProgress = errors.New("抓取任务正在执行中，请稍后重试")
-
 // ScrapeService 抓取服务
 type ScrapeService struct {
-	dataDir string
-	servers []scraper.ServerConfig
-	mutex   *sync.Mutex
-	running bool
+	dataDir     string
+	servers     []scraper.ServerConfig
+	mutex       *sync.Mutex
+	taskManager *ScrapeTaskManager
 }
 
 // NewScrapeService 创建抓取服务
 func NewScrapeService(dataDir string, servers []scraper.ServerConfig, mutex *sync.Mutex) *ScrapeService {
 	return &ScrapeService{
-		dataDir: dataDir,
-		servers: servers,
-		mutex:   mutex,
+		dataDir:     dataDir,
+		servers:     servers,
+		mutex:       mutex,
+		taskManager: NewScrapeTaskManager(),
 	}
+}
+
+// GetTaskManager 获取任务管理器
+func (s *ScrapeService) GetTaskManager() *ScrapeTaskManager {
+	return s.taskManager
 }
 
 // GetServers 获取服务器配置
@@ -32,30 +35,33 @@ func (s *ScrapeService) GetServers() []scraper.ServerConfig {
 	return s.servers
 }
 
-// IsRunning 检查是否正在运行
-func (s *ScrapeService) IsRunning() bool {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	return s.running
-}
-
 // ScrapeAll 抓取所有账号
+// 包含并发控制，如果任务已在运行则返回 ErrTaskAlreadyRunning
+// 处理结果通过 TaskManager 状态追踪，前端轮询获取
 func (s *ScrapeService) ScrapeAll() error {
 	if len(s.servers) == 0 {
 		return nil
 	}
 
-	if !s.mutex.TryLock() {
-		return ErrScrapeInProgress
+	// 原子性检查并开始任务
+	if err := s.taskManager.TryStart(len(s.servers)); err != nil {
+		return err
 	}
 
-	s.running = true
-	defer func() {
-		s.running = false
-		s.mutex.Unlock()
-	}()
+	fmt.Printf("开始抓取 %d 个服务器\n", len(s.servers))
 
-	return scraper.ScrapeAllServers(s.servers, s.dataDir)
+	err := scraper.ScrapeAllServers(s.servers, s.dataDir)
+
+	if err != nil {
+		fmt.Printf("抓取失败: %v\n", err)
+		s.taskManager.Fail(err)
+		return err
+	}
+
+	fmt.Printf("抓取完成: %d 个服务器\n", len(s.servers))
+	s.taskManager.Complete()
+
+	return nil
 }
 
 // ScrapeAccount 抓取单个账号

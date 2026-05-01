@@ -33,17 +33,17 @@ func main() {
 
 	// 创建处理器
 	statsHandler := handlers.NewStatsHandler(diamondService, etlService)
-	var scrapeHandler *handlers.ScrapeHandler
-	if scrapeService != nil {
-		scrapeHandler = handlers.NewScrapeHandler(scrapeService)
-	}
-	historyHandler := handlers.NewHistoryHandler(diamondService)
 
-	// 获取服务器配置用于ETL多服务器处理
+	// 获取服务器配置用于 Scrape 和 ETL
 	var servers []scraper.ServerConfig
 	if cfg.ScrapeCfg != nil {
 		servers = cfg.ScrapeCfg.Servers
 	}
+
+	// 始终创建 scrapeHandler，内部检查 servers 是否为空
+	scrapeHandler := handlers.NewScrapeHandler(scrapeService, servers)
+	historyHandler := handlers.NewHistoryHandler(diamondService)
+
 	etlHandler := handlers.NewETLHandler(etlService, servers)
 	caveHandler := handlers.NewCaveHandler(etlService)
 	challengeHandler := handlers.NewChallengeHandler(etlService)

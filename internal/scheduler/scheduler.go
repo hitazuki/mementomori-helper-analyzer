@@ -195,15 +195,15 @@ func (s *Scheduler) performScrape() {
 	go func() {
 		err := s.scrapeService.ScrapeAll()
 		if err != nil {
-			if err == service.ErrScrapeInProgress {
+			if err == service.ErrTaskAlreadyRunning {
 				fmt.Println("[scheduler] scrape already running, skipped")
 			} else {
 				fmt.Printf("[scheduler] scrape failed: %v\n", err)
 			}
-			return
 		}
-		fmt.Println("[scheduler] scrape succeeded")
 	}()
+
+	fmt.Println("[scheduler] scrape started")
 }
 
 // performETL 执行定时 ETL（异步执行，不阻塞调度器）

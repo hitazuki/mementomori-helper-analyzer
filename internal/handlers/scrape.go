@@ -1,9 +1,10 @@
 package handlers
 
 import (
-	"errors"
+	"net/http"
+
+	"mmth-analyzer/internal/scraper"
 	"mmth-analyzer/internal/service"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,52 +12,53 @@ import (
 // ScrapeHandler 抓取处理器
 type ScrapeHandler struct {
 	scrapeService *service.ScrapeService
+	servers       []scraper.ServerConfig
 }
 
 // NewScrapeHandler 创建抓取处理器
-func NewScrapeHandler(scrapeService *service.ScrapeService) *ScrapeHandler {
-	return &ScrapeHandler{scrapeService: scrapeService}
-}
-
-// isChromeNotFoundError 检查错误是否为 Chrome 未找到
-func isChromeNotFoundError(err error) bool {
-	if err == nil {
-		return false
+func NewScrapeHandler(scrapeService *service.ScrapeService, servers []scraper.ServerConfig) *ScrapeHandler {
+	return &ScrapeHandler{
+		scrapeService: scrapeService,
+		servers:       servers,
 	}
-	return strings.Contains(err.Error(), "未找到 Chrome/Chromium")
 }
 
-// ScrapeAll 抓取所有账号
+// ScrapeAll 抓取所有账号（异步）
+// POST /api/scrape/all
 func (h *ScrapeHandler) ScrapeAll(c *gin.Context) {
-	err := h.scrapeService.ScrapeAll()
-	if err != nil {
-		// 检查是否是任务正在执行
-		if errors.Is(err, service.ErrScrapeInProgress) {
-			c.JSON(409, gin.H{
-				"error":   err.Error(),
-				"retry":   true,
-			})
-			return
-		}
-		// 检查是否是 Chrome 未找到错误
-		if isChromeNotFoundError(err) {
-			c.JSON(500, gin.H{
-				"error":         err.Error(),
-				"chrome_needed": true,
-			})
-			return
-		}
-		c.JSON(500, gin.H{"error": err.Error()})
+	if h.scrapeService == nil || len(h.servers) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "no servers configured",
+		})
 		return
 	}
 
-	c.JSON(200, gin.H{
-		"success": true,
-		"message": "All accounts scraped successfully",
+	// 异步执行，并发控制由 ScrapeAll 内部处理
+	go func() {
+		_ = h.scrapeService.ScrapeAll()
+	}()
+
+	c.JSON(http.StatusAccepted, gin.H{
+		"message": "Scrape started",
+		"status":  "running",
 	})
 }
 
+// GetStatus 获取抓取任务状态
+// GET /api/scrape/status
+func (h *ScrapeHandler) GetStatus(c *gin.Context) {
+	if h.scrapeService == nil {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "idle",
+		})
+		return
+	}
+	state := h.scrapeService.GetTaskManager().GetState()
+	c.JSON(http.StatusOK, state)
+}
+
 // ScrapeAccount 抓取单个账号
+// POST /api/scrape/account
 type ScrapeAccountRequest struct {
 	URL     string `json:"url" binding:"required"`
 	Account string `json:"account" binding:"required"`
@@ -64,9 +66,14 @@ type ScrapeAccountRequest struct {
 }
 
 func (h *ScrapeHandler) ScrapeAccount(c *gin.Context) {
+	if h.scrapeService == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no servers configured"})
+		return
+	}
+
 	var req ScrapeAccountRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -76,11 +83,11 @@ func (h *ScrapeHandler) ScrapeAccount(c *gin.Context) {
 
 	data, err := h.scrapeService.ScrapeAccount(req.URL, req.Account, req.Server)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"data":    data,
 	})
