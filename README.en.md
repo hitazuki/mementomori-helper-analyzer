@@ -1,5 +1,7 @@
 # MMTH Analyzer
 
+**English** | [简体中文](README.md)
+
 [![Docker Build](https://github.com/hitazuki/mementomori-helper-analyzer/actions/workflows/docker.yml/badge.svg)](https://github.com/hitazuki/mementomori-helper-analyzer/actions/workflows/docker.yml)
 [![Release](https://github.com/hitazuki/mementomori-helper-analyzer/actions/workflows/release.yml/badge.svg)](https://github.com/hitazuki/mementomori-helper-analyzer/releases)
 
