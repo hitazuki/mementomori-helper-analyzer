@@ -252,7 +252,7 @@ function app() {
                         alert('Scrape ' + this.t('status.failed') + ': ' + (status.error || 'Unknown error'));
                     }
                 }
-            }, 2000); // 每 2 秒轮询一次
+            }, 3000); // 每 3 秒轮询一次
         },
 
         async triggerETL() {
@@ -338,7 +338,7 @@ function app() {
                         alert('ETL ' + this.t('status.failed') + ': ' + (status.error || 'Unknown error'));
                     }
                 }
-            }, 2000); // 每 2 秒轮询一次
+            }, 3000); // 每 3 秒轮询一次
         },
 
         async refreshAll() {
