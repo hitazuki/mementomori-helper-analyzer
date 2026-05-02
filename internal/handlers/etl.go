@@ -11,12 +11,12 @@ import (
 
 // ETLHandler ETL处理器
 type ETLHandler struct {
-	etlService *service.ETLService
+	etlService service.ETLServiceInterface
 	servers    []scraper.ServerConfig
 }
 
 // NewETLHandler 创建ETL处理器实例
-func NewETLHandler(etlService *service.ETLService, servers []scraper.ServerConfig) *ETLHandler {
+func NewETLHandler(etlService service.ETLServiceInterface, servers []scraper.ServerConfig) *ETLHandler {
 	return &ETLHandler{
 		etlService: etlService,
 		servers:    servers,

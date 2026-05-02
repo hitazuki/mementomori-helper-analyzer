@@ -11,12 +11,12 @@ import (
 
 // ScrapeHandler 抓取处理器
 type ScrapeHandler struct {
-	scrapeService *service.ScrapeService
+	scrapeService service.ScrapeServiceInterface
 	servers       []scraper.ServerConfig
 }
 
 // NewScrapeHandler 创建抓取处理器
-func NewScrapeHandler(scrapeService *service.ScrapeService, servers []scraper.ServerConfig) *ScrapeHandler {
+func NewScrapeHandler(scrapeService service.ScrapeServiceInterface, servers []scraper.ServerConfig) *ScrapeHandler {
 	return &ScrapeHandler{
 		scrapeService: scrapeService,
 		servers:       servers,
