@@ -184,6 +184,9 @@ function app() {
         async triggerScrape() {
             if (this.scraping) return;
 
+            // 立即设置状态，避免等待 API 响应
+            this.scraping = true;
+
             const data = await API.triggerScrape();
             console.log('Scrape trigger response:', data);
 
@@ -191,24 +194,23 @@ function app() {
             // 202 Accepted: 任务启动成功
             // 409 Conflict: 任务已在运行
             if (data._httpStatus === 202 || data.status === 'running') {
-                this.scraping = true;
                 this.scrapeStatus = await API.getScrapeStatus();
                 this.pollScrapeStatus();
             } else if (data._httpStatus === 409 || data.error === '任务已在运行中') {
                 // 任务已在运行，进入轮询状态
-                this.scraping = true;
                 this.scrapeStatus = await API.getScrapeStatus();
                 this.pollScrapeStatus();
             } else if (data.error) {
+                this.scraping = false;
                 alert('Scrape ' + this.t('status.failed') + ': ' + data.error);
             } else {
                 console.warn('Unexpected scrape response, checking status...');
                 const status = await API.getScrapeStatus();
                 if (status.status === 'running') {
-                    this.scraping = true;
                     this.scrapeStatus = status;
                     this.pollScrapeStatus();
                 } else {
+                    this.scraping = false;
                     alert('Scrape ' + this.t('status.failed') + ': Unexpected response');
                 }
             }
@@ -258,6 +260,9 @@ function app() {
         async triggerETL() {
             if (this.etlProcessing) return;
 
+            // 立即设置状态，避免等待 API 响应
+            this.etlProcessing = true;
+
             const data = await API.triggerETL();
             console.log('ETL trigger response:', data);
 
@@ -265,25 +270,24 @@ function app() {
             // 202 Accepted: 任务启动成功
             // 409 Conflict: 任务已在运行
             if (data._httpStatus === 202 || data.status === 'running') {
-                this.etlProcessing = true;
                 this.etlStatus = await API.getETLStatus();
                 this.pollETLStatus();
             } else if (data._httpStatus === 409 || data.error === 'ETL task already running') {
                 // 任务已在运行（可能是定时任务或其他人触发），进入轮询状态
-                this.etlProcessing = true;
                 this.etlStatus = await API.getETLStatus();
                 console.log('ETL task already running, polling status...');
                 this.pollETLStatus();
             } else if (data.error) {
+                this.etlProcessing = false;
                 alert('ETL ' + this.t('status.failed') + ': ' + data.error);
             } else {
                 console.warn('Unexpected ETL response, checking status...');
                 const status = await API.getETLStatus();
                 if (status.status === 'running') {
-                    this.etlProcessing = true;
                     this.etlStatus = status;
                     this.pollETLStatus();
                 } else {
+                    this.etlProcessing = false;
                     alert('ETL ' + this.t('status.failed') + ': Unexpected response');
                 }
             }
