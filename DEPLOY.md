@@ -251,4 +251,24 @@ mmth-analyzer/
 2. **轻量版限制**：lite 镜像不支持抓取功能
 3. **日志文件**：确保 `log_path` 配置正确指向游戏日志
 4. **权限**：Docker 部署注意 volume 挂载权限
-5. **时区**：Docker 镜像默认 `Asia/Shanghai`
+5. **时区**：必须与 mementomori-helper 保持一致（详见下文）
+
+### 时区配置
+
+> **重要**：mmth-analyzer 和 mementomori-helper 的时区必须一致。
+
+- mementomori-helper 使用 `DateTime.Now` 输出日志时间（系统本地时间）
+- mmth-analyzer 使用 `time.Local` 解析日志时间（系统本地时间）
+- 前端使用浏览器本地时间显示日期
+
+如果时区不一致，会导致：
+
+- ETL 解析的时间戳与实际时间偏差
+- 前端显示的日期与日志日期不匹配（如凌晨时段当天状态不显示）
+
+**Docker 部署**：确保两个容器设置相同的 `TZ` 环境变量：
+
+```yaml
+environment:
+  - TZ=Asia/Shanghai
+```

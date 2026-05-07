@@ -149,6 +149,26 @@ The default configuration file is `config/app.json`. You can also pass a custom 
 - ETL does not require Chrome. It only needs access to configured log files.
 - Scraping requires the configured MMTH server to be reachable from the analyzer service.
 
+### Timezone Configuration
+
+> **Important**: The timezone of mmth-analyzer must match mementomori-helper.
+
+- mementomori-helper uses `DateTime.Now` for log timestamps (system local time)
+- mmth-analyzer uses `time.Local` to parse log timestamps (system local time)
+- The frontend uses browser local time for date display
+
+If timezones are inconsistent, you may see:
+
+- Incorrect timestamps in ETL output
+- Date mismatch in the frontend (e.g., today's status not showing during early morning hours)
+
+**Docker deployment**: Ensure both containers use the same `TZ` environment variable:
+
+```yaml
+environment:
+  - TZ=Asia/Shanghai
+```
+
 ## Development
 
 ### Tech Stack

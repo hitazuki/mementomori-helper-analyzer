@@ -7,7 +7,11 @@ const Utils = {
         if (groupType === 'week') {
             const d = new Date(dateStr);
             d.setDate(d.getDate() - d.getDay());
-            return d.toISOString().substring(0, 10) + ' 周';
+            // 使用本地时间格式化，避免 UTC 转换问题
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day} 周`;
         }
         if (groupType === 'month') return dateStr.substring(0, 7);
         return dateStr.substring(0, 10);
@@ -39,14 +43,18 @@ const Utils = {
         return Array.from(chars).sort();
     },
 
-    // 获取最近N天日期
+    // 获取最近N天日期（使用本地时区）
     getRecentDates(days) {
         const dates = [];
         const today = new Date();
         for (let i = 0; i < days; i++) {
             const d = new Date(today);
             d.setDate(d.getDate() - i);
-            dates.push(d.toISOString().substring(0, 10));
+            // 使用本地时间格式化日期，避免 toISOString() 的 UTC 转换问题
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            dates.push(`${year}-${month}-${day}`);
         }
         return dates;
     },
