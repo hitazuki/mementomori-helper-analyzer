@@ -17,7 +17,7 @@ const API = {
 
     async fetch(endpoint) {
         try {
-            const res = await fetch(endpoint);
+            const res = await fetch(endpoint, { cache: 'no-store' });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return await res.json();
         } catch (e) {
