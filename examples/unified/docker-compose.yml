@@ -26,8 +26,15 @@ services:
       - ./mmth-config/appsettings.user.json:/app/appsettings.user.json:rw
       - ./mmth-logs:/app/Logs
     # 日志持久化：重定向 stdout/stderr 到文件（追加模式）
+    # 容器启动时重命名旧日志文件，按时间戳备份
     entrypoint: ["/bin/sh", "-c"]
-    command: ["mkdir -p /app/Logs && dotnet MementoMori.WebUI.dll 2>&1 | tee -a /app/Logs/app.log"]
+    command:
+      - |
+        mkdir -p /app/Logs
+        if [ -f /app/Logs/app.log ]; then
+          mv /app/Logs/app.log "/app/Logs/app_$$(date +%Y%m%d_%H%M%S).log"
+        fi
+        dotnet MementoMori.WebUI.dll 2>&1 | tee -a /app/Logs/app.log
     # Docker 日志轮转（tee 会产生双重日志，限制 Docker 日志大小）
     logging:
       driver: "json-file"
