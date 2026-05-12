@@ -4,7 +4,21 @@ const Charts = {
     init(containerId) {
         const el = document.getElementById(containerId);
         if (!el) return null;
-        return echarts.init(el);
+
+        let chart = echarts.getInstanceByDom(el);
+        if (!chart) {
+            // 根据根节点是否包含 dark 类来判断深色模式
+            const isDarkMode = document.documentElement.classList.contains('dark');
+            chart = echarts.init(el, isDarkMode ? 'dark' : null);
+
+            // 响应式优化：使用 ResizeObserver
+            const resizeObserver = new ResizeObserver(() => {
+                // 使用 requestAnimationFrame 避免 "ResizeObserver loop limit exceeded" 错误
+                requestAnimationFrame(() => chart.resize());
+            });
+            resizeObserver.observe(el);
+        }
+        return chart;
     },
 
     // 折线图 - 用于 MMTH 历史趋势
@@ -15,6 +29,9 @@ const Charts = {
         const shouldSample = totalPoints > 50;
 
         chart.setOption({
+            backgroundColor: 'transparent',
+            color: typeof Utils !== 'undefined' ? Utils.chartColors : undefined,
+            animationDurationUpdate: 500,
             title: { text: options.title || '', left: 'center' },
             tooltip: {
                 trigger: 'axis',
@@ -47,6 +64,9 @@ const Charts = {
         if (!chart) return;
 
         chart.setOption({
+            backgroundColor: 'transparent',
+            color: typeof Utils !== 'undefined' ? Utils.chartColors : undefined,
+            animationDurationUpdate: 500,
             title: { text: options.title || '', left: 'center' },
             tooltip: {
                 trigger: 'axis',
@@ -70,6 +90,9 @@ const Charts = {
         if (!chart) return;
 
         chart.setOption({
+            backgroundColor: 'transparent',
+            color: typeof Utils !== 'undefined' ? Utils.chartColors : undefined,
+            animationDurationUpdate: 500,
             title: { text: options.title || '', left: 'center' },
             tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
             series: [{
@@ -92,6 +115,7 @@ const Charts = {
     showEmpty(chart, message) {
         if (!chart) return;
         chart.setOption({
+            backgroundColor: 'transparent',
             title: { text: message || I18n.t('chart.noData'), left: 'center', top: 'center' }
         }, true);
     },
@@ -116,7 +140,9 @@ const Charts = {
             name: item.name,
             type: 'bar',
             data: item.data,
-            itemStyle: { color: Utils.chartColors[idx % Utils.chartColors.length] },
+            large: true,
+            largeThreshold: 500,
+            // 颜色将使用全局的 Utils.chartColors，移除局部的硬编码
             emphasis: { focus: 'series' }
         }));
     },
@@ -136,12 +162,18 @@ const Charts = {
     // 柱状图 tooltip
     barTooltipFormatter(params) {
         if (!params || params.length === 0) return '';
-        let result = params[0].axisValue + '<br/>';
+        let result = `<div class="font-medium mb-1">${params[0].axisValue}</div>`;
         params.forEach(p => {
             const val = p.value;
             const sign = val >= 0 ? '+' : '';
-            const color = val >= 0 ? '#10b981' : '#ef4444';
-            result += `${p.marker} ${p.seriesName}: <span style="color:${color}">${sign}${val.toLocaleString()}</span><br/>`;
+            // 不再使用硬编码颜色，利用 Tailwind 类的思路，但在 tooltip HTML 里我们使用通用颜色或原生类
+            const colorClass = val >= 0 ? 'color: #10b981;' : 'color: #ef4444;';
+            result += `
+                <div class="flex items-center gap-2 mt-1">
+                    ${p.marker} 
+                    <span class="flex-1">${p.seriesName}:</span> 
+                    <span style="font-weight: 600; ${colorClass}">${sign}${val.toLocaleString()}</span>
+                </div>`;
         });
         return result;
     }

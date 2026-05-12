@@ -5,26 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MMTH Analyzer</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              gray: tailwind.colors.zinc
+            }
+          }
+        }
+      }
+    </script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
     <style>
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen text-gray-800 dark:text-gray-200 dark:text-gray-200 transition-colors duration-200">
     <div x-data="app()" x-init="init()" class="container mx-auto px-4 py-8">
         <!-- 头部 -->
         <header class="mb-8">
             <div class="flex justify-between items-start">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-800" x-text="t('app.title')"></h1>
-                    <p class="text-gray-600" x-text="t('app.subtitle')"></p>
+                    <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200" x-text="t('app.title')"></h1>
+                    <p class="text-gray-600 dark:text-gray-400" x-text="t('app.subtitle')"></p>
                 </div>
-                <!-- 语言选择器 -->
+                <!-- 右侧操作区：深色模式 & 语言选择器 -->
                 <div class="flex items-center gap-2">
+                    <button @click="toggleDarkMode()" 
+                            class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-400 dark:text-gray-300"
+                            :title="isDarkMode ? t('app.lightMode') : t('app.darkMode')">
+                        <svg x-show="!isDarkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                        <svg x-show="isDarkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    </button>
                     <select x-model="currentLang"
                             @change="setLanguage($event.target.value)"
-                            class="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded text-sm cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            class="bg-white dark:bg-gray-800 border dark:border-gray-600 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1.5 rounded text-sm cursor-pointer hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="zh-CN">简体中文</option>
                         <option value="zh-TW">繁體中文</option>
                         <option value="en-US">English</option>
@@ -53,20 +71,20 @@
                         x-text="etlProcessing ? t('status.processing') : t('btn.etl')">
                 </button>
             </div>
-            <div class="mt-4 bg-white rounded-lg shadow p-4">
+            <div class="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow p-4">
                 <div class="flex flex-wrap items-end gap-3">
                     <div class="min-w-0 flex-1 basis-64">
-                        <label class="block text-gray-700 mb-1 text-sm" x-text="t('schedule.scrape')"></label>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-1 text-sm" x-text="t('schedule.scrape')"></label>
                         <input x-model="schedule.cronScrape"
                                type="text"
-                               class="border rounded px-3 py-2 w-full font-mono text-sm"
+                               class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-full font-mono text-sm"
                                :placeholder="t('schedule.placeholder')">
                     </div>
                     <div class="min-w-0 flex-1 basis-64">
-                        <label class="block text-gray-700 mb-1 text-sm" x-text="t('schedule.etl')"></label>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-1 text-sm" x-text="t('schedule.etl')"></label>
                         <input x-model="schedule.cronETL"
                                type="text"
-                               class="border rounded px-3 py-2 w-full font-mono text-sm"
+                               class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-full font-mono text-sm"
                                :placeholder="t('schedule.placeholder')">
                     </div>
                     <button @click="saveSchedule()"
@@ -75,43 +93,43 @@
                             x-text="scheduleSaving ? t('status.processing') : t('schedule.save')">
                     </button>
                 </div>
-                <div class="mt-2 text-xs text-gray-500">
+                <div class="mt-2 text-xs text-gray-500 dark:text-gray-500">
                     <span x-text="t('schedule.hint')"></span>
                     <span x-show="schedule.configPath"> · <span x-text="schedule.configPath"></span></span>
                 </div>
                 <div x-show="scheduleStatus" class="mt-2 text-sm text-green-600" x-text="scheduleStatus"></div>
                 <div x-show="scheduleError" class="mt-2 text-sm text-red-600" x-text="scheduleError"></div>
             </div>
-            <p class="mt-2 text-sm text-gray-500">
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-500">
                 <span class="text-amber-600">⚠️</span> <span x-text="t('warn.scrape')"></span>
             </p>
         </div>
 
         <!-- Tab 切换 -->
-        <div class="mb-6 border-b border-gray-200">
+        <div class="mb-6 border-b dark:border-gray-700 border-gray-200 dark:border-gray-700">
             <nav class="flex space-x-8">
                 <button @click="switchTab('mmth')"
-                        :class="activeTab === 'mmth' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        :class="activeTab === 'mmth' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300'"
                         class="py-4 px-1 border-b-2 font-medium text-sm"
                         x-text="t('tab.mmth')">
                 </button>
                 <button @click="switchTab('logs')"
-                        :class="activeTab === 'logs' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        :class="activeTab === 'logs' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300'"
                         class="py-4 px-1 border-b-2 font-medium text-sm"
                         x-text="t('tab.logs')">
                 </button>
                 <button @click="switchTab('cave')"
-                        :class="activeTab === 'cave' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        :class="activeTab === 'cave' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300'"
                         class="py-4 px-1 border-b-2 font-medium text-sm"
                         x-text="t('tab.cave')">
                 </button>
                 <button @click="switchTab('challenge')"
-                        :class="activeTab === 'challenge' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        :class="activeTab === 'challenge' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300'"
                         class="py-4 px-1 border-b-2 font-medium text-sm"
                         x-text="t('tab.challenge')">
                 </button>
                 <button @click="switchTab('items')"
-                        :class="activeTab === 'items' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                        :class="activeTab === 'items' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:text-gray-300'"
                         class="py-4 px-1 border-b-2 font-medium text-sm"
                         x-text="t('tab.items')">
                 </button>
@@ -120,16 +138,16 @@
 
         <!-- MMTH 钻石监控 Tab -->
         <div x-show="activeTab === 'mmth'" x-cloak>
-            <p class="text-sm text-gray-500 mb-4" x-show="lastScrapeTime" x-text="t('mmth.lastScrapeTime', {time: lastScrapeTime})"></p>
+            <p class="text-sm text-gray-500 dark:text-gray-500 mb-4" x-show="lastScrapeTime" x-text="t('mmth.lastScrapeTime', {time: lastScrapeTime})"></p>
 
             <!-- 最新抓取数据 -->
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                 <h2 class="text-xl font-semibold mb-4" x-text="t('mmth.latestData')"></h2>
-                <div x-show="latestData.length === 0" class="text-gray-500" x-text="t('status.noData')"></div>
+                <div x-show="latestData.length === 0" class="text-gray-500 dark:text-gray-500" x-text="t('status.noData')"></div>
                 <div x-show="latestData.length > 0" class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
-                            <tr class="border-b bg-gray-50">
+                            <tr class="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                                 <th class="text-left py-3 px-4" x-text="t('col.server')"></th>
                                 <th class="text-left py-3 px-4" x-text="t('col.account')"></th>
                                 <th class="text-right py-3 px-4" x-text="t('col.totalDiamond')"></th>
@@ -141,7 +159,7 @@
                         </thead>
                         <tbody>
                             <template x-for="item in latestData" :key="item.account">
-                                <tr class="border-b hover:bg-gray-50">
+                                <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:bg-gray-800">
                                     <td class="py-3 px-4" x-text="item.server"></td>
                                     <td class="py-3 px-4 font-medium" x-text="item.account"></td>
                                     <td class="py-3 px-4 text-right font-mono" x-text="item.total.toLocaleString()"></td>
@@ -151,7 +169,7 @@
                                         <span x-show="!item.error" class="text-green-600" x-text="t('status.normal')"></span>
                                         <span x-show="item.error" class="text-red-600" x-text="item.error"></span>
                                     </td>
-                                    <td class="py-3 px-4 text-sm text-gray-500" x-text="item.timestamp"></td>
+                                    <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-500" x-text="item.timestamp"></td>
                                 </tr>
                             </template>
                         </tbody>
@@ -160,13 +178,13 @@
             </div>
 
             <!-- 历史趋势图 -->
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                 <h2 class="text-xl font-semibold mb-4" x-text="t('mmth.historyTrend')"></h2>
                 <div class="mb-4 flex flex-wrap gap-4 items-end">
                     <div>
-                        <label class="block text-gray-700 mb-1 text-sm" x-text="t('mmth.selectAccount')"></label>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-1 text-sm" x-text="t('mmth.selectAccount')"></label>
                         <select x-model="selectedAccount"
-                                class="border rounded px-3 py-2 w-48"
+                                class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-48"
                                 @change="updateMmthCharts()">
                             <option value="" x-text="t('mmth.allAccounts')"></option>
                             <template x-for="name in mmthAccountNames" :key="name">
@@ -175,9 +193,9 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-gray-700 mb-1 text-sm" x-text="t('mmth.dataType')"></label>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-1 text-sm" x-text="t('mmth.dataType')"></label>
                         <select x-model="dataType"
-                                class="border rounded px-3 py-2 w-32"
+                                class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-32"
                                 @change="updateMmthCharts()">
                             <option value="total" x-text="t('mmth.total')"></option>
                             <option value="free" x-text="t('mmth.free')"></option>
@@ -185,9 +203,9 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-gray-700 mb-1 text-sm" x-text="t('mmth.timeGroup')"></label>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-1 text-sm" x-text="t('mmth.timeGroup')"></label>
                         <select x-model="mmthTimeGroup"
-                                class="border rounded px-3 py-2 w-32"
+                                class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-32"
                                 @change="updateMmthCharts()">
                             <option value="raw" x-text="t('mmth.raw')"></option>
                             <option value="day" x-text="t('mmth.day')"></option>
@@ -202,8 +220,8 @@
             <!-- 汇总统计卡片 -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <template x-for="item in latestData.filter(i => !i.error)" :key="item.account">
-                    <div class="bg-white rounded-lg shadow p-4">
-                        <div class="text-sm text-gray-600" x-text="item.account"></div>
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+                        <div class="text-sm text-gray-600 dark:text-gray-400" x-text="item.account"></div>
                         <div class="text-2xl font-bold text-blue-600" x-text="item.total.toLocaleString()"></div>
                         <div class="text-xs text-gray-400 mt-1">
                             <span x-text="t('logs.free')"></span>: <span x-text="item.free.toLocaleString()"></span> |
@@ -217,12 +235,12 @@
         <!-- 钻石日志统计 Tab -->
         <div x-show="activeTab === 'logs'" x-cloak>
             <!-- 角色选择 -->
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                 <div class="mb-4 flex flex-wrap gap-4 items-end">
                     <div>
-                        <label class="block text-gray-700 mb-2" x-text="t('logs.selectCharacter')"></label>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('logs.selectCharacter')"></label>
                         <select x-model="selectedCharacter"
-                                class="border rounded px-3 py-2 w-full md:w-64"
+                                class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-full md:w-64"
                                 @change="updateLogsCharts()">
                             <option value="" x-text="t('logs.all')"></option>
                             <template x-for="name in characterNames" :key="name">
@@ -231,9 +249,9 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-gray-700 mb-2" x-text="t('mmth.timeGroup')"></label>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('mmth.timeGroup')"></label>
                         <select x-model="logsTimeGroup"
-                                class="border rounded px-3 py-2 w-32"
+                                class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-32"
                                 @change="updateLogsCharts()">
                             <option value="day" x-text="t('mmth.day')"></option>
                             <option value="week" x-text="t('mmth.week')"></option>
@@ -244,15 +262,15 @@
 
                 <!-- 汇总卡片 -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-blue-50 rounded p-4">
+                    <div class="bg-blue-50 dark:bg-blue-900/30 rounded p-4">
                         <div class="text-sm text-blue-600" x-text="t('logs.totalGain')"></div>
                         <div class="text-2xl font-bold text-blue-800" x-text="totalGain.toLocaleString()"></div>
                     </div>
-                    <div class="bg-red-50 rounded p-4">
+                    <div class="bg-red-50 dark:bg-red-900/30 rounded p-4">
                         <div class="text-sm text-red-600" x-text="t('logs.totalConsume')"></div>
                         <div class="text-2xl font-bold text-red-800" x-text="totalConsume.toLocaleString()"></div>
                     </div>
-                    <div class="bg-green-50 rounded p-4">
+                    <div class="bg-green-50 dark:bg-green-900/30 rounded p-4">
                         <div class="text-sm text-green-600" x-text="t('logs.netChange')"></div>
                         <div class="text-2xl font-bold text-green-800" x-text="totalNetChange.toLocaleString()"></div>
                     </div>
@@ -260,7 +278,7 @@
             </div>
 
             <!-- 图表 -->
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                 <div id="dailyChart" style="width: 100%; height: 400px;" class="mb-6"></div>
                 <div id="sourceChart" style="width: 100%; height: 300px;"></div>
             </div>
@@ -268,12 +286,12 @@
 
         <!-- 洞窟日志统计 Tab -->
         <div x-show="activeTab === 'cave'" x-cloak>
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-semibold" x-text="t('cave.title')"></h2>
                     <div class="flex items-center gap-2">
-                        <label class="text-sm text-gray-600" x-text="t('cave.displayDays')"></label>
-                        <select x-model.number="caveDays" class="border rounded px-2 py-1 text-sm w-20">
+                        <label class="text-sm text-gray-600 dark:text-gray-400" x-text="t('cave.displayDays')"></label>
+                        <select x-model.number="caveDays" class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-2 py-1 text-sm w-20">
                             <option value="5" x-text="t('cave.days', {n: 5})"></option>
                             <option value="7" x-text="t('cave.days', {n: 7})"></option>
                             <option value="14" x-text="t('cave.days', {n: 14})"></option>
@@ -282,11 +300,11 @@
                         </select>
                     </div>
                 </div>
-                <div x-show="caveCharacters.length === 0" class="text-gray-500" x-text="t('status.noData')"></div>
+                <div x-show="caveCharacters.length === 0" class="text-gray-500 dark:text-gray-500" x-text="t('status.noData')"></div>
                 <div x-show="caveCharacters.length > 0" class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="border-b bg-gray-50">
+                            <tr class="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                                 <th class="text-left py-2 px-3 font-medium" x-text="t('col.character')"></th>
                                 <template x-for="date in caveRecentDates" :key="date">
                                     <th class="text-center py-2 px-2 font-medium whitespace-nowrap" x-text="date.substring(5)"></th>
@@ -295,7 +313,7 @@
                         </thead>
                         <tbody>
                             <template x-for="char in caveCharacters" :key="char">
-                                <tr class="border-b hover:bg-gray-50">
+                                <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:bg-gray-800">
                                     <td class="py-2 px-3 font-medium whitespace-nowrap" x-text="char"></td>
                                     <template x-for="date in caveRecentDates" :key="date">
                                         <td class="py-2 px-1 text-center whitespace-nowrap">
@@ -316,12 +334,12 @@
         <!-- 战斗日志统计 Tab -->
         <div x-show="activeTab === 'challenge'" x-cloak>
             <!-- 角色选择 -->
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                 <div class="flex flex-wrap gap-4 items-end">
                     <div>
-                        <label class="block text-gray-700 mb-2" x-text="t('challenge.selectCharacter')"></label>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('challenge.selectCharacter')"></label>
                         <select x-model="challengeSelectedCharacter"
-                                class="border rounded px-3 py-2 w-full md:w-64">
+                                class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-full md:w-64">
                             <option value="" x-text="t('challenge.all')"></option>
                             <template x-for="name in challengeCharacterNames" :key="name">
                                 <option :value="name" x-text="name"></option>
@@ -329,9 +347,9 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-gray-700 mb-2" x-text="t('challenge.levelType')"></label>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('challenge.levelType')"></label>
                         <select x-model="challengeSelectedType"
-                                class="border rounded px-3 py-2 w-40">
+                                class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-40">
                             <template x-for="opt in challengeTypeOptions" :key="opt.value">
                                 <option :value="opt.value" x-text="opt.label"></option>
                             </template>
@@ -342,12 +360,12 @@
 
             <!-- 主线关卡统计 -->
             <div x-show="challengeQuestStats.length > 0"
-                 class="bg-white rounded-lg shadow p-6 mb-6">
+                 class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                 <h2 class="text-xl font-semibold mb-4" x-text="t('challenge.quest')"></h2>
                 <div class="overflow-x-auto">
                     <table class="w-full">
                         <thead>
-                            <tr class="border-b bg-gray-50">
+                            <tr class="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                                 <th class="text-left py-3 px-4" x-text="t('col.level')"></th>
                                 <th x-show="!challengeSelectedCharacter" class="text-left py-3 px-4" x-text="t('col.character')"></th>
                                 <th class="text-right py-3 px-4" x-text="t('col.attempts')"></th>
@@ -357,15 +375,15 @@
                         </thead>
                         <tbody>
                             <template x-for="item in challengeQuestStats" :key="item.level + (item.character || '')">
-                                <tr class="border-b hover:bg-gray-50">
+                                <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:bg-gray-800">
                                     <td class="py-3 px-4 font-medium" x-text="item.level"></td>
-                                    <td x-show="!challengeSelectedCharacter" class="py-3 px-4 text-gray-600" x-text="item.character"></td>
+                                    <td x-show="!challengeSelectedCharacter" class="py-3 px-4 text-gray-600 dark:text-gray-400" x-text="item.character"></td>
                                     <td class="py-3 px-4 text-right" x-text="item.attempts"></td>
                                     <td class="py-3 px-4">
                                         <span :class="item.success ? 'text-green-600' : 'text-red-600'"
                                               x-text="item.success ? t('status.cleared') : t('status.notCleared')"></span>
                                     </td>
-                                    <td class="py-3 px-4 text-sm text-gray-500" x-text="item.last_time || '-'"></td>
+                                    <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-500" x-text="item.last_time || '-'"></td>
                                 </tr>
                             </template>
                         </tbody>
@@ -376,12 +394,12 @@
             <!-- 塔统计（按类型分组） -->
             <template x-for="tower in challengeTowerTypes" :key="tower">
                 <div x-show="getChallengeTowerStats(tower).length > 0"
-                     class="bg-white rounded-lg shadow p-6 mb-6">
+                     class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                     <h2 class="text-xl font-semibold mb-4" x-text="t('challenge.tower', {name: tower})"></h2>
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <thead>
-                                <tr class="border-b bg-gray-50">
+                                <tr class="border-b dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
                                     <th class="text-left py-3 px-4" x-text="t('col.floor')"></th>
                                     <th x-show="!challengeSelectedCharacter" class="text-left py-3 px-4" x-text="t('col.character')"></th>
                                     <th class="text-right py-3 px-4" x-text="t('col.attempts')"></th>
@@ -391,15 +409,15 @@
                             </thead>
                             <tbody>
                                 <template x-for="item in getChallengeTowerStats(tower)" :key="item.level + (item.character || '')">
-                                    <tr class="border-b hover:bg-gray-50">
+                                    <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:bg-gray-800">
                                         <td class="py-3 px-4 font-medium" x-text="item.level"></td>
-                                        <td x-show="!challengeSelectedCharacter" class="py-3 px-4 text-gray-600" x-text="item.character"></td>
+                                        <td x-show="!challengeSelectedCharacter" class="py-3 px-4 text-gray-600 dark:text-gray-400" x-text="item.character"></td>
                                         <td class="py-3 px-4 text-right" x-text="item.attempts"></td>
                                         <td class="py-3 px-4">
                                             <span :class="item.success ? 'text-green-600' : 'text-red-600'"
                                                   x-text="item.success ? t('status.cleared') : t('status.notCleared')"></span>
                                         </td>
-                                        <td class="py-3 px-4 text-sm text-gray-500" x-text="item.last_time || '-'"></td>
+                                        <td class="py-3 px-4 text-sm text-gray-500 dark:text-gray-500" x-text="item.last_time || '-'"></td>
                                     </tr>
                                 </template>
                             </tbody>
@@ -412,21 +430,21 @@
         <!-- 物品日志统计 Tab -->
         <div x-show="activeTab === 'items'" x-cloak>
             <!-- 筛选条件 -->
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                 <div class="mb-4 flex flex-wrap gap-4 items-end">
                     <div>
-                        <label class="block text-gray-700 mb-2" x-text="t('items.itemType')"></label>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('items.itemType')"></label>
                         <select x-model="itemType"
-                                class="border rounded px-3 py-2 w-48"
+                                class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-48"
                                 @change="updateItemCharts()">
                             <option value="runeTicket" x-text="t('items.runeTicket')"></option>
                             <option value="upgradePanacea" x-text="t('items.upgradePanacea')"></option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-gray-700 mb-2" x-text="t('items.selectCharacter')"></label>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('items.selectCharacter')"></label>
                         <select x-model="itemSelectedCharacter"
-                                class="border rounded px-3 py-2 w-full md:w-64"
+                                class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-full md:w-64"
                                 @change="updateItemCharts()">
                             <option value="" x-text="t('items.all')"></option>
                             <template x-for="name in itemCharacterNames" :key="name">
@@ -435,9 +453,9 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-gray-700 mb-2" x-text="t('items.timeGroup')"></label>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('items.timeGroup')"></label>
                         <select x-model="itemTimeGroup"
-                                class="border rounded px-3 py-2 w-32"
+                                class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-32"
                                 @change="updateItemCharts()">
                             <option value="day" x-text="t('mmth.day')"></option>
                             <option value="week" x-text="t('mmth.week')"></option>
@@ -448,18 +466,18 @@
             </div>
 
             <!-- 统计卡片 -->
-            <div class="bg-white rounded-lg shadow p-6 mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                 <h2 class="text-xl font-semibold mb-4" x-text="itemTypeName"></h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <div class="bg-blue-50 rounded p-4">
+                    <div class="bg-blue-50 dark:bg-blue-900/30 rounded p-4">
                         <div class="text-sm text-blue-600" x-text="t('logs.totalGain')"></div>
                         <div class="text-2xl font-bold text-blue-800" x-text="(itemType === 'upgradePanacea' ? upgradePanaceaTotalGain : itemTotalGain).toLocaleString()"></div>
                     </div>
-                    <div class="bg-red-50 rounded p-4">
+                    <div class="bg-red-50 dark:bg-red-900/30 rounded p-4">
                         <div class="text-sm text-red-600" x-text="t('logs.totalConsume')"></div>
                         <div class="text-2xl font-bold text-red-800" x-text="(itemType === 'upgradePanacea' ? upgradePanaceaTotalConsume : itemTotalConsume).toLocaleString()"></div>
                     </div>
-                    <div class="bg-green-50 rounded p-4">
+                    <div class="bg-green-50 dark:bg-green-900/30 rounded p-4">
                         <div class="text-sm text-green-600" x-text="t('logs.netChange')"></div>
                         <div class="text-2xl font-bold text-green-800" x-text="(itemType === 'upgradePanacea' ? upgradePanaceaTotalNetChange : itemTotalNetChange).toLocaleString()"></div>
                     </div>
@@ -475,14 +493,14 @@
     <script src="js/i18n/glossary.js?v=30"></script>
     <script src="js/i18n/i18n.js?v=30"></script>
     <script src="js/i18n/sources.js?v=34"></script>
-    <script src="js/utils.js?v=30"></script>
+    <script src="js/utils.js?v=33"></script>
     <script src="js/api.js?v=32"></script>
-    <script src="js/charts.js?v=30"></script>
+    <script src="js/charts.js?v=33"></script>
     <script src="js/tabs/mmth.js?v=30"></script>
     <script src="js/tabs/logs.js?v=31"></script>
     <script src="js/tabs/cave.js?v=30"></script>
     <script src="js/tabs/challenge.js?v=30"></script>
     <script src="js/tabs/items.js?v=31"></script>
-    <script src="js/app.js?v=32"></script>
+    <script src="js/app.js?v=35"></script>
 </body>
 </html>

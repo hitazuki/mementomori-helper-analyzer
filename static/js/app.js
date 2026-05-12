@@ -23,6 +23,9 @@ function app() {
         // i18n 状态
         currentLang: 'zh-CN',
 
+        // 深色模式状态
+        isDarkMode: false,
+
         // MMTH 数据
         ...MmthTab.initialData,
 
@@ -55,6 +58,16 @@ function app() {
             // 初始化 i18n
             this.currentLang = I18n.init();
             document.documentElement.lang = this.currentLang;
+
+            // 初始化深色模式
+            const savedMode = localStorage.getItem('darkMode');
+            if (savedMode === 'true' || (savedMode === null && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                this.isDarkMode = true;
+                document.documentElement.classList.add('dark');
+            } else {
+                this.isDarkMode = false;
+                document.documentElement.classList.remove('dark');
+            }
 
             // 初始化来源翻译
             await SourceI18n.init();
@@ -95,7 +108,48 @@ function app() {
         // ===== 图表初始化 =====
         initCharts() {
             MmthTab.initChart(this);
-            window.addEventListener('resize', () => this.handleResize());
+            // 图表响应式现在由 charts.js 中的 ResizeObserver 处理
+        },
+
+        // 切换深色模式
+        toggleDarkMode() {
+            this.isDarkMode = !this.isDarkMode;
+            localStorage.setItem('darkMode', this.isDarkMode);
+            if (this.isDarkMode) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+            setTimeout(() => this.rebuildAllCharts(), 50); // 稍微延迟等待 Vue/Alpine 更新 DOM class
+        },
+
+        // 重建所有图表以应用新主题
+        rebuildAllCharts() {
+            // 销毁已有实例
+            const chartIds = ['historyChart', 'dailyChart', 'sourceChart', 'itemDailyChart', 'itemSourceChart'];
+            chartIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const chart = echarts.getInstanceByDom(el);
+                    if (chart) chart.dispose();
+                }
+            });
+
+            // 清空引用
+            this.historyChart = null;
+            this.dailyChart = null;
+            this.sourceChart = null;
+            this.itemDailyChart = null;
+            this.itemSourceChart = null;
+
+            // 根据当前 activeTab 重新初始化
+            if (this.activeTab === 'mmth') {
+                MmthTab.initChart(this);
+            } else if (this.activeTab === 'logs') {
+                LogsTab.initCharts(this);
+            } else if (this.activeTab === 'items') {
+                ItemsTab.initCharts(this);
+            }
         },
 
         initOrUpdateLogsCharts() {
@@ -112,14 +166,6 @@ function app() {
             } else {
                 ItemsTab.updateCharts(this);
             }
-        },
-
-        handleResize() {
-            this.historyChart?.resize();
-            this.dailyChart?.resize();
-            this.sourceChart?.resize();
-            this.itemDailyChart?.resize();
-            this.itemSourceChart?.resize();
         },
 
         // ===== 数据加载 =====

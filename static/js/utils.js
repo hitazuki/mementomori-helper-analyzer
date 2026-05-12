@@ -59,6 +59,19 @@ const Utils = {
         return dates;
     },
 
-    // 图表颜色
-    chartColors: ['#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316']
+    // 图表颜色 (高对比度、高辨识度分类色板，适合同时展示多条数据)
+    chartColors: [
+        '#3b82f6', // Blue 500
+        '#ef4444', // Red 500
+        '#10b981', // Emerald 500
+        '#f59e0b', // Amber 500
+        '#8b5cf6', // Violet 500
+        '#06b6d4', // Cyan 500
+        '#ec4899', // Pink 500
+        '#84cc16', // Lime 500
+        '#f97316', // Orange 500
+        '#6366f1', // Indigo 500
+        '#14b8a6', // Teal 500
+        '#d946ef'  // Fuchsia 500
+    ]
 };
