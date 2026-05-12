@@ -56,8 +56,8 @@ const Charts = {
                 }
             },
             series: this.buildLineSeries(options.series, shouldSample)
-        // 使用 merge 模式（false）保留图例点击状态，避免每次更新重置选中
-        }, false);
+        // replaceMerge 确保 series 数量变化时旧系列被移除，同时保留图例点击选中状态
+        }, { replaceMerge: ['series', 'xAxis'] });
     },
 
     // 柱状图 - 用于日志统计
@@ -83,8 +83,8 @@ const Charts = {
             },
             yAxis: { type: 'value' },
             series: this.buildBarSeries(options.series)
-        // merge 模式，保留图例点击隐藏状态
-        }, false);
+        // replaceMerge 确保 series 数量变化时旧系列被移除，同时保留图例点击选中状态
+        }, { replaceMerge: ['series', 'xAxis'] });
     },
 
     // 饼图 - 用于来源分布

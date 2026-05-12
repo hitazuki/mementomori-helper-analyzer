@@ -8,7 +8,8 @@ const ItemsTab = {
         itemTimeGroup: 'day',
         itemType: 'runeTicket',
         itemDailyChart: null,
-        itemSourceChart: null
+        itemSourceChart: null,
+        itemSelectedPeriod: null  // 当前点击选中的时间段（null = 全量）
     },
 
     // 加载数据
@@ -27,8 +28,9 @@ const ItemsTab = {
         this.updateCharts(instance);
     },
 
-    // 更新图表
+    // 更新图表（过滤条件改变时调用，重置时间段选择）
     updateCharts(instance) {
+        instance.itemSelectedPeriod = null;
         this.updateDailyChart(instance);
         this.updateSourceChart(instance);
     },
@@ -77,6 +79,17 @@ const ItemsTab = {
             legends: characters,
             series
         });
+
+        // 注册点击事件：点击柱子时过滤饼图至该时间段
+        const groupKeysCopy = [...groupKeys];
+        instance.itemDailyChart.off('click');
+        instance.itemDailyChart.on('click', (params) => {
+            if (params.componentType !== 'series') return;
+            const clickedKey = groupKeysCopy[params.dataIndex];
+            // 再次点击同一柱子则取消选中（恢复全量视图）
+            instance.itemSelectedPeriod = instance.itemSelectedPeriod === clickedKey ? null : clickedKey;
+            ItemsTab.updateSourceChart(instance);
+        });
     },
 
     updateSourceChart(instance) {
@@ -87,20 +100,43 @@ const ItemsTab = {
             : this.getCharacterNames(instance);
 
         const itemStats = this.getCurrentStats(instance);
+        const selectedPeriod = instance.itemSelectedPeriod;
         const sources = {};
 
-        characters.forEach(charName => {
-            for (const serverData of Object.values(itemStats || {})) {
-                if (serverData && serverData[charName] && serverData[charName].total) {
-                    const totalSources = serverData[charName].total.sources || {};
-                    Object.entries(totalSources).forEach(([sourceKey, sourceData]) => {
-                        if (!sources[sourceKey]) sources[sourceKey] = { gain: 0, consume: 0 };
-                        sources[sourceKey].gain += sourceData.gain || 0;
-                        sources[sourceKey].consume += sourceData.consume || 0;
-                    });
+        if (selectedPeriod) {
+            // 只聚合属于选中时间段的每日 sources
+            characters.forEach(charName => {
+                for (const serverData of Object.values(itemStats || {})) {
+                    if (serverData && serverData[charName]) {
+                        const daily = serverData[charName].daily || {};
+                        for (const [date, dayData] of Object.entries(daily)) {
+                            // 只处理属于选中时间段的日期
+                            if (Utils.getTimeKey(date, instance.itemTimeGroup) !== selectedPeriod) continue;
+                            const daySources = dayData.sources || {};
+                            for (const [sourceKey, sourceData] of Object.entries(daySources)) {
+                                if (!sources[sourceKey]) sources[sourceKey] = { gain: 0, consume: 0 };
+                                sources[sourceKey].gain += sourceData.gain || 0;
+                                sources[sourceKey].consume += sourceData.consume || 0;
+                            }
+                        }
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            // 全量：使用 total.sources
+            characters.forEach(charName => {
+                for (const serverData of Object.values(itemStats || {})) {
+                    if (serverData && serverData[charName] && serverData[charName].total) {
+                        const totalSources = serverData[charName].total.sources || {};
+                        Object.entries(totalSources).forEach(([sourceKey, sourceData]) => {
+                            if (!sources[sourceKey]) sources[sourceKey] = { gain: 0, consume: 0 };
+                            sources[sourceKey].gain += sourceData.gain || 0;
+                            sources[sourceKey].consume += sourceData.consume || 0;
+                        });
+                    }
+                }
+            });
+        }
 
         const lang = I18n.getLanguage();
         const data = Object.entries(sources)
@@ -111,8 +147,10 @@ const ItemsTab = {
             .filter(d => d.value > 0)
             .sort((a, b) => b.value - a.value);
 
+        // 标题显示当前选中的时间段（若有）
+        const periodLabel = selectedPeriod ? ` · ${selectedPeriod}` : '';
         Charts.createPieChart(instance.itemSourceChart, {
-            title: I18n.t('chart.sourceDistribution'),
+            title: I18n.t('chart.sourceDistribution') + periodLabel,
             data
         });
     },
