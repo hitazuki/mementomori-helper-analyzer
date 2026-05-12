@@ -38,11 +38,11 @@ const Charts = {
                 formatter: this.lineTooltipFormatter
             },
             legend: { data: (options.series || []).map(s => s.name), bottom: 0, type: 'scroll' },
-            grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+            grid: { left: '3%', right: '4%', bottom: '8%', top: '10%', containLabel: true },
             toolbox: { feature: { saveAsImage: { title: I18n.t('chart.saveAsImage') } }, right: 20 },
+            // 仅保留鼠标滚轮/触控板缩放，移除底部滑条
             dataZoom: [
-                { type: 'inside', start: 0, end: 100 },
-                { type: 'slider', start: 0, end: 100, bottom: 40, height: 20 }
+                { type: 'inside', start: 0, end: 100 }
             ],
             xAxis: {
                 type: 'category',
@@ -56,7 +56,8 @@ const Charts = {
                 }
             },
             series: this.buildLineSeries(options.series, shouldSample)
-        }, true);
+        // 使用 merge 模式（false）保留图例点击状态，避免每次更新重置选中
+        }, false);
     },
 
     // 柱状图 - 用于日志统计
@@ -74,7 +75,7 @@ const Charts = {
                 formatter: this.barTooltipFormatter
             },
             legend: { data: (options.series || []).map(s => s.name), bottom: 0, type: 'scroll' },
-            grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+            grid: { left: '3%', right: '4%', bottom: '8%', top: '10%', containLabel: true },
             xAxis: {
                 type: 'category',
                 data: options.xAxis || [],
@@ -82,7 +83,8 @@ const Charts = {
             },
             yAxis: { type: 'value' },
             series: this.buildBarSeries(options.series)
-        }, true);
+        // merge 模式，保留图例点击隐藏状态
+        }, false);
     },
 
     // 饼图 - 用于来源分布
