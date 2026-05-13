@@ -90,18 +90,40 @@ function app() {
         // ===== Tab 切换 =====
         switchTab(tab) {
             this.activeTab = tab;
-            setTimeout(() => this.handleTabSwitch(tab), 150);
+            // 1. Alpine.js 是异步更新 DOM 的，必须先用 $nextTick 等待 DOM 真实渲染出 display: block
+            this.$nextTick(() => {
+                // 2. 此时 DOM 虽有 block，但浏览器可能还没完成物理像素级的排版（Layout）。
+                // 必须再用 requestAnimationFrame 等一帧，确保 clientWidth 绝对不为 0。
+                // 否则 ECharts 会在宽高为 0 时构建坐标系失败，从而导致内部抛出 coordSys.type 的 TypeError！
+                requestAnimationFrame(() => {
+                    this.handleTabSwitch(tab);
+                });
+            });
         },
 
         handleTabSwitch(tab) {
-            if (tab === 'mmth' && this.historyChart) {
-                this.historyChart.resize();
+            if (tab === 'mmth') {
+                const historyChart = Charts.init('historyChart');
+                if (historyChart) historyChart.resize();
             }
             if (tab === 'logs') {
                 this.initOrUpdateLogsCharts();
+                // 在图表 setOption 后再次触发布局重算，保障内部坐标系绝对正确
+                requestAnimationFrame(() => {
+                    const dailyChart = Charts.init('dailyChart');
+                    const sourceChart = Charts.init('sourceChart');
+                    if (dailyChart) dailyChart.resize();
+                    if (sourceChart) sourceChart.resize();
+                });
             }
             if (tab === 'items') {
                 this.initOrUpdateItemCharts();
+                requestAnimationFrame(() => {
+                    const itemDailyChart = Charts.init('itemDailyChart');
+                    const itemSourceChart = Charts.init('itemSourceChart');
+                    if (itemDailyChart) itemDailyChart.resize();
+                    if (itemSourceChart) itemSourceChart.resize();
+                });
             }
         },
 
@@ -126,7 +148,7 @@ function app() {
         // 重建所有图表以应用新主题
         rebuildAllCharts() {
             // 销毁已有实例
-            const chartIds = ['historyChart', 'dailyChart', 'sourceChart', 'itemDailyChart', 'itemSourceChart'];
+            const chartIds = ['historyChart', 'dailyChart', 'sourceChart', 'itemDailyChart', 'itemSourceChart', 'caveChart', 'challengeChart'];
             chartIds.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
@@ -135,13 +157,6 @@ function app() {
                 }
             });
 
-            // 清空引用
-            this.historyChart = null;
-            this.dailyChart = null;
-            this.sourceChart = null;
-            this.itemDailyChart = null;
-            this.itemSourceChart = null;
-
             // 根据当前 activeTab 重新初始化
             if (this.activeTab === 'mmth') {
                 MmthTab.initChart(this);
@@ -149,22 +164,28 @@ function app() {
                 LogsTab.initCharts(this);
             } else if (this.activeTab === 'items') {
                 ItemsTab.initCharts(this);
+            } else if (this.activeTab === 'cave') {
+                CaveTab.initCharts(this);
+            } else if (this.activeTab === 'challenge') {
+                ChallengeTab.initCharts(this);
             }
         },
 
         initOrUpdateLogsCharts() {
-            if (!this.dailyChart) {
-                LogsTab.initCharts(this);
-            } else {
+            const chart = Charts.init('dailyChart');
+            if (chart.getOption()) {
                 LogsTab.updateCharts(this);
+            } else {
+                LogsTab.initCharts(this);
             }
         },
 
         initOrUpdateItemCharts() {
-            if (!this.itemDailyChart) {
-                ItemsTab.initCharts(this);
-            } else {
+            const chart = Charts.init('itemDailyChart');
+            if (chart.getOption()) {
                 ItemsTab.updateCharts(this);
+            } else {
+                ItemsTab.initCharts(this);
             }
         },
 

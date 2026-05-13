@@ -7,8 +7,7 @@ const MmthTab = {
         selectedAccount: '',
         dataType: 'total',
         mmthTimeGroup: 'day',
-        lastScrapeTime: '',
-        historyChart: null
+        lastScrapeTime: ''
     },
 
     // 加载数据
@@ -26,20 +25,20 @@ const MmthTab = {
 
     // 初始化图表
     initChart(instance) {
-        instance.historyChart = Charts.init('historyChart');
         this.updateChart(instance);
     },
 
     // 更新图表
     updateChart(instance) {
-        if (!instance.historyChart) return;
+        const chart = Charts.init('historyChart');
+        if (!chart) return;
 
         const accounts = instance.selectedAccount
             ? [instance.selectedAccount]
             : Object.keys(instance.historyData || {});
 
         if (accounts.length === 0 || accounts[0] === undefined) {
-            Charts.showEmpty(instance.historyChart);
+            Charts.showEmpty(chart);
             return;
         }
 
@@ -85,7 +84,7 @@ const MmthTab = {
             data: groupKeys.map(key => grouped[key][account] ?? null)
         }));
 
-        Charts.createLineChart(instance.historyChart, {
+        Charts.createLineChart(chart, {
             title: I18n.t('chart.diamondTrend'),
             xAxis: xAxisData,
             legends: accounts,

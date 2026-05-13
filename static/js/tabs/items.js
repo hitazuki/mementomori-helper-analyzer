@@ -7,8 +7,6 @@ const ItemsTab = {
         itemSelectedCharacter: '',
         itemTimeGroup: 'day',
         itemType: 'runeTicket',
-        itemDailyChart: null,
-        itemSourceChart: null,
         itemSelectedPeriod: null  // 当前点击选中的时间段（null = 全量）
     },
 
@@ -23,8 +21,6 @@ const ItemsTab = {
 
     // 初始化图表
     initCharts(instance) {
-        instance.itemDailyChart = Charts.init('itemDailyChart');
-        instance.itemSourceChart = Charts.init('itemSourceChart');
         this.updateCharts(instance);
     },
 
@@ -36,14 +32,15 @@ const ItemsTab = {
     },
 
     updateDailyChart(instance) {
-        if (!instance.itemDailyChart) return;
+        const chart = Charts.init('itemDailyChart');
+        if (!chart) return;
 
         const characters = instance.itemSelectedCharacter
             ? [instance.itemSelectedCharacter]
             : this.getCharacterNames(instance);
 
         if (characters.length === 0) {
-            Charts.showEmpty(instance.itemDailyChart);
+            Charts.showEmpty(chart);
             return;
         }
 
@@ -73,7 +70,7 @@ const ItemsTab = {
             })
         }));
 
-        Charts.createBarChart(instance.itemDailyChart, {
+        Charts.createBarChart(chart, {
             title: this.getTypeName(instance) + ' ' + I18n.t('chart.dailyChange'),
             xAxis: groupKeys,
             legends: characters,
@@ -82,8 +79,7 @@ const ItemsTab = {
 
         // 注册点击事件：点击柱子时过滤饼图至该时间段
         const groupKeysCopy = [...groupKeys];
-        instance.itemDailyChart.off('click');
-        instance.itemDailyChart.on('click', (params) => {
+        chart.on('click', (params) => {
             if (params.componentType !== 'series') return;
             const clickedKey = groupKeysCopy[params.dataIndex];
             // 再次点击同一柱子则取消选中（恢复全量视图）
@@ -93,7 +89,8 @@ const ItemsTab = {
     },
 
     updateSourceChart(instance) {
-        if (!instance.itemSourceChart) return;
+        const chart = Charts.init('itemSourceChart');
+        if (!chart) return;
 
         const characters = instance.itemSelectedCharacter
             ? [instance.itemSelectedCharacter]
@@ -149,7 +146,7 @@ const ItemsTab = {
 
         // 标题显示当前选中的时间段（若有）
         const periodLabel = selectedPeriod ? ` · ${selectedPeriod}` : '';
-        Charts.createPieChart(instance.itemSourceChart, {
+        Charts.createPieChart(chart, {
             title: I18n.t('chart.sourceDistribution') + periodLabel,
             data
         });

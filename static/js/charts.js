@@ -7,18 +7,39 @@ const Charts = {
 
         let chart = echarts.getInstanceByDom(el);
         if (!chart) {
-            // 根据根节点是否包含 dark 类来判断深色模式
             const isDarkMode = document.documentElement.classList.contains('dark');
-            chart = echarts.init(el, isDarkMode ? 'dark' : null);
+            // 提供兜底宽高，防止在 display: none 或尚未 Layout 完成时初始化，
+            // 导致 ECharts 内部 width=0 从而无法构建坐标系，最终引发 coordSys.type 的 TypeError
+            chart = echarts.init(el, isDarkMode ? 'dark' : null, {
+                width: el.clientWidth > 0 ? undefined : (el.style.width === '100%' ? 800 : parseInt(el.style.width) || 800),
+                height: el.clientHeight > 0 ? undefined : (parseInt(el.style.height) || 400)
+            });
 
             // 响应式优化：使用 ResizeObserver
             const resizeObserver = new ResizeObserver(() => {
-                // 使用 requestAnimationFrame 避免 "ResizeObserver loop limit exceeded" 错误
                 requestAnimationFrame(() => chart.resize());
             });
             resizeObserver.observe(el);
         }
         return chart;
+    },
+
+    // 补齐 Series 数量（解决 ECharts 5 默认 merge 模式下减少 series 数量时旧数据残留的问题）
+    _padSeries(chart, newSeries, type) {
+        const currentOption = chart.getOption();
+        const currentSeriesCount = (currentOption && currentOption.series) ? currentOption.series.length : 0;
+        
+        const paddedSeries = [...newSeries];
+        if (paddedSeries.length < currentSeriesCount) {
+            for (let i = paddedSeries.length; i < currentSeriesCount; i++) {
+                paddedSeries.push({
+                    name: '',
+                    type: type,
+                    data: []
+                });
+            }
+        }
+        return paddedSeries;
     },
 
     // 折线图 - 用于 MMTH 历史趋势
@@ -27,6 +48,9 @@ const Charts = {
 
         const totalPoints = options.xAxis?.length || 0;
         const shouldSample = totalPoints > 50;
+        
+        const baseSeries = this.buildLineSeries(options.series, shouldSample);
+        const finalSeries = this._padSeries(chart, baseSeries, 'line');
 
         chart.setOption({
             backgroundColor: 'transparent',
@@ -35,15 +59,17 @@ const Charts = {
             title: { text: options.title || '', left: 'center' },
             tooltip: {
                 trigger: 'axis',
-                formatter: this.lineTooltipFormatter
+                formatter: this.lineTooltipFormatter,
+                confine: true
             },
-            legend: { data: (options.series || []).map(s => s.name), bottom: 0, type: 'scroll' },
+            legend: { 
+                data: (options.series || []).map(s => s.name), 
+                bottom: 0, 
+                type: 'scroll' 
+            },
             grid: { left: '3%', right: '4%', bottom: '8%', top: '10%', containLabel: true },
             toolbox: { feature: { saveAsImage: { title: I18n.t('chart.saveAsImage') } }, right: 20 },
-            // 仅保留鼠标滚轮/触控板缩放，移除底部滑条
-            dataZoom: [
-                { type: 'inside', start: 0, end: 100 }
-            ],
+            dataZoom: [{ type: 'inside', start: 0, end: 100 }],
             xAxis: {
                 type: 'category',
                 data: options.xAxis || [],
@@ -55,14 +81,16 @@ const Charts = {
                     formatter: v => v >= 100000 ? (v / 1000).toFixed(0) + 'k' : v
                 }
             },
-            series: this.buildLineSeries(options.series, shouldSample)
-        // replaceMerge 确保 series 数量变化时旧系列被移除，同时保留图例点击选中状态
-        }, { replaceMerge: ['series', 'xAxis'] });
+            series: finalSeries
+        }); // 默认 merge
     },
 
     // 柱状图 - 用于日志统计
     createBarChart(chart, options) {
         if (!chart) return;
+
+        const baseSeries = this.buildBarSeries(options.series);
+        const finalSeries = this._padSeries(chart, baseSeries, 'bar');
 
         chart.setOption({
             backgroundColor: 'transparent',
@@ -72,9 +100,14 @@ const Charts = {
             tooltip: {
                 trigger: 'axis',
                 axisPointer: { type: 'shadow' },
-                formatter: this.barTooltipFormatter
+                formatter: this.barTooltipFormatter,
+                confine: true
             },
-            legend: { data: (options.series || []).map(s => s.name), bottom: 0, type: 'scroll' },
+            legend: { 
+                data: (options.series || []).map(s => s.name), 
+                bottom: 0, 
+                type: 'scroll' 
+            },
             grid: { left: '3%', right: '4%', bottom: '8%', top: '10%', containLabel: true },
             xAxis: {
                 type: 'category',
@@ -82,9 +115,8 @@ const Charts = {
                 axisLabel: { rotate: 45 }
             },
             yAxis: { type: 'value' },
-            series: this.buildBarSeries(options.series)
-        // replaceMerge 确保 series 数量变化时旧系列被移除，同时保留图例点击选中状态
-        }, { replaceMerge: ['series', 'xAxis'] });
+            series: finalSeries
+        }); // 默认 merge
     },
 
     // 饼图 - 用于来源分布
@@ -96,7 +128,7 @@ const Charts = {
             color: typeof Utils !== 'undefined' ? Utils.chartColors : undefined,
             animationDurationUpdate: 500,
             title: { text: options.title || '', left: 'center' },
-            tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+            tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)', confine: true },
             series: [{
                 type: 'pie',
                 radius: '60%',
@@ -110,7 +142,7 @@ const Charts = {
                     }
                 }
             }]
-        }, true);
+        }); // 默认 merge
     },
 
     // 空图表
@@ -118,8 +150,9 @@ const Charts = {
         if (!chart) return;
         chart.setOption({
             backgroundColor: 'transparent',
-            title: { text: message || I18n.t('chart.noData'), left: 'center', top: 'center' }
-        }, true);
+            title: { text: message || I18n.t('chart.noData'), left: 'center', top: 'center' },
+            series: []
+        }); // 默认 merge
     },
 
     // 构建折线图系列
@@ -132,19 +165,19 @@ const Charts = {
             symbolSize: shouldSample ? 0 : 6,
             sampling: shouldSample ? 'lttb' : 'none',
             data: item.data,
-            connectNulls: true
+            connectNulls: true,
+            emphasis: { focus: 'series' }
         }));
     },
 
     // 构建柱状图系列
-    buildBarSeries(seriesData, legends) {
-        return (seriesData || []).map((item, idx) => ({
+    buildBarSeries(seriesData) {
+        return (seriesData || []).map(item => ({
             name: item.name,
             type: 'bar',
             data: item.data,
             large: true,
             largeThreshold: 500,
-            // 颜色将使用全局的 Utils.chartColors，移除局部的硬编码
             emphasis: { focus: 'series' }
         }));
     },
@@ -154,7 +187,7 @@ const Charts = {
         if (!params || params.length === 0) return '';
         let result = params[0]?.axisValue + '<br/>';
         params.forEach(p => {
-            if (p.value !== null) {
+            if (p.value != null && p.seriesName) { // 使用 != null 同时规避 null 和 undefined
                 result += `${p.marker} ${p.seriesName}: ${p.value.toLocaleString()}<br/>`;
             }
         });
@@ -166,14 +199,14 @@ const Charts = {
         if (!params || params.length === 0) return '';
         let result = `<div class="font-medium mb-1">${params[0].axisValue}</div>`;
         params.forEach(p => {
+            if (!p.seriesName || p.value == null) return; // 忽略空白补齐的 series 和 null/undefined 数据
             const val = p.value;
             const sign = val >= 0 ? '+' : '';
-            // 不再使用硬编码颜色，利用 Tailwind 类的思路，但在 tooltip HTML 里我们使用通用颜色或原生类
             const colorClass = val >= 0 ? 'color: #10b981;' : 'color: #ef4444;';
             result += `
                 <div class="flex items-center gap-2 mt-1">
-                    ${p.marker} 
-                    <span class="flex-1">${p.seriesName}:</span> 
+                    ${p.marker}
+                    <span class="flex-1">${p.seriesName}:</span>
                     <span style="font-weight: 600; ${colorClass}">${sign}${val.toLocaleString()}</span>
                 </div>`;
         });
