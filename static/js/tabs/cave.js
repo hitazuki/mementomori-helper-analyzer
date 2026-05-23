@@ -31,13 +31,42 @@ const CaveTab = {
         return Utils.getNestedCharacterNames(instance.caveStats);
     },
 
-    // 获取状态
+    // 获取指定角色指定日期的状态
     getStatus(instance, charName, date) {
         for (const serverData of Object.values(instance.caveStats || {})) {
             if (serverData && serverData[charName] && serverData[charName][date]) {
                 return serverData[charName][date].status;
             }
         }
+        return null;
+    },
+
+    // 获取今天所有角色的整体状态
+    // 优先级：有任一角色 error → 'error'；全部 finished → 'finished'；有 started → 'started'；无记录 → null
+    getTodayOverallStatus(instance) {
+        const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+        const stats = instance.caveStats || {};
+        let hasAny = false;
+        let hasError = false;
+        let hasStarted = false;
+        let allFinished = true;
+
+        for (const serverData of Object.values(stats)) {
+            if (!serverData) continue;
+            for (const charData of Object.values(serverData)) {
+                if (!charData || !charData[today]) continue;
+                hasAny = true;
+                const status = charData[today].status;
+                if (status === 'error') hasError = true;
+                if (status === 'started') hasStarted = true;
+                if (status !== 'finished') allFinished = false;
+            }
+        }
+
+        if (!hasAny) return null;
+        if (hasError) return 'error';
+        if (allFinished) return 'finished';
+        if (hasStarted) return 'started';
         return null;
     },
 

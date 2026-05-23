@@ -476,6 +476,11 @@ function app() {
             return CaveTab.getCharacters(this);
         },
 
+        // 今日洞窟整体状态（用于 Header 常驻标识）
+        get caveOverallStatus() {
+            return CaveTab.getTodayOverallStatus(this);
+        },
+
         getCaveStatus(charName, date) {
             return CaveTab.getStatus(this, charName, date);
         },
