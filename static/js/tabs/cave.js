@@ -41,33 +41,47 @@ const CaveTab = {
         return null;
     },
 
-    // 获取今天所有角色的整体状态
-    // 优先级：有任一角色 error → 'error'；全部 finished → 'finished'；有 started → 'started'；无记录 → null
-    getTodayOverallStatus(instance) {
-        const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+    // 获取所有角色最近一次执行的整体状态摘要
+    // 每个角色取其最新日期的记录，跨角色汇总：异常 > 未完成 > 已完成
+    // 同时返回所有角色中最早的最后执行日期（最慢角色），供 Header 展示
+    // 返回 { status, date } 或 null（无任何记录）
+    getOverallStatus(instance) {
         const stats = instance.caveStats || {};
-        let hasAny = false;
-        let hasError = false;
-        let hasStarted = false;
-        let allFinished = true;
+
+        // 收集每个角色的最新记录：{ status, latestDate }
+        const charSummaries = [];
 
         for (const serverData of Object.values(stats)) {
             if (!serverData) continue;
-            for (const charData of Object.values(serverData)) {
-                if (!charData || !charData[today]) continue;
-                hasAny = true;
-                const status = charData[today].status;
-                if (status === 'error') hasError = true;
-                if (status === 'started') hasStarted = true;
-                if (status !== 'finished') allFinished = false;
+            for (const [charName, charData] of Object.entries(serverData)) {
+                if (!charData) continue;
+                // 找该角色最新的日期
+                const dates = Object.keys(charData).sort();
+                if (dates.length === 0) continue;
+                const latestDate = dates[dates.length - 1];
+                const status = charData[latestDate].status;
+                charSummaries.push({ charName, status, latestDate });
             }
         }
 
-        if (!hasAny) return null;
-        if (hasError) return 'error';
-        if (allFinished) return 'finished';
-        if (hasStarted) return 'started';
-        return null;
+        if (charSummaries.length === 0) return null;
+
+        // 汇总状态：异常 > 未完成（有任一角色未完成即为未完成）> 已完成
+        // 使用标志位遍历全部角色，避免 break 导致遗漏
+        let hasError = false;
+        let hasStarted = false;
+        for (const { status } of charSummaries) {
+            if (status === 'error') hasError = true;
+            if (status === 'started') hasStarted = true;
+        }
+        const overallStatus = hasError ? 'error' : hasStarted ? 'started' : 'finished';
+
+        // 所有角色最后执行日期中最早的（最慢角色）
+        const earliestDate = charSummaries
+            .map(s => s.latestDate)
+            .sort()[0];
+
+        return { status: overallStatus, date: earliestDate };
     },
 
     getStatusText(instance, charName, date) {

@@ -37,13 +37,13 @@
                 <div>
                     <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200" x-text="t('app.title')"></h1>
                     <p class="text-gray-600 dark:text-gray-400" x-text="t('app.subtitle')"></p>
-                    <!-- 洞窟今日状态常驻标识 -->
+                    <!-- 洞窟最近执行状态常驻标识 -->
                     <div x-show="caveOverallStatus !== null" class="mt-2 flex items-center gap-1.5"
                         @click="switchTab('cave')"
                         title="前往洞窟日志"
                         style="cursor:pointer; width:fit-content;">
                         <!-- error -->
-                        <template x-if="caveOverallStatus === 'error'">
+                        <template x-if="caveOverallStatus && caveOverallStatus.status === 'error'">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 ring-1 ring-red-300 dark:ring-red-700 select-none">
                                 <span class="relative flex h-2 w-2">
                                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -52,24 +52,27 @@
                                 <span x-text="t('cave.statusLabel')"></span>
                                 <span>·</span>
                                 <span x-text="t('cave.error')"></span>
+                                <span class="opacity-60" x-text="caveOverallStatus.date ? caveOverallStatus.date.substring(5) : ''"></span>
                             </span>
                         </template>
                         <!-- finished -->
-                        <template x-if="caveOverallStatus === 'finished'">
+                        <template x-if="caveOverallStatus && caveOverallStatus.status === 'finished'">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 ring-1 ring-green-300 dark:ring-green-700 select-none">
                                 <span class="inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                                 <span x-text="t('cave.statusLabel')"></span>
                                 <span>·</span>
                                 <span x-text="t('cave.finished')"></span>
+                                <span class="opacity-60" x-text="caveOverallStatus.date ? caveOverallStatus.date.substring(5) : ''"></span>
                             </span>
                         </template>
                         <!-- started / unfinished -->
-                        <template x-if="caveOverallStatus === 'started'">
+                        <template x-if="caveOverallStatus && caveOverallStatus.status === 'started'">
                             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300 ring-1 ring-yellow-300 dark:ring-yellow-700 select-none">
                                 <span class="inline-flex rounded-full h-2 w-2 bg-yellow-500"></span>
                                 <span x-text="t('cave.statusLabel')"></span>
                                 <span>·</span>
                                 <span x-text="t('cave.unfinished')"></span>
+                                <span class="opacity-60" x-text="caveOverallStatus.date ? caveOverallStatus.date.substring(5) : ''"></span>
                             </span>
                         </template>
                     </div>
@@ -569,10 +572,10 @@
     <script crossorigin="anonymous" src="js/charts.js?v=60"></script>
     <script src="js/tabs/mmth.js?v=31"></script>
     <script src="js/tabs/logs.js?v=33"></script>
-    <script src="js/tabs/cave.js?v=31"></script>
+    <script src="js/tabs/cave.js?v=33"></script>
     <script src="js/tabs/challenge.js?v=30"></script>
     <script src="js/tabs/items.js?v=34"></script>
-    <script src="js/app.js?v=44"></script>
+    <script src="js/app.js?v=45"></script>
 </body>
 
 </html>

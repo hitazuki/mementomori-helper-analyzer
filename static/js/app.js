@@ -476,9 +476,10 @@ function app() {
             return CaveTab.getCharacters(this);
         },
 
-        // 今日洞窟整体状态（用于 Header 常驻标识）
+        // 所有角色最近执行的整体状态摘要（用于 Header 常驻标识）
+        // 返回 { status, date } 或 null
         get caveOverallStatus() {
-            return CaveTab.getTodayOverallStatus(this);
+            return CaveTab.getOverallStatus(this);
         },
 
         getCaveStatus(charName, date) {
