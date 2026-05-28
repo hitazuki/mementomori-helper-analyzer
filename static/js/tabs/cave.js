@@ -13,6 +13,9 @@ const CaveTab = {
 
     // Getters
     getRecentDates(instance) {
+        // 强制依赖 caveStats，使其在数据刷新时重新计算（哪怕 caveDays !== 0）
+        const _ = instance.caveStats;
+
         if (instance.caveDays === 0) {
             const allDates = new Set();
             for (const serverData of Object.values(instance.caveStats || {})) {
