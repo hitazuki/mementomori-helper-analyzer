@@ -1,0 +1,9 @@
+# Output and Local configs
+output/
+docs/mysterium_scoring_template.md
+
+# Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
