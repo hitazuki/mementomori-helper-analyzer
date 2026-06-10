@@ -18,6 +18,22 @@ const translations = {
     'status.scraping': '抓取中...',
     'status.processing': '处理中...',
 
+    // 视图切换
+    'view.trend': '趋势分析',
+    'view.compare': '角色横向对比',
+
+    // 对比视图
+    'compare.topGain': '🏆 肝帝 / 欧皇',
+    'compare.topConsume': '💸 消费主力',
+    'compare.topNet': '📈 最强囤鼠',
+    'compare.chartTitle': '角色数值对比',
+    'compare.tableTitle': '详细数据对比 (点击表头排序)',
+    'compare.metricGain': '按获取排序',
+    'compare.metricConsume': '按消耗排序',
+    'compare.metricNetChange': '按净变化排序',
+    'compare.metricAvgGain': '按日均获取排序',
+    'compare.days': '记录天数',
+
     // 警告
     'warn.scrape': '抓取功能需要 Chrome/Chromium 浏览器（Docker 镜像已内置）',
 
@@ -133,6 +149,22 @@ const translations = {
     'status.scraping': '抓取中...',
     'status.processing': '處理中...',
 
+    // 視圖切換
+    'view.trend': '趨勢分析',
+    'view.compare': '角色橫向對比',
+
+    // 對比視圖
+    'compare.topGain': '🏆 肝帝 / 歐皇',
+    'compare.topConsume': '💸 消費主力',
+    'compare.topNet': '📈 最強囤鼠',
+    'compare.chartTitle': '角色數值對比',
+    'compare.tableTitle': '詳細數據對比 (點擊表頭排序)',
+    'compare.metricGain': '按獲取排序',
+    'compare.metricConsume': '按消耗排序',
+    'compare.metricNetChange': '按淨變化排序',
+    'compare.metricAvgGain': '按日均獲取排序',
+    'compare.days': '記錄天數',
+
     // 警告
     'warn.scrape': '抓取功能需要 Chrome/Chromium 瀏覽器（Docker 映像已內置）',
 
@@ -219,7 +251,7 @@ const translations = {
 
     // 物品 Tab
     'items.itemType': '物品類型:',
-    'items.runeTicket': '餅乾 (Rune Ticket)',
+    'items.runeTicket': '餅干 (Rune Ticket)',
     'items.upgradePanacea': '紅水 (Upgrade Panacea)',
     'items.selectCharacter': '選擇角色:',
     'items.all': '全部',
@@ -243,10 +275,26 @@ const translations = {
     'btn.scrape': 'Scrape MMTH Diamonds',
     'btn.etl': 'Update Log Data',
 
-    // Loading status
+    // Loading & Status
     'status.loading': 'Loading...',
     'status.scraping': 'Scraping...',
     'status.processing': 'Processing...',
+
+    // Views
+    'view.trend': 'Trend View',
+    'view.compare': 'Compare Characters',
+
+    // Compare View
+    'compare.topGain': '🏆 Top Earner',
+    'compare.topConsume': '💸 Top Spender',
+    'compare.topNet': '📈 Top Hoarder',
+    'compare.chartTitle': 'Character Comparison',
+    'compare.tableTitle': 'Detailed Comparison (Click headers to sort)',
+    'compare.metricGain': 'Sort by Gain',
+    'compare.metricConsume': 'Sort by Consume',
+    'compare.metricNetChange': 'Sort by Net Change',
+    'compare.metricAvgGain': 'Sort by Avg Gain',
+    'compare.days': 'Days Recorded',
 
     // Warning
     'warn.scrape': 'Scraping requires Chrome/Chromium browser (included in Docker image)',
@@ -358,10 +406,26 @@ const translations = {
     'btn.scrape': 'MMTHダイヤ取得',
     'btn.etl': 'ログデータ更新',
 
-    // 読み込み状態
+    // ステータス
     'status.loading': '読み込み中...',
-    'status.scraping': '取得中...',
+    'status.scraping': 'スクレイピング中...',
     'status.processing': '処理中...',
+
+    // ビュー
+    'view.trend': 'トレンド分析',
+    'view.compare': 'キャラクター比較',
+
+    // 比較ビュー
+    'compare.topGain': '🏆 獲得トップ',
+    'compare.topConsume': '💸 消費トップ',
+    'compare.topNet': '📈 貯蓄トップ',
+    'compare.chartTitle': 'キャラクター比較',
+    'compare.tableTitle': '詳細データ比較 (ヘッダーをクリックして並べ替え)',
+    'compare.metricGain': '獲得順',
+    'compare.metricConsume': '消費順',
+    'compare.metricNetChange': '純変化順',
+    'compare.metricAvgGain': '1日平均獲得順',
+    'compare.days': '記録日数',
 
     // 警告
     'warn.scrape': '取得機能には Chrome/Chromium ブラウザが必要です（Dockerイメージに内蔵）',

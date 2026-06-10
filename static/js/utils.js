@@ -34,13 +34,56 @@ const Utils = {
 
     // 从嵌套结构获取角色列表 (cave, challenge, items)
     getNestedCharacterNames(stats) {
-        const chars = new Set();
-        for (const serverData of Object.values(stats || {})) {
-            for (const charName of Object.keys(serverData || {})) {
-                chars.add(charName);
+        const charSet = new Set();
+        Object.values(stats || {}).forEach(serverData => {
+            Object.keys(serverData || {}).forEach(name => charSet.add(name));
+        });
+        return Array.from(charSet).sort();
+    },
+
+    // 按角色聚合数据，用于横向对比视图
+    aggregateByCharacter(stats, characters) {
+        const result = {};
+        characters.forEach(charName => {
+            result[charName] = {
+                gain: 0,
+                consume: 0,
+                daysCount: 0
+            };
+        });
+
+        // 遍历所有角色
+        for (const charName of characters) {
+            const charData = stats[charName];
+            if (!charData || !charData.daily) continue;
+
+            const daily = charData.daily;
+            
+            let gain = 0;
+            let consume = 0;
+            let validDays = 0;
+
+            for (const dayData of Object.values(daily)) {
+                gain += dayData.gain || 0;
+                consume += dayData.consume || 0;
+                validDays++;
             }
+
+            result[charName].gain += gain;
+            result[charName].consume += consume;
+            result[charName].daysCount += validDays;
         }
-        return Array.from(chars).sort();
+
+        // 计算衍生数据
+        characters.forEach(charName => {
+            const data = result[charName];
+            data.netChange = data.gain - data.consume;
+            data.avgGain = data.daysCount > 0 ? Math.round(data.gain / data.daysCount) : 0;
+            data.avgConsume = data.daysCount > 0 ? Math.round(data.consume / data.daysCount) : 0;
+            data.avgNetChange = data.daysCount > 0 ? Math.round(data.netChange / data.daysCount) : 0;
+        });
+
+        return result;
     },
 
     // 获取最近N天日期（使用本地时区）

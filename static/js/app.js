@@ -85,6 +85,20 @@ function app() {
             // 检查是否有进行中的任务
             await this.checkScrapeStatus();
             await this.checkETLStatus();
+
+            // 监听视图模式和指标切换，自动刷新图表
+            this.$watch('logsViewMode', () => {
+                this.$nextTick(() => requestAnimationFrame(() => this.initOrUpdateLogsCharts()));
+            });
+            this.$watch('itemsViewMode', () => {
+                this.$nextTick(() => requestAnimationFrame(() => this.initOrUpdateItemCharts()));
+            });
+            this.$watch('logsCompareMetric', () => {
+                LogsTab.updateCompareView(this);
+            });
+            this.$watch('itemsCompareMetric', () => {
+                ItemsTab.updateCompareView(this);
+            });
         },
 
         // ===== Tab 切换 =====
@@ -182,11 +196,21 @@ function app() {
 
         initOrUpdateItemCharts() {
             const chart = Charts.init('itemDailyChart');
-            if (chart.getOption()) {
+            if (chart && chart.getOption()) {
                 ItemsTab.updateCharts(this);
             } else {
                 ItemsTab.initCharts(this);
             }
+        },
+
+        sortLogsCompareTable(col) {
+            LogsTab.sortCompareTable(this, col);
+            LogsTab.renderCompareChart(this);
+        },
+
+        sortItemsCompareTable(col) {
+            ItemsTab.sortCompareTable(this, col);
+            ItemsTab.renderCompareChart(this);
         },
 
         // ===== 数据加载 =====

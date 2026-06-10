@@ -15,7 +15,17 @@ const ItemsTab = {
         itemCurrentNetChange: 0,
         itemCurrentAvgNet: 0,
         itemAvgLabel: 'logs.avgDay',
-        itemRangeLabel: ''
+        itemRangeLabel: '',
+
+        // 对比视图状态
+        itemsViewMode: 'trend',
+        itemsCompareMetric: 'netChange',
+        itemsCompareSortCol: 'netChange',
+        itemsCompareSortAsc: false,
+        itemsCompareData: [],
+        itemsTopGain: {},
+        itemsTopConsume: {},
+        itemsTopNet: {}
     },
 
     // 加载数据
@@ -84,8 +94,12 @@ const ItemsTab = {
     // 更新图表（过滤条件改变时调用，重置时间段选择）
     updateCharts(instance) {
         instance.itemSelectedPeriod = null;
-        this.updateDailyChart(instance);
-        this.updateSourceChart(instance);
+        if (instance.itemsViewMode === 'trend') {
+            this.updateDailyChart(instance);
+            this.updateSourceChart(instance);
+        } else {
+            this.updateCompareView(instance);
+        }
     },
 
     updateDailyChart(instance) {
@@ -169,6 +183,7 @@ const ItemsTab = {
             title: this.getTypeName(instance) + ' ' + I18n.t('chart.dailyChange'),
             xAxis: groupKeys,
             legends: characters,
+            showAverage: true,
             series
         });
 
@@ -397,5 +412,98 @@ const ItemsTab = {
             }
         });
         return combined;
+    },
+
+    // ===== 对比视图逻辑 =====
+    updateCompareView(instance) {
+        const characters = this.getCharacterNames(instance);
+        if (characters.length === 0) return;
+
+        const itemStats = this.getCurrentStats(instance);
+        const combinedStats = this.combineStats(itemStats, characters);
+
+        // 使用 utils 聚合数据
+        const aggregated = Utils.aggregateByCharacter(combinedStats, characters);
+
+        const dataArray = Object.keys(aggregated).map(name => ({
+            name,
+            gain: aggregated[name].gain,
+            consume: aggregated[name].consume,
+            netChange: aggregated[name].netChange,
+            avgGain: aggregated[name].avgGain,
+            avgConsume: aggregated[name].avgConsume,
+            avgNet: aggregated[name].avgNetChange,
+            daysCount: aggregated[name].daysCount
+        }));
+
+        instance.itemsCompareData = dataArray;
+
+        // 计算 Top 3
+        if (dataArray.length > 0) {
+            const topGain = [...dataArray].sort((a, b) => b.avgGain - a.avgGain)[0];
+            const topConsume = [...dataArray].sort((a, b) => b.consume - a.consume)[0];
+            const topNet = [...dataArray].sort((a, b) => b.netChange - a.netChange)[0];
+            instance.itemsTopGain = { name: topGain.name, value: topGain.avgGain };
+            instance.itemsTopConsume = { name: topConsume.name, value: topConsume.consume };
+            instance.itemsTopNet = { name: topNet.name, value: topNet.netChange };
+        } else {
+            instance.itemsTopGain = {};
+            instance.itemsTopConsume = {};
+            instance.itemsTopNet = {};
+        }
+
+        // 默认排序
+        this.sortCompareTable(instance, instance.itemsCompareSortCol, instance.itemsCompareSortAsc);
+        
+        // 渲染图表
+        this.renderCompareChart(instance);
+    },
+
+    renderCompareChart(instance) {
+        const chart = Charts.init('itemsCompareChart');
+        if (!chart) return;
+
+        let sortKey = instance.itemsCompareMetric;
+        
+        const chartData = [...instance.itemsCompareData].sort((a, b) => a[sortKey] - b[sortKey]);
+        
+        const yAxisData = chartData.map(d => d.name);
+        const seriesData = chartData.map(d => d[sortKey]);
+
+        let color = '#3b82f6'; // blue
+        if (sortKey === 'gain') color = '#22c55e'; // green
+        if (sortKey === 'consume') color = '#ef4444'; // red
+        if (sortKey === 'avgGain') color = '#a855f7'; // purple
+
+        Charts.createHorizontalBarChart(chart, {
+            title: I18n.t('compare.chartTitle'),
+            yAxis: yAxisData,
+            showAverage: true,
+            series: [{
+                name: I18n.t('compare.metric' + sortKey.charAt(0).toUpperCase() + sortKey.slice(1)),
+                data: seriesData,
+                itemStyle: { color: color }
+            }]
+        });
+    },
+
+    sortCompareTable(instance, col, forceAsc = null) {
+        if (forceAsc !== null) {
+            instance.itemsCompareSortAsc = forceAsc;
+        } else if (instance.itemsCompareSortCol === col) {
+            instance.itemsCompareSortAsc = !instance.itemsCompareSortAsc;
+        } else {
+            instance.itemsCompareSortAsc = false;
+        }
+        instance.itemsCompareSortCol = col;
+
+        instance.itemsCompareData.sort((a, b) => {
+            let valA = a[col];
+            let valB = b[col];
+            if (typeof valA === 'string') {
+                return instance.itemsCompareSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            }
+            return instance.itemsCompareSortAsc ? valA - valB : valB - valA;
+        });
     }
 };

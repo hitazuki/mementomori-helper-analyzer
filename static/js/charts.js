@@ -90,6 +90,19 @@ const Charts = {
         if (!chart) return;
 
         const baseSeries = this.buildBarSeries(options.series);
+        if (options.showAverage && baseSeries.length > 0) {
+            baseSeries[0].markLine = {
+                data: [{ type: 'average', name: 'Avg' }],
+                lineStyle: { type: 'dashed', color: '#f59e0b', width: 2 },
+                label: {
+                    position: 'end',
+                    formatter: '{c}',
+                    color: '#f59e0b',
+                    fontWeight: 'bold'
+                },
+                symbol: ['none', 'none']
+            };
+        }
         const finalSeries = this._padSeries(chart, baseSeries, 'bar');
 
         chart.setOption({
@@ -121,6 +134,61 @@ const Charts = {
             yAxis: { type: 'value' },
             series: finalSeries
         }); // 默认 merge
+    },
+
+    // 横向柱状图 - 用于角色对比视图
+    createHorizontalBarChart(chart, options) {
+        if (!chart) return;
+
+        const baseSeries = this.buildBarSeries(options.series);
+        if (options.showAverage && baseSeries.length > 0) {
+            baseSeries[0].markLine = {
+                data: [{ type: 'average', name: 'Avg' }],
+                lineStyle: { type: 'dashed', color: '#f59e0b', width: 2 },
+                label: {
+                    position: 'end',
+                    formatter: '{c}',
+                    color: '#f59e0b',
+                    fontWeight: 'bold'
+                },
+                symbol: ['none', 'none']
+            };
+        }
+        const finalSeries = this._padSeries(chart, baseSeries, 'bar');
+
+        chart.setOption({
+            backgroundColor: 'transparent',
+            color: typeof Utils !== 'undefined' ? Utils.chartColors : undefined,
+            animationDurationUpdate: 500,
+            title: { text: options.title || '', left: 'center' },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: { type: 'shadow' },
+                formatter: this.barTooltipFormatter,
+                confine: true
+            },
+            legend: { 
+                data: (options.series || []).map(s => s.name), 
+                bottom: 0, 
+                type: 'scroll' 
+            },
+            grid: { left: '3%', right: '10%', bottom: '15%', top: '10%', containLabel: true },
+            dataZoom: [
+                { type: 'inside', yAxisIndex: 0, start: 0, end: 100 },
+                { type: 'slider', yAxisIndex: 0, right: 10, width: 20 }
+            ],
+            xAxis: { type: 'value' },
+            yAxis: {
+                type: 'category',
+                data: options.yAxis || [],
+                axisLabel: { 
+                    interval: 0, // 强制显示所有标签
+                    width: 100, // 限制标签宽度
+                    overflow: 'truncate' // 超出截断
+                }
+            },
+            series: finalSeries
+        });
     },
 
     // 饼图 - 用于来源分布
