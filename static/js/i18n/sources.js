@@ -68,7 +68,7 @@ const SourceI18n = {
     
     for (const prefix of this.openPrefixes) {
       if (sourceKey.startsWith(prefix)) {
-        return { type: '100004', suffix: sourceKey.substring(prefix.length) };
+        return { type: '67', suffix: sourceKey.substring(prefix.length) };
       }
     }
     

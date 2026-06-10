@@ -118,7 +118,7 @@ const LogsTab = {
                             dayConsume += sData.consume || 0;
                         }
                     }
-                } else if (sel && typeof SourceI18n !== 'undefined' && SourceI18n.parseCompositeDynamic && ['id:100004', 'id:100005'].includes(sel)) {
+                } else if (sel && typeof SourceI18n !== 'undefined' && SourceI18n.parseCompositeDynamic && ['id:67', 'id:100005'].includes(sel)) {
                     for (const [sKey, sData] of Object.entries(daySources)) {
                         const dyn = SourceI18n.parseCompositeDynamic(sKey);
                         if (dyn && 'id:' + dyn.type === sel) {
@@ -272,8 +272,8 @@ const LogsTab = {
         let otherNet = 0;
         
         const sel = instance.logsSelectedSource;
-        const dynamicNets = { 'id:100004': 0, 'id:100005': 0 };
-        const dynamicDetails = { 'id:100004': [], 'id:100005': [] };
+        const dynamicNets = { 'id:67': 0, 'id:100005': 0 };
+        const dynamicDetails = { 'id:67': [], 'id:100005': [] };
 
         if (sel === 'other') {
             for (const [sKey, val] of Object.entries(sources)) {
@@ -282,7 +282,7 @@ const LogsTab = {
                     if (net > 0) data.push({ name: sKey, value: net });
                 }
             }
-        } else if (sel && typeof SourceI18n !== 'undefined' && SourceI18n.parseCompositeDynamic && ['id:100004', 'id:100005'].includes(sel)) {
+        } else if (sel && typeof SourceI18n !== 'undefined' && SourceI18n.parseCompositeDynamic && ['id:67', 'id:100005'].includes(sel)) {
             for (const [sKey, val] of Object.entries(sources)) {
                 const dyn = SourceI18n.parseCompositeDynamic(sKey);
                 if (dyn && 'id:' + dyn.type === sel) {
@@ -314,7 +314,7 @@ const LogsTab = {
                 }
             }
             
-            ['id:100004', 'id:100005'].forEach(grp => {
+            ['id:67', 'id:100005'].forEach(grp => {
                 if (dynamicNets[grp] > 0) {
                     data.push({
                         name: SourceI18n.translate(grp, lang),
