@@ -55,7 +55,7 @@ const SourceI18n = {
   },
 
   gachaPrefixes: ['Gacha ', '抽卡 ', 'ガチャ ', '가챠 '],
-  openPrefixes: ['Open ', '開放 ', '開啟 ', '開啓 ', '开启 ', '開く ', '열기 ', '오픈 '],
+  openPrefixes: ['Open ', '開啟 ', '開く ', '열기 '],
 
   parseCompositeDynamic(sourceKey) {
     if (!sourceKey) return null;
