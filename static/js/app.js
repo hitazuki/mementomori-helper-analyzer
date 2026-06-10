@@ -520,37 +520,7 @@ function app() {
             return ItemsTab.getTypeName(this);
         },
 
-        get itemTotalGain() {
-            return ItemsTab.getTotalGain(this);
-        },
 
-        get itemTotalConsume() {
-            return ItemsTab.getTotalConsume(this);
-        },
-
-        get itemTotalNetChange() {
-            return this.itemTotalGain - this.itemTotalConsume;
-        },
-
-        get upgradePanaceaTotalGain() {
-            const originalType = this.itemType;
-            this.itemType = 'upgradePanacea';
-            const result = ItemsTab.getTotalGain(this);
-            this.itemType = originalType;
-            return result;
-        },
-
-        get upgradePanaceaTotalConsume() {
-            const originalType = this.itemType;
-            this.itemType = 'upgradePanacea';
-            const result = ItemsTab.getTotalConsume(this);
-            this.itemType = originalType;
-            return result;
-        },
-
-        get upgradePanaceaTotalNetChange() {
-            return this.upgradePanaceaTotalGain - this.upgradePanaceaTotalConsume;
-        },
 
         // 物品图表更新
         updateItemCharts() {

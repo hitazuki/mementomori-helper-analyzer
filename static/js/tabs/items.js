@@ -7,7 +7,15 @@ const ItemsTab = {
         itemSelectedCharacter: '',
         itemTimeGroup: 'day',
         itemType: 'runeTicket',
-        itemSelectedPeriod: null  // 当前点击选中的时间段（null = 全量）
+        itemSelectedPeriod: null,  // 当前点击选中的时间段（null = 全量）
+        itemSelectedSource: '',    // 当前选中的来源筛选
+        itemSourceOptions: [],     // 来源筛选下拉列表
+        itemCurrentGain: 0,
+        itemCurrentConsume: 0,
+        itemCurrentNetChange: 0,
+        itemCurrentAvgNet: 0,
+        itemAvgLabel: 'logs.avgDay',
+        itemRangeLabel: ''
     },
 
     // 加载数据
@@ -19,8 +27,50 @@ const ItemsTab = {
         return { runeTicketStats: runeTicket, upgradePanaceaStats: upgradePanacea };
     },
 
+    // 判断来源是否有 i18n 支持
+    hasI18n(sourceKey) {
+        if (!sourceKey) return false;
+        if (sourceKey === 'none') return true;
+        if (sourceKey.startsWith('id:')) {
+            const id = sourceKey.substring(3);
+            if (SourceI18n.mapping[id] || SourceI18n.parseRewardMissionComposite(id)) return true;
+        }
+        return false;
+    },
+
     // 初始化图表
     initCharts(instance) {
+        const itemStats = this.getCurrentStats(instance);
+        const characters = this.getCharacterNames(instance);
+        const combinedStats = this.combineStats(itemStats, characters);
+
+        // 生成来源下拉列表
+        const sourceKeys = new Set();
+        Object.values(combinedStats).forEach(charData => {
+            Object.values(charData.daily || {}).forEach(dayData => {
+                Object.keys(dayData.sources || {}).forEach(k => sourceKeys.add(k));
+            });
+        });
+        
+        const lang = I18n.getLanguage();
+        const options = [];
+        let hasOther = false;
+
+        sourceKeys.forEach(k => {
+            if (this.hasI18n(k)) {
+                options.push({ value: k, label: SourceI18n.translate(k, lang) });
+            } else {
+                hasOther = true;
+            }
+        });
+        
+        options.sort((a, b) => a.label.localeCompare(b.label));
+        if (hasOther) {
+            options.push({ value: 'other', label: I18n.t('logs.sourceOther') });
+        }
+        
+        instance.itemSourceOptions = options;
+
         this.updateCharts(instance);
     },
 
@@ -48,14 +98,44 @@ const ItemsTab = {
         const combinedStats = this.combineStats(itemStats, characters);
 
         const grouped = {};
+
         characters.forEach(charName => {
             const daily = combinedStats[charName]?.daily || {};
+
             Object.entries(daily).forEach(([date, dayData]) => {
                 const key = Utils.getTimeKey(date, instance.itemTimeGroup);
-                if (!grouped[key]) grouped[key] = {};
+
+                if (!grouped[key]) grouped[key] = { sourceGain: 0, sourceConsume: 0 };
                 if (!grouped[key][charName]) grouped[key][charName] = { gain: 0, consume: 0 };
-                grouped[key][charName].gain += dayData.gain || 0;
-                grouped[key][charName].consume += dayData.consume || 0;
+                
+                let dayGain = 0;
+                let dayConsume = 0;
+
+                const daySources = dayData.sources || {};
+                const sel = instance.itemSelectedSource;
+                
+                if (sel === 'other') {
+                    for (const [sKey, sData] of Object.entries(daySources)) {
+                        if (!this.hasI18n(sKey)) {
+                            dayGain += sData.gain || 0;
+                            dayConsume += sData.consume || 0;
+                        }
+                    }
+                } else if (sel) {
+                    const sData = daySources[sel];
+                    if (sData) {
+                        dayGain = sData.gain || 0;
+                        dayConsume = sData.consume || 0;
+                    }
+                } else {
+                    dayGain = dayData.gain || 0;
+                    dayConsume = dayData.consume || 0;
+                }
+
+                grouped[key][charName].gain += dayGain;
+                grouped[key][charName].consume += dayConsume;
+                grouped[key].sourceGain += dayGain;
+                grouped[key].sourceConsume += dayConsume;
             });
         });
 
@@ -77,8 +157,26 @@ const ItemsTab = {
             series
         });
 
+        const getZoomRange = () => {
+            const dz = chart.getOption().dataZoom?.[0];
+            if (dz && dz.startValue !== undefined) {
+                return { start: dz.startValue, end: dz.endValue };
+            }
+            return { start: 0, end: groupKeys.length - 1 };
+        };
+        
+        const initRange = getZoomRange();
+        this.calculateRangeStats(instance, groupKeys, grouped, initRange.start, initRange.end);
+
+        chart.off('dataZoom');
+        chart.on('dataZoom', () => {
+            const r = getZoomRange();
+            this.calculateRangeStats(instance, groupKeys, grouped, r.start, r.end);
+        });
+
         // 注册点击事件：点击柱子时过滤饼图至该时间段
         const groupKeysCopy = [...groupKeys];
+        chart.off('click');
         chart.on('click', (params) => {
             if (params.componentType !== 'series') return;
             const clickedKey = groupKeysCopy[params.dataIndex];
@@ -86,6 +184,44 @@ const ItemsTab = {
             instance.itemSelectedPeriod = instance.itemSelectedPeriod === clickedKey ? null : clickedKey;
             ItemsTab.updateSourceChart(instance);
         });
+    },
+
+    calculateRangeStats(instance, groupKeys, grouped, startIdx, endIdx) {
+        if (!groupKeys || groupKeys.length === 0) {
+            instance.itemCurrentGain = 0;
+            instance.itemCurrentConsume = 0;
+            instance.itemCurrentNetChange = 0;
+            instance.itemCurrentAvgNet = null;
+            instance.itemRangeLabel = '';
+            return;
+        }
+        startIdx = Math.max(0, startIdx || 0);
+        endIdx = Math.min(groupKeys.length - 1, endIdx !== undefined ? endIdx : groupKeys.length - 1);
+
+        let gain = 0;
+        let consume = 0;
+        for (let i = startIdx; i <= endIdx; i++) {
+            gain += grouped[groupKeys[i]].sourceGain || 0;
+            consume += grouped[groupKeys[i]].sourceConsume || 0;
+        }
+
+        instance.itemCurrentGain = gain;
+        instance.itemCurrentConsume = consume;
+        instance.itemCurrentNetChange = gain - consume;
+        
+        const count = endIdx - startIdx + 1;
+        instance.itemCurrentAvgNet = count > 0 ? Math.round(instance.itemCurrentNetChange / count) : 0;
+
+        const timeGrp = instance.itemTimeGroup;
+        if (timeGrp === 'week') instance.itemAvgLabel = 'logs.avgWeek';
+        else if (timeGrp === 'month') instance.itemAvgLabel = 'logs.avgMonth';
+        else instance.itemAvgLabel = 'logs.avgDay';
+
+        if (startIdx === 0 && endIdx === groupKeys.length - 1) {
+            instance.itemRangeLabel = '';
+        } else {
+            instance.itemRangeLabel = `${groupKeys[startIdx]} ~ ${groupKeys[endIdx]}`;
+        }
     },
 
     updateSourceChart(instance) {
@@ -97,58 +233,86 @@ const ItemsTab = {
             : this.getCharacterNames(instance);
 
         const itemStats = this.getCurrentStats(instance);
+        const combinedStats = this.combineStats(itemStats, characters);
+        
         const selectedPeriod = instance.itemSelectedPeriod;
         const sources = {};
 
-        if (selectedPeriod) {
-            // 只聚合属于选中时间段的每日 sources
-            characters.forEach(charName => {
-                for (const serverData of Object.values(itemStats || {})) {
-                    if (serverData && serverData[charName]) {
-                        const daily = serverData[charName].daily || {};
-                        for (const [date, dayData] of Object.entries(daily)) {
-                            // 只处理属于选中时间段的日期
-                            if (Utils.getTimeKey(date, instance.itemTimeGroup) !== selectedPeriod) continue;
-                            const daySources = dayData.sources || {};
-                            for (const [sourceKey, sourceData] of Object.entries(daySources)) {
-                                if (!sources[sourceKey]) sources[sourceKey] = { gain: 0, consume: 0 };
-                                sources[sourceKey].gain += sourceData.gain || 0;
-                                sources[sourceKey].consume += sourceData.consume || 0;
-                            }
-                        }
-                    }
+        characters.forEach(charName => {
+            const daily = combinedStats[charName]?.daily || {};
+
+            for (const [date, dayData] of Object.entries(daily)) {
+                if (selectedPeriod && Utils.getTimeKey(date, instance.itemTimeGroup) !== selectedPeriod) continue;
+                
+                const daySources = dayData.sources || {};
+                for (const [sourceKey, sourceData] of Object.entries(daySources)) {
+                    if (!sources[sourceKey]) sources[sourceKey] = { gain: 0, consume: 0 };
+                    sources[sourceKey].gain += sourceData.gain || 0;
+                    sources[sourceKey].consume += sourceData.consume || 0;
                 }
-            });
-        } else {
-            // 全量：使用 total.sources
-            characters.forEach(charName => {
-                for (const serverData of Object.values(itemStats || {})) {
-                    if (serverData && serverData[charName] && serverData[charName].total) {
-                        const totalSources = serverData[charName].total.sources || {};
-                        Object.entries(totalSources).forEach(([sourceKey, sourceData]) => {
-                            if (!sources[sourceKey]) sources[sourceKey] = { gain: 0, consume: 0 };
-                            sources[sourceKey].gain += sourceData.gain || 0;
-                            sources[sourceKey].consume += sourceData.consume || 0;
-                        });
-                    }
-                }
-            });
-        }
+            }
+        });
 
         const lang = I18n.getLanguage();
-        const data = Object.entries(sources)
-            .map(([key, val]) => ({
-                name: SourceI18n.translate(key, lang),
-                value: val.gain - val.consume
-            }))
-            .filter(d => d.value > 0)
-            .sort((a, b) => b.value - a.value);
+        const data = [];
+        const otherDetails = [];
+        let otherNet = 0;
+        
+        const sel = instance.itemSelectedSource;
 
-        // 标题显示当前选中的时间段（若有）
+        if (sel === 'other') {
+            for (const [sKey, val] of Object.entries(sources)) {
+                if (!this.hasI18n(sKey)) {
+                    const net = val.gain - val.consume;
+                    if (net > 0) data.push({ name: sKey, value: net });
+                }
+            }
+        } else if (sel) {
+            const val = sources[sel];
+            if (val) {
+                const net = val.gain - val.consume;
+                if (net > 0) data.push({ name: SourceI18n.translate(sel, lang), value: net });
+            }
+        } else {
+            for (const [sKey, val] of Object.entries(sources)) {
+                const net = val.gain - val.consume;
+                if (net <= 0) continue;
+                
+                if (this.hasI18n(sKey)) {
+                    data.push({ name: SourceI18n.translate(sKey, lang), value: net });
+                } else {
+                    otherNet += net;
+                    otherDetails.push({ name: sKey, value: net });
+                }
+            }
+            if (otherNet > 0) {
+                data.push({
+                    name: I18n.t('logs.sourceOther'),
+                    value: otherNet,
+                    details: otherDetails.sort((a, b) => b.value - a.value)
+                });
+            }
+        }
+
+        data.sort((a, b) => b.value - a.value);
+
         const periodLabel = selectedPeriod ? ` · ${selectedPeriod}` : '';
         Charts.createPieChart(chart, {
             title: I18n.t('chart.sourceDistribution') + periodLabel,
-            data
+            data,
+            tooltipFormatter: (params) => {
+                let res = `${params.marker} ${params.name}: ${params.value.toLocaleString()} (${params.percent}%)`;
+                if (params.data.details && params.data.details.length > 0) {
+                    res += '<br/><hr style="margin:5px 0;border:none;border-top:1px solid #ccc;"/>';
+                    params.data.details.slice(0, 15).forEach(d => {
+                        res += `<div style="font-size:12px">${d.name}: ${d.value.toLocaleString()}</div>`;
+                    });
+                    if (params.data.details.length > 15) {
+                        res += `<div style="font-size:12px">...</div>`;
+                    }
+                }
+                return res;
+            }
         });
     },
 
@@ -165,32 +329,6 @@ const ItemsTab = {
         return instance.itemType === 'upgradePanacea' ? I18n.t('items.upgradePanacea') : I18n.t('items.runeTicket');
     },
 
-    getTotalGain(instance) {
-        return this.calculateTotal(instance, 'gain');
-    },
-
-    getTotalConsume(instance) {
-        return this.calculateTotal(instance, 'consume');
-    },
-
-    calculateTotal(instance, field) {
-        const characters = instance.itemSelectedCharacter
-            ? [instance.itemSelectedCharacter]
-            : this.getCharacterNames(instance);
-
-        const itemStats = this.getCurrentStats(instance);
-        let total = 0;
-
-        for (const charName of characters) {
-            for (const serverData of Object.values(itemStats || {})) {
-                if (serverData && serverData[charName] && serverData[charName].total) {
-                    total += serverData[charName].total[field] || 0;
-                }
-            }
-        }
-        return total;
-    },
-
     combineStats(itemStats, characters) {
         const combined = {};
         characters.forEach(charName => {
@@ -200,10 +338,19 @@ const ItemsTab = {
                     const daily = serverData[charName].daily || {};
                     for (const [date, dayData] of Object.entries(daily)) {
                         if (!combined[charName].daily[date]) {
-                            combined[charName].daily[date] = { gain: 0, consume: 0 };
+                            combined[charName].daily[date] = { gain: 0, consume: 0, sources: {} };
                         }
                         combined[charName].daily[date].gain += dayData.gain || 0;
                         combined[charName].daily[date].consume += dayData.consume || 0;
+                        
+                        const daySources = dayData.sources || {};
+                        for (const [sKey, sData] of Object.entries(daySources)) {
+                            if (!combined[charName].daily[date].sources[sKey]) {
+                                combined[charName].daily[date].sources[sKey] = { gain: 0, consume: 0 };
+                            }
+                            combined[charName].daily[date].sources[sKey].gain += sData.gain || 0;
+                            combined[charName].daily[date].sources[sKey].consume += sData.consume || 0;
+                        }
                     }
                 }
             }
