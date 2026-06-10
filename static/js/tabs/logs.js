@@ -5,7 +5,15 @@ const LogsTab = {
         stats: {},
         selectedCharacter: '',
         logsTimeGroup: 'day',
-        logsSelectedPeriod: null  // 当前点击选中的时间段（null = 全量）
+        logsSelectedPeriod: null,  // 当前点击选中的时间段（null = 全量）
+        logsSelectedSource: '',    // 当前选中的来源筛选
+        logsSourceOptions: [],     // 来源筛选下拉列表
+        currentGain: 0,
+        currentConsume: 0,
+        currentNetChange: 0,
+        currentAvgNet: 0,
+        fountainAvgLabel: 'logs.avgDay',
+        fountainRangeLabel: ''
     },
 
     // 加载数据
@@ -13,8 +21,46 @@ const LogsTab = {
         return await API.loadStats();
     },
 
+    // 判断来源是否有 i18n 支持
+    hasI18n(sourceKey) {
+        if (!sourceKey) return false;
+        if (sourceKey === 'none') return true;
+        if (sourceKey.startsWith('id:')) {
+            const id = sourceKey.substring(3);
+            if (SourceI18n.mapping[id] || SourceI18n.parseRewardMissionComposite(id)) return true;
+        }
+        return false;
+    },
+
     // 初始化图表
     initCharts(instance) {
+        // 生成来源下拉列表
+        const sourceKeys = new Set();
+        Object.values(instance.stats || {}).forEach(charData => {
+            Object.keys(charData.total?.sources || {}).forEach(k => sourceKeys.add(k));
+        });
+        
+        const lang = I18n.getLanguage();
+        const options = [];
+        let hasOther = false;
+
+        sourceKeys.forEach(k => {
+            if (this.hasI18n(k)) {
+                options.push({ value: k, label: SourceI18n.translate(k, lang) });
+            } else {
+                hasOther = true;
+            }
+        });
+        
+        // 按字典序排一下
+        options.sort((a, b) => a.label.localeCompare(b.label));
+
+        if (hasOther) {
+            options.push({ value: 'other', label: I18n.t('logs.sourceOther') });
+        }
+        
+        instance.logsSourceOptions = options;
+
         this.updateCharts(instance);
     },
 
@@ -47,10 +93,39 @@ const LogsTab = {
             Object.entries(daily).forEach(([date, dayData]) => {
                 const key = Utils.getTimeKey(date, instance.logsTimeGroup);
 
-                if (!grouped[key]) grouped[key] = {};
+                if (!grouped[key]) grouped[key] = {
+                    sourceGain: 0, sourceConsume: 0
+                };
                 if (!grouped[key][charName]) grouped[key][charName] = { gain: 0, consume: 0 };
-                grouped[key][charName].gain += dayData.gain || 0;
-                grouped[key][charName].consume += dayData.consume || 0;
+                
+                let dayGain = 0;
+                let dayConsume = 0;
+
+                const daySources = dayData.sources || {};
+                const sel = instance.logsSelectedSource;
+                
+                if (sel === 'other') {
+                    for (const [sKey, sData] of Object.entries(daySources)) {
+                        if (!this.hasI18n(sKey)) {
+                            dayGain += sData.gain || 0;
+                            dayConsume += sData.consume || 0;
+                        }
+                    }
+                } else if (sel) {
+                    const sData = daySources[sel];
+                    if (sData) {
+                        dayGain = sData.gain || 0;
+                        dayConsume = sData.consume || 0;
+                    }
+                } else {
+                    dayGain = dayData.gain || 0;
+                    dayConsume = dayData.consume || 0;
+                }
+
+                grouped[key][charName].gain += dayGain;
+                grouped[key][charName].consume += dayConsume;
+                grouped[key].sourceGain += dayGain;
+                grouped[key].sourceConsume += dayConsume;
             });
         });
 
@@ -72,16 +147,69 @@ const LogsTab = {
             series
         });
 
-        // 注册点击事件：点击柱子时过滤饼图至该时间段
+        const getZoomRange = () => {
+            const dz = chart.getOption().dataZoom?.[0];
+            if (dz && dz.startValue !== undefined) {
+                return { start: dz.startValue, end: dz.endValue };
+            }
+            return { start: 0, end: groupKeys.length - 1 };
+        };
+        
+        const initRange = getZoomRange();
+        this.calculateRangeStats(instance, groupKeys, grouped, initRange.start, initRange.end);
+
+        chart.off('dataZoom');
+        chart.on('dataZoom', () => {
+            const r = getZoomRange();
+            this.calculateRangeStats(instance, groupKeys, grouped, r.start, r.end);
+        });
+
         const groupKeysCopy = [...groupKeys];
         chart.off('click');
         chart.on('click', (params) => {
             if (params.componentType !== 'series') return;
             const clickedKey = groupKeysCopy[params.dataIndex];
-            // 再次点击同一柱子则取消选中（恢复全量视图）
             instance.logsSelectedPeriod = instance.logsSelectedPeriod === clickedKey ? null : clickedKey;
             LogsTab.updateSourceChart(instance);
         });
+    },
+
+    calculateRangeStats(instance, groupKeys, grouped, startIdx, endIdx) {
+        if (!groupKeys || groupKeys.length === 0) {
+            instance.currentGain = 0;
+            instance.currentConsume = 0;
+            instance.currentNetChange = 0;
+            instance.currentAvgNet = null;
+            instance.fountainRangeLabel = '';
+            return;
+        }
+        startIdx = Math.max(0, startIdx || 0);
+        endIdx = Math.min(groupKeys.length - 1, endIdx !== undefined ? endIdx : groupKeys.length - 1);
+
+        let gain = 0;
+        let consume = 0;
+        for (let i = startIdx; i <= endIdx; i++) {
+            gain += grouped[groupKeys[i]].sourceGain || 0;
+            consume += grouped[groupKeys[i]].sourceConsume || 0;
+        }
+
+        instance.currentGain = gain;
+        instance.currentConsume = consume;
+        instance.currentNetChange = gain - consume;
+        
+        const count = endIdx - startIdx + 1;
+        instance.currentAvgNet = count > 0 ? Math.round(instance.currentNetChange / count) : 0;
+
+        const timeGrp = instance.logsTimeGroup;
+        if (timeGrp === 'week') instance.fountainAvgLabel = 'logs.avgWeek';
+        else if (timeGrp === 'month') instance.fountainAvgLabel = 'logs.avgMonth';
+        else instance.fountainAvgLabel = 'logs.avgDay';
+
+        if (startIdx === 0 && endIdx === groupKeys.length - 1) {
+            instance.fountainRangeLabel = '';
+        } else {
+            instance.fountainRangeLabel = `${groupKeys[startIdx]} ~ ${groupKeys[endIdx]}`;
+        }
     },
 
     updateSourceChart(instance) {
@@ -96,13 +224,11 @@ const LogsTab = {
         const sources = {};
 
         if (selectedPeriod) {
-            // 只聚合属于选中时间段的每日 sources
             characters.forEach(charName => {
                 const charData = instance.stats[charName] || {};
                 const daily = charData.daily || {};
 
                 for (const [date, dayData] of Object.entries(daily)) {
-                    // 只处理属于选中时间段的日期
                     if (Utils.getTimeKey(date, instance.logsTimeGroup) !== selectedPeriod) continue;
                     const daySources = dayData.sources || {};
                     for (const [sourceKey, sourceData] of Object.entries(daySources)) {
@@ -113,7 +239,6 @@ const LogsTab = {
                 }
             });
         } else {
-            // 全量：使用 total.sources
             characters.forEach(charName => {
                 const charData = instance.stats[charName] || {};
                 const totalSources = charData.total?.sources || {};
@@ -127,36 +252,70 @@ const LogsTab = {
         }
 
         const lang = I18n.getLanguage();
-        const data = Object.entries(sources)
-            .map(([key, val]) => ({
-                name: SourceI18n.translate(key, lang),
-                value: val.gain - val.consume
-            }))
-            .filter(d => d.value > 0)
-            .sort((a, b) => b.value - a.value);
+        const data = [];
+        const otherDetails = [];
+        let otherNet = 0;
+        
+        const sel = instance.logsSelectedSource;
 
-        // 标题显示当前选中的时间段（若有）
+        if (sel === 'other') {
+            for (const [sKey, val] of Object.entries(sources)) {
+                if (!this.hasI18n(sKey)) {
+                    const net = val.gain - val.consume;
+                    if (net > 0) data.push({ name: sKey, value: net });
+                }
+            }
+        } else if (sel) {
+            const val = sources[sel];
+            if (val) {
+                const net = val.gain - val.consume;
+                if (net > 0) data.push({ name: SourceI18n.translate(sel, lang), value: net });
+            }
+        } else {
+            for (const [sKey, val] of Object.entries(sources)) {
+                const net = val.gain - val.consume;
+                if (net <= 0) continue;
+                
+                if (this.hasI18n(sKey)) {
+                    data.push({ name: SourceI18n.translate(sKey, lang), value: net });
+                } else {
+                    otherNet += net;
+                    otherDetails.push({ name: sKey, value: net });
+                }
+            }
+            if (otherNet > 0) {
+                data.push({
+                    name: I18n.t('logs.sourceOther'),
+                    value: otherNet,
+                    details: otherDetails.sort((a, b) => b.value - a.value)
+                });
+            }
+        }
+
+        data.sort((a, b) => b.value - a.value);
+
         const periodLabel = selectedPeriod ? ` · ${selectedPeriod}` : '';
         Charts.createPieChart(chart, {
             title: I18n.t('chart.sourceDistribution') + periodLabel,
-            data
+            data,
+            tooltipFormatter: (params) => {
+                let res = `${params.marker} ${params.name}: ${params.value.toLocaleString()} (${params.percent}%)`;
+                if (params.data.details && params.data.details.length > 0) {
+                    res += '<br/><hr style="margin:5px 0;border:none;border-top:1px solid #ccc;"/>';
+                    params.data.details.slice(0, 15).forEach(d => {
+                        res += `<div style="font-size:12px">${d.name}: ${d.value.toLocaleString()}</div>`;
+                    });
+                    if (params.data.details.length > 15) {
+                        res += `<div style="font-size:12px">...</div>`;
+                    }
+                }
+                return res;
+            }
         });
     },
 
     // Getters
     getCharacterNames(instance) {
         return Utils.getCharacterNames(instance.stats);
-    },
-
-    getSelectedCharacters(instance) {
-        return instance.selectedCharacter ? [instance.selectedCharacter] : this.getCharacterNames(instance);
-    },
-
-    getTotalGain(instance) {
-        return Utils.aggregateTotal(instance.stats, this.getSelectedCharacters(instance), 'gain');
-    },
-
-    getTotalConsume(instance) {
-        return Utils.aggregateTotal(instance.stats, this.getSelectedCharacters(instance), 'consume');
     }
 };

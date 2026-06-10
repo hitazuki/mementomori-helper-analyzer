@@ -303,6 +303,17 @@
                         </select>
                     </div>
                     <div>
+                        <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('logs.selectSource')"></label>
+                        <select x-model="logsSelectedSource"
+                            class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-48"
+                            @change="updateLogsCharts()">
+                            <option value="" x-text="t('logs.allSources')"></option>
+                            <template x-for="opt in logsSourceOptions" :key="opt.value">
+                                <option :value="opt.value" x-text="opt.label"></option>
+                            </template>
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('mmth.timeGroup')"></label>
                         <select x-model="logsTimeGroup"
                             class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-32"
@@ -315,18 +326,31 @@
                 </div>
 
                 <!-- 汇总卡片 -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-blue-50 dark:bg-blue-900/30 rounded p-4">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="bg-blue-50 dark:bg-blue-900/30 rounded p-4 flex flex-col justify-between">
                         <div class="text-sm text-blue-600" x-text="t('logs.totalGain')"></div>
-                        <div class="text-2xl font-bold text-blue-800" x-text="totalGain.toLocaleString()"></div>
+                        <div class="text-2xl font-bold text-blue-800" x-text="currentGain.toLocaleString()"></div>
                     </div>
-                    <div class="bg-red-50 dark:bg-red-900/30 rounded p-4">
+                    <div class="bg-red-50 dark:bg-red-900/30 rounded p-4 flex flex-col justify-between">
                         <div class="text-sm text-red-600" x-text="t('logs.totalConsume')"></div>
-                        <div class="text-2xl font-bold text-red-800" x-text="totalConsume.toLocaleString()"></div>
+                        <div class="text-2xl font-bold text-red-800" x-text="currentConsume.toLocaleString()"></div>
                     </div>
-                    <div class="bg-green-50 dark:bg-green-900/30 rounded p-4">
+                    <div class="bg-green-50 dark:bg-green-900/30 rounded p-4 flex flex-col justify-between">
                         <div class="text-sm text-green-600" x-text="t('logs.netChange')"></div>
-                        <div class="text-2xl font-bold text-green-800" x-text="totalNetChange.toLocaleString()"></div>
+                        <div class="text-2xl font-bold text-green-800" x-text="currentNetChange.toLocaleString()"></div>
+                    </div>
+                    <div class="bg-purple-50 dark:bg-purple-900/30 rounded p-4 flex flex-col justify-between relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <svg class="w-20 h-20 text-purple-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 2a8 8 0 100 16 8 8 0 000-16zm-3.5 4a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm7 0a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM12 11c1.657 0 3 1.343 3 3s-1.343 3-3 3-3-1.343-3-3 1.343-3 3-3zm0 2a1 1 0 100 2 1 1 0 000-2z"/></svg>
+                        </div>
+                        <div class="text-sm text-purple-600 relative z-10 flex items-center gap-1">
+                            <span x-text="t('logs.avgNetChange')"></span>
+                            <span x-show="fountainRangeLabel" class="text-xs px-1.5 py-0.5 bg-purple-100 dark:bg-purple-800 rounded-full" x-text="fountainRangeLabel"></span>
+                        </div>
+                        <div class="flex items-end gap-2 mt-1 relative z-10">
+                            <div class="text-2xl font-bold text-purple-800" x-text="currentAvgNet.toLocaleString()"></div>
+                            <div x-show="currentAvgNet !== null" class="text-sm text-purple-600 font-medium mb-1" x-text="t(fountainAvgLabel, {n: currentAvgNet})"></div>
+                        </div>
                     </div>
                 </div>
             </div>

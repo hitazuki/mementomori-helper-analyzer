@@ -108,7 +108,11 @@ const Charts = {
                 bottom: 0, 
                 type: 'scroll' 
             },
-            grid: { left: '3%', right: '4%', bottom: '8%', top: '10%', containLabel: true },
+            grid: { left: '3%', right: '4%', bottom: '20%', top: '10%', containLabel: true },
+            dataZoom: [
+                { type: 'inside', start: 0, end: 100 },
+                { type: 'slider', start: 0, end: 100, bottom: 30, height: 20 }
+            ],
             xAxis: {
                 type: 'category',
                 data: options.xAxis || [],
@@ -127,8 +131,12 @@ const Charts = {
             backgroundColor: 'transparent',
             color: typeof Utils !== 'undefined' ? Utils.chartColors : undefined,
             animationDurationUpdate: 500,
-            title: { text: options.title || '', left: 'center' },
-            tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)', confine: true },
+            title: { text: options.title, left: 'center' },
+            tooltip: { 
+                trigger: 'item', 
+                formatter: options.tooltipFormatter || '{b}: {c} ({d}%)',
+                confine: true 
+            },
             series: [{
                 type: 'pie',
                 radius: '60%',

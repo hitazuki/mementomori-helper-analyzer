@@ -69,10 +69,18 @@ const translations = {
 
     // 日志统计 Tab
     'logs.selectCharacter': '选择角色:',
+    'logs.selectSource': '选择来源:',
     'logs.all': '全部',
+    'logs.allSources': '全部来源',
     'logs.totalGain': '总获取',
     'logs.totalConsume': '总消耗',
     'logs.netChange': '净变化',
+    'logs.fountainIncome': '祈愿之泉净收入',
+    'logs.avgNetChange': '平均净变化',
+    'logs.sourceOther': '其它',
+    'logs.avgDay': '日均: {n}',
+    'logs.avgWeek': '周均: {n}',
+    'logs.avgMonth': '月均: {n}',
     'logs.free': '免费',
     'logs.paid': '付费',
 
@@ -176,10 +184,18 @@ const translations = {
 
     // 日誌統計 Tab
     'logs.selectCharacter': '選擇角色:',
+    'logs.selectSource': '選擇來源:',
     'logs.all': '全部',
+    'logs.allSources': '全部來源',
     'logs.totalGain': '總獲取',
     'logs.totalConsume': '總消耗',
     'logs.netChange': '淨變化',
+    'logs.fountainIncome': '祈願之泉淨收入',
+    'logs.avgNetChange': '平均淨變化',
+    'logs.sourceOther': '其它',
+    'logs.avgDay': '日均: {n}',
+    'logs.avgWeek': '週均: {n}',
+    'logs.avgMonth': '月均: {n}',
     'logs.free': '免費',
     'logs.paid': '付費',
 
@@ -283,10 +299,18 @@ const translations = {
 
     // Log Stats Tab
     'logs.selectCharacter': 'Select Character:',
+    'logs.selectSource': 'Select Source:',
     'logs.all': 'All',
+    'logs.allSources': 'All Sources',
     'logs.totalGain': 'Total Gain',
     'logs.totalConsume': 'Total Consume',
     'logs.netChange': 'Net Change',
+    'logs.fountainIncome': 'Fountain of Prayers Income',
+    'logs.avgNetChange': 'Avg Net Change',
+    'logs.sourceOther': 'Other',
+    'logs.avgDay': 'Avg/Day: {n}',
+    'logs.avgWeek': 'Avg/Week: {n}',
+    'logs.avgMonth': 'Avg/Month: {n}',
     'logs.free': 'Free',
     'logs.paid': 'Paid',
 
@@ -390,10 +414,18 @@ const translations = {
 
     // ログ統計タブ
     'logs.selectCharacter': 'キャラクター選択:',
+    'logs.selectSource': '入手元選択:',
     'logs.all': '全て',
+    'logs.allSources': '全ての入手元',
     'logs.totalGain': '合計獲得',
     'logs.totalConsume': '合計消費',
     'logs.netChange': '純増減',
+    'logs.fountainIncome': '祈りの泉 純利益',
+    'logs.avgNetChange': '平均純増減',
+    'logs.sourceOther': 'その他',
+    'logs.avgDay': '日平均: {n}',
+    'logs.avgWeek': '週平均: {n}',
+    'logs.avgMonth': '月平均: {n}',
     'logs.free': '無料',
     'logs.paid': '有料',
 
