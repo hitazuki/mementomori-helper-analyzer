@@ -18,6 +18,8 @@ MMTH Analyzer is a web dashboard and data processing service for [mementomori-he
 - **Cave tracking**: Track Space-Time Cave task status, including completed, incomplete, failed, and not-run states.
 - **Challenge statistics**: Analyze campaign and tower challenge records, attempts, completion status, and last challenge time.
 - **Item statistics**: Track Rune Ticket and Upgrade Panacea gains and spending by source.
+- **Horizontal comparison**: Support cross-character comparison and sorting for diamond and item acquisition/consumption.
+- **Dynamic filtering**: Support global date range filtering (e.g., 7 days, 30 days, or custom chart zoom syncing).
 
 ## Preview
 
