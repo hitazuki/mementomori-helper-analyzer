@@ -42,7 +42,7 @@ const Utils = {
     },
 
     // 按角色聚合数据，用于横向对比视图
-    aggregateByCharacter(stats, characters) {
+    aggregateByCharacter(stats, characters, filterDates = null, selectedSource = null, mappedSourceKeys = null) {
         const result = {};
         characters.forEach(charName => {
             result[charName] = {
@@ -63,9 +63,40 @@ const Utils = {
             let consume = 0;
             let validDays = 0;
 
-            for (const dayData of Object.values(daily)) {
-                gain += dayData.gain || 0;
-                consume += dayData.consume || 0;
+            const datesToProcess = filterDates ? filterDates.filter(d => daily[d]) : Object.keys(daily);
+
+            for (const date of datesToProcess) {
+                const dayData = daily[date];
+                if (!dayData) continue;
+
+                let dayGain = 0;
+                let dayConsume = 0;
+
+                if (selectedSource) {
+                    const daySources = dayData.sources || {};
+                    if (selectedSource === 'other') {
+                        if (mappedSourceKeys) {
+                            for (const [sKey, sData] of Object.entries(daySources)) {
+                                if (!mappedSourceKeys.has(sKey)) {
+                                    dayGain += sData.gain || 0;
+                                    dayConsume += sData.consume || 0;
+                                }
+                            }
+                        }
+                    } else {
+                        const sData = daySources[selectedSource];
+                        if (sData) {
+                            dayGain = sData.gain || 0;
+                            dayConsume = sData.consume || 0;
+                        }
+                    }
+                } else {
+                    dayGain = dayData.gain || 0;
+                    dayConsume = dayData.consume || 0;
+                }
+
+                gain += dayGain;
+                consume += dayConsume;
                 validDays++;
             }
 

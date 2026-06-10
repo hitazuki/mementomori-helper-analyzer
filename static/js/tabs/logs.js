@@ -6,6 +6,8 @@ const LogsTab = {
         selectedCharacter: '',
         logsTimeGroup: 'day',
         logsSelectedPeriod: null,  // 当前点击选中的时间段（null = 全量）
+        logsDateRangeType: 'all',  // 'all', '7d', '30d', 'custom'
+        logsCustomDateRange: [null, null], // [startKey, endKey]
         logsSelectedSource: '',    // 当前选中的来源筛选
         logsSourceOptions: [],     // 来源筛选下拉列表
         currentGain: 0,
@@ -81,9 +83,37 @@ const LogsTab = {
         this.updateCharts(instance);
     },
 
-    // 更新图表（过滤条件改变时调用，重置时间段选择）
+    getFilteredDates(allDates, timeGroup, rangeType, customRange) {
+        if (rangeType === 'all') return allDates;
+        
+        const groupKeysSet = new Set();
+        allDates.forEach(d => groupKeysSet.add(Utils.getTimeKey(d, timeGroup)));
+        const groupKeys = Array.from(groupKeysSet).sort();
+        
+        let startKey, endKey;
+        if (rangeType === '7d') {
+            startKey = groupKeys[Math.max(0, groupKeys.length - 7)];
+            endKey = groupKeys[groupKeys.length - 1];
+        } else if (rangeType === '30d') {
+            startKey = groupKeys[Math.max(0, groupKeys.length - 30)];
+            endKey = groupKeys[groupKeys.length - 1];
+        } else if (rangeType === 'custom' && customRange[0]) {
+            startKey = customRange[0];
+            endKey = customRange[1];
+        } else {
+            return allDates;
+        }
+        
+        return allDates.filter(d => {
+            const k = Utils.getTimeKey(d, timeGroup);
+            return k >= startKey && k <= endKey;
+        });
+    },
+
+    // 重新渲染所有图表
     updateCharts(instance) {
-        instance.logsSelectedPeriod = null;
+        if (!instance.stats) return;
+
         if (instance.logsViewMode === 'trend') {
             this.updateDailyChart(instance);
             this.updateSourceChart(instance);
@@ -92,11 +122,12 @@ const LogsTab = {
         }
     },
 
+    // 更新每日柱状图
     updateDailyChart(instance) {
         const chart = Charts.init('dailyChart');
         if (!chart) return;
 
-        const characters = instance.selectedCharacter
+        const characters = instance.selectedCharacter 
             ? [instance.selectedCharacter]
             : Utils.getCharacterNames(instance.stats);
 
@@ -169,12 +200,27 @@ const LogsTab = {
             })
         }));
 
+        let dzStart = undefined;
+        let dzEnd = undefined;
+        if (instance.logsDateRangeType === '7d') {
+            dzStart = Math.max(0, groupKeys.length - 7);
+            dzEnd = groupKeys.length - 1;
+        } else if (instance.logsDateRangeType === '30d') {
+            dzStart = Math.max(0, groupKeys.length - 30);
+            dzEnd = groupKeys.length - 1;
+        } else if (instance.logsDateRangeType === 'custom' && instance.logsCustomDateRange[0]) {
+            dzStart = instance.logsCustomDateRange[0];
+            dzEnd = instance.logsCustomDateRange[1];
+        }
+
         Charts.createBarChart(chart, {
             title: I18n.t('chart.dailyChange'),
             xAxis: groupKeys,
             legends: characters,
             showAverage: true,
-            series
+            series,
+            dataZoomStartValue: dzStart,
+            dataZoomEndValue: dzEnd
         });
 
         const getZoomRange = () => {
@@ -192,6 +238,14 @@ const LogsTab = {
         chart.on('dataZoom', () => {
             const r = getZoomRange();
             this.calculateRangeStats(instance, groupKeys, grouped, r.start, r.end);
+            
+            const isFull = r.start === 0 && r.end === groupKeys.length - 1;
+            if (isFull) {
+                instance.logsDateRangeType = 'all';
+            } else {
+                instance.logsDateRangeType = 'custom';
+                instance.logsCustomDateRange = [groupKeys[r.start], groupKeys[r.end]];
+            }
         });
 
         const groupKeysCopy = [...groupKeys];
@@ -377,11 +431,40 @@ const LogsTab = {
 
     // ===== 对比视图逻辑 =====
     updateCompareView(instance) {
-        const characters = Utils.getCharacterNames(instance.stats);
-        if (characters.length === 0) return;
+        let characters = Utils.getCharacterNames(instance.stats);
+        if (instance.selectedCharacter) {
+            characters = characters.filter(c => c === instance.selectedCharacter);
+        }
+        if (characters.length === 0) {
+            instance.logsCompareData = [];
+            this.renderCompareChart(instance);
+            return;
+        }
+
+        // 提取所有的日期并过滤
+        const allDatesSet = new Set();
+        Object.values(instance.stats || {}).forEach(charData => {
+            Object.keys(charData.daily || {}).forEach(d => allDatesSet.add(d));
+        });
+        const allDates = Array.from(allDatesSet).sort();
+        
+        let filterDates = this.getFilteredDates(allDates, instance.logsTimeGroup, instance.logsDateRangeType, instance.logsCustomDateRange);
+        
+        // 考虑到 logsSelectedPeriod（点击趋势图柱子触发的单时间点筛选）
+        if (instance.logsSelectedPeriod) {
+            filterDates = filterDates.filter(d => Utils.getTimeKey(d, instance.logsTimeGroup) === instance.logsSelectedPeriod);
+        }
+
+        const mappedSet = new Set(instance.logsSourceOptions.map(opt => opt.value));
 
         // 使用 utils 聚合数据
-        const aggregated = Utils.aggregateByCharacter(instance.stats, characters);
+        const aggregated = Utils.aggregateByCharacter(
+            instance.stats, 
+            characters, 
+            filterDates, 
+            instance.logsSelectedSource, 
+            mappedSet
+        );
 
         const dataArray = Object.keys(aggregated).map(name => ({
             name,

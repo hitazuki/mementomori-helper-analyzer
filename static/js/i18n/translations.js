@@ -22,6 +22,13 @@ const translations = {
     'view.trend': '趋势分析',
     'view.compare': '角色横向对比',
 
+    // 时间范围筛选
+    'filter.dateRange': '时间范围',
+    'range.all': '全部时间',
+    'range.7d': '最近7天',
+    'range.30d': '最近30天',
+    'range.custom': '自定义(拉拽图表)',
+
     // 对比视图
     'compare.topGain': '🏆 肝帝 / 欧皇',
     'compare.topConsume': '💸 消费主力',
@@ -153,6 +160,13 @@ const translations = {
     'view.trend': '趨勢分析',
     'view.compare': '角色橫向對比',
 
+    // 时间范围筛选
+    'filter.dateRange': '時間範圍',
+    'range.all': '全部時間',
+    'range.7d': '最近7天',
+    'range.30d': '最近30天',
+    'range.custom': '自訂(拉拽圖表)',
+
     // 對比視圖
     'compare.topGain': '🏆 肝帝 / 歐皇',
     'compare.topConsume': '💸 消費主力',
@@ -280,9 +294,16 @@ const translations = {
     'status.scraping': 'Scraping...',
     'status.processing': 'Processing...',
 
-    // Views
-    'view.trend': 'Trend View',
-    'view.compare': 'Compare Characters',
+    // 视图切换
+    'view.trend': 'Trend Analysis',
+    'view.compare': 'Character Comparison',
+
+    // 时间范围筛选
+    'filter.dateRange': 'Date Range',
+    'range.all': 'All Time',
+    'range.7d': 'Last 7 Days',
+    'range.30d': 'Last 30 Days',
+    'range.custom': 'Custom (Drag Chart)',
 
     // Compare View
     'compare.topGain': '🏆 Top Earner',
@@ -411,9 +432,16 @@ const translations = {
     'status.scraping': 'スクレイピング中...',
     'status.processing': '処理中...',
 
-    // ビュー
+    // 视图切换
     'view.trend': 'トレンド分析',
     'view.compare': 'キャラクター比較',
+
+    // 时间范围筛选
+    'filter.dateRange': '期間',
+    'range.all': '全期間',
+    'range.7d': '過去7日間',
+    'range.30d': '過去30日間',
+    'range.custom': 'カスタム(グラフをドラッグ)',
 
     // 比較ビュー
     'compare.topGain': '🏆 獲得トップ',

@@ -8,6 +8,8 @@ const ItemsTab = {
         itemTimeGroup: 'day',
         itemType: 'runeTicket',
         itemSelectedPeriod: null,  // 当前点击选中的时间段（null = 全量）
+        itemDateRangeType: 'all',  // 'all', '7d', '30d', 'custom'
+        itemCustomDateRange: [null, null], // [startKey, endKey]
         itemSelectedSource: '',    // 当前选中的来源筛选
         itemSourceOptions: [],     // 来源筛选下拉列表
         itemCurrentGain: 0,
@@ -179,12 +181,27 @@ const ItemsTab = {
             })
         }));
 
+        let dzStart = undefined;
+        let dzEnd = undefined;
+        if (instance.itemDateRangeType === '7d') {
+            dzStart = Math.max(0, groupKeys.length - 7);
+            dzEnd = groupKeys.length - 1;
+        } else if (instance.itemDateRangeType === '30d') {
+            dzStart = Math.max(0, groupKeys.length - 30);
+            dzEnd = groupKeys.length - 1;
+        } else if (instance.itemDateRangeType === 'custom' && instance.itemCustomDateRange[0]) {
+            dzStart = instance.itemCustomDateRange[0];
+            dzEnd = instance.itemCustomDateRange[1];
+        }
+
         Charts.createBarChart(chart, {
             title: this.getTypeName(instance) + ' ' + I18n.t('chart.dailyChange'),
             xAxis: groupKeys,
             legends: characters,
             showAverage: true,
-            series
+            series,
+            dataZoomStartValue: dzStart,
+            dataZoomEndValue: dzEnd
         });
 
         const getZoomRange = () => {
@@ -202,15 +219,21 @@ const ItemsTab = {
         chart.on('dataZoom', () => {
             const r = getZoomRange();
             this.calculateRangeStats(instance, groupKeys, grouped, r.start, r.end);
+            
+            const isFull = r.start === 0 && r.end === groupKeys.length - 1;
+            if (isFull) {
+                instance.itemDateRangeType = 'all';
+            } else {
+                instance.itemDateRangeType = 'custom';
+                instance.itemCustomDateRange = [groupKeys[r.start], groupKeys[r.end]];
+            }
         });
 
-        // 注册点击事件：点击柱子时过滤饼图至该时间段
         const groupKeysCopy = [...groupKeys];
         chart.off('click');
         chart.on('click', (params) => {
             if (params.componentType !== 'series') return;
             const clickedKey = groupKeysCopy[params.dataIndex];
-            // 再次点击同一柱子则取消选中（恢复全量视图）
             instance.itemSelectedPeriod = instance.itemSelectedPeriod === clickedKey ? null : clickedKey;
             ItemsTab.updateSourceChart(instance);
         });
@@ -416,14 +439,42 @@ const ItemsTab = {
 
     // ===== 对比视图逻辑 =====
     updateCompareView(instance) {
-        const characters = this.getCharacterNames(instance);
-        if (characters.length === 0) return;
+        let characters = this.getCharacterNames(instance);
+        if (instance.itemSelectedCharacter) {
+            characters = characters.filter(c => c === instance.itemSelectedCharacter);
+        }
+        if (characters.length === 0) {
+            instance.itemsCompareData = [];
+            this.renderCompareChart(instance);
+            return;
+        }
 
         const itemStats = this.getCurrentStats(instance);
         const combinedStats = this.combineStats(itemStats, characters);
 
+        // 提取所有的日期并过滤
+        const allDatesSet = new Set();
+        Object.values(combinedStats || {}).forEach(charData => {
+            Object.keys(charData.daily || {}).forEach(d => allDatesSet.add(d));
+        });
+        const allDates = Array.from(allDatesSet).sort();
+        
+        let filterDates = LogsTab.getFilteredDates(allDates, instance.itemTimeGroup, instance.itemDateRangeType, instance.itemCustomDateRange);
+        
+        if (instance.itemSelectedPeriod) {
+            filterDates = filterDates.filter(d => Utils.getTimeKey(d, instance.itemTimeGroup) === instance.itemSelectedPeriod);
+        }
+
+        const mappedSet = new Set(instance.itemSourceOptions.map(opt => opt.value));
+
         // 使用 utils 聚合数据
-        const aggregated = Utils.aggregateByCharacter(combinedStats, characters);
+        const aggregated = Utils.aggregateByCharacter(
+            combinedStats,
+            characters,
+            filterDates,
+            instance.itemSelectedSource,
+            mappedSet
+        );
 
         const dataArray = Object.keys(aggregated).map(name => ({
             name,

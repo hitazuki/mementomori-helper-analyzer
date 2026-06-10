@@ -303,11 +303,9 @@
                 </div>
             </div>
 
-            <!-- 原有趋势视图 -->
-            <div x-show="logsViewMode === 'trend'">
-                <!-- 筛选与汇总卡片 -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-                    <div class="mb-4 flex flex-wrap gap-4 items-end">
+            <!-- 通用筛选与趋势汇总 -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+                <div class="flex flex-wrap gap-4 items-end" :class="logsViewMode === 'trend' ? 'mb-4' : ''">
                         <div>
                             <label class="block text-gray-700 dark:text-gray-300 mb-2"
                                 x-text="t('logs.selectCharacter')"></label>
@@ -332,6 +330,17 @@
                             </select>
                         </div>
                         <div>
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('filter.dateRange')"></label>
+                            <select x-model="logsDateRangeType"
+                                class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-40"
+                                @change="updateLogsCharts()">
+                                <option value="all" x-text="t('range.all')"></option>
+                                <option value="7d" x-text="t('range.7d')"></option>
+                                <option value="30d" x-text="t('range.30d')"></option>
+                                <option value="custom" x-text="t('range.custom')" disabled></option>
+                            </select>
+                        </div>
+                        <div>
                             <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('mmth.timeGroup')"></label>
                             <select x-model="logsTimeGroup"
                                 class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-32"
@@ -344,7 +353,7 @@
                     </div>
 
                     <!-- 汇总卡片 -->
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4" x-show="logsViewMode === 'trend'" x-cloak>
                         <div class="bg-blue-50 dark:bg-blue-900/30 rounded p-4 flex flex-col justify-between">
                             <div class="text-sm text-blue-600" x-text="t('logs.totalGain')"></div>
                             <div class="text-2xl font-bold text-blue-800" x-text="currentGain.toLocaleString()"></div>
@@ -366,13 +375,15 @@
                                 <span x-show="fountainRangeLabel" class="text-xs px-1.5 py-0.5 bg-purple-100 dark:bg-purple-800 rounded-full" x-text="fountainRangeLabel"></span>
                             </div>
                             <div class="flex items-end gap-2 mt-1 relative z-10">
-                                <div class="text-2xl font-bold text-purple-800" x-text="currentAvgNet.toLocaleString()"></div>
+                                <div class="text-2xl font-bold text-purple-800" x-text="currentAvgNet !== null ? currentAvgNet.toLocaleString() : '-'"></div>
                                 <div x-show="currentAvgNet !== null" class="text-sm text-purple-600 font-medium mb-1" x-text="t(fountainAvgLabel, {n: currentAvgNet})"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+            <!-- 趋势视图图表 -->
+            <div x-show="logsViewMode === 'trend'" x-cloak>
                 <!-- 图表 -->
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
                     <div id="dailyChart" style="width: 100%; height: 400px;" class="mb-6"></div>
@@ -669,11 +680,9 @@
                 </div>
             </div>
 
-            <!-- 原有趋势视图 -->
-            <div x-show="itemsViewMode === 'trend'">
-                <!-- 筛选条件 -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-                    <div class="mb-4 flex flex-wrap gap-4 items-end">
+            <!-- 通用筛选与趋势汇总 -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+                <div class="flex flex-wrap gap-4 items-end" :class="itemsViewMode === 'trend' ? 'mb-4' : ''">
                         <div>
                             <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('items.itemType')"></label>
                             <select x-model="itemType"
@@ -707,6 +716,17 @@
                             </select>
                         </div>
                         <div>
+                            <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('filter.dateRange')"></label>
+                            <select x-model="itemDateRangeType"
+                                class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-40"
+                                @change="updateItemCharts()">
+                                <option value="all" x-text="t('range.all')"></option>
+                                <option value="7d" x-text="t('range.7d')"></option>
+                                <option value="30d" x-text="t('range.30d')"></option>
+                                <option value="custom" x-text="t('range.custom')" disabled></option>
+                            </select>
+                        </div>
+                        <div>
                             <label class="block text-gray-700 dark:text-gray-300 mb-2" x-text="t('items.timeGroup')"></label>
                             <select x-model="itemTimeGroup"
                                 class="bg-white dark:bg-gray-800 dark:text-gray-200 border dark:border-gray-600 rounded px-3 py-2 w-32"
@@ -719,7 +739,7 @@
                     </div>
 
                     <!-- 汇总数据 -->
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4" x-show="itemsViewMode === 'trend'" x-cloak>
                         <div class="bg-green-50 dark:bg-green-900/30 rounded p-4 flex flex-col justify-between">
                             <div class="text-sm text-green-600" x-text="t('logs.totalGain')"></div>
                             <div class="text-2xl font-bold text-green-800" x-text="'+' + itemCurrentGain.toLocaleString()"></div>
@@ -746,12 +766,11 @@
                     </div>
                 </div>
 
-                <!-- 图表区 -->
+            <!-- 趋势视图图表区 -->
+            <div x-show="itemsViewMode === 'trend'" x-cloak>
                 <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div id="itemDailyChart" style="width: 100%; height: 400px;"></div>
-                        <div id="itemSourceChart" style="width: 100%; height: 400px;"></div>
-                    </div>
+                    <div id="itemDailyChart" style="width: 100%; height: 400px;" class="mb-6"></div>
+                    <div id="itemSourceChart" style="width: 100%; height: 300px;"></div>
                 </div>
             </div>
 

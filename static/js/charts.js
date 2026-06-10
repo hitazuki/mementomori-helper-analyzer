@@ -123,8 +123,19 @@ const Charts = {
             },
             grid: { left: '3%', right: '4%', bottom: '20%', top: '10%', containLabel: true },
             dataZoom: [
-                { type: 'inside', start: 0, end: 100 },
-                { type: 'slider', start: 0, end: 100, bottom: 30, height: 20 }
+                { 
+                    type: 'inside', 
+                    ...(options.dataZoomStartValue !== undefined 
+                        ? { startValue: options.dataZoomStartValue, endValue: options.dataZoomEndValue }
+                        : { start: 0, end: 100 })
+                },
+                { 
+                    type: 'slider', 
+                    bottom: 30, height: 20,
+                    ...(options.dataZoomStartValue !== undefined 
+                        ? { startValue: options.dataZoomStartValue, endValue: options.dataZoomEndValue }
+                        : { start: 0, end: 100 })
+                }
             ],
             xAxis: {
                 type: 'category',
