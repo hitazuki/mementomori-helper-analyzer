@@ -17,6 +17,43 @@ const Utils = {
         return dateStr.substring(0, 10);
     },
 
+    // 递归标准化数据中的 sources，聚合 Gacha/Open
+    normalizeSources(stats) {
+        if (!stats || typeof stats !== 'object') return stats;
+        
+        if ('sources' in stats && typeof stats.sources === 'object' && stats.sources !== null) {
+            const newSources = {};
+            for (const [sKey, sData] of Object.entries(stats.sources)) {
+                let normKey = sKey;
+                if (typeof SourceI18n !== 'undefined' && SourceI18n.parseCompositeDynamic) {
+                    const dyn = SourceI18n.parseCompositeDynamic(sKey);
+                    if (dyn) normKey = 'id:' + dyn.type;
+                }
+                
+                if (!newSources[normKey]) {
+                    newSources[normKey] = { gain: 0, consume: 0 };
+                }
+                newSources[normKey].gain += sData.gain || 0;
+                newSources[normKey].consume += sData.consume || 0;
+                
+                for (const k in sData) {
+                    if (k !== 'gain' && k !== 'consume') {
+                        newSources[normKey][k] = sData[k];
+                    }
+                }
+            }
+            stats.sources = newSources;
+        }
+
+        for (const val of Object.values(stats)) {
+            if (val && typeof val === 'object') {
+                Utils.normalizeSources(val);
+            }
+        }
+        
+        return stats;
+    },
+
     // 聚合统计数据
     aggregateTotal(stats, characters, field) {
         let total = 0;
