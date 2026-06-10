@@ -52,12 +52,23 @@ const ItemsTab = {
         const options = [];
         let hasOther = false;
 
+        const dynamicGroups = new Set();
+
         sourceKeys.forEach(k => {
             if (this.hasI18n(k)) {
-                options.push({ value: k, label: SourceI18n.translate(k, lang) });
+                const dyn = typeof SourceI18n !== 'undefined' && SourceI18n.parseCompositeDynamic ? SourceI18n.parseCompositeDynamic(k) : null;
+                if (dyn) {
+                    dynamicGroups.add('id:' + dyn.type);
+                } else {
+                    options.push({ value: k, label: SourceI18n.translate(k, lang) });
+                }
             } else {
                 hasOther = true;
             }
+        });
+
+        dynamicGroups.forEach(g => {
+            options.push({ value: g, label: SourceI18n.translate(g, lang) });
         });
         
         options.sort((a, b) => a.label.localeCompare(b.label));
@@ -113,6 +124,14 @@ const ItemsTab = {
                 if (sel === 'other') {
                     for (const [sKey, sData] of Object.entries(daySources)) {
                         if (!this.hasI18n(sKey)) {
+                            dayGain += sData.gain || 0;
+                            dayConsume += sData.consume || 0;
+                        }
+                    }
+                } else if (sel && typeof SourceI18n !== 'undefined' && SourceI18n.parseCompositeDynamic && ['id:100004', 'id:100005'].includes(sel)) {
+                    for (const [sKey, sData] of Object.entries(daySources)) {
+                        const dyn = SourceI18n.parseCompositeDynamic(sKey);
+                        if (dyn && 'id:' + dyn.type === sel) {
                             dayGain += sData.gain || 0;
                             dayConsume += sData.consume || 0;
                         }
@@ -255,12 +274,22 @@ const ItemsTab = {
         let otherNet = 0;
         
         const sel = instance.itemSelectedSource;
+        const dynamicNets = { 'id:100004': 0, 'id:100005': 0 };
+        const dynamicDetails = { 'id:100004': [], 'id:100005': [] };
 
         if (sel === 'other') {
             for (const [sKey, val] of Object.entries(sources)) {
                 if (!this.hasI18n(sKey)) {
                     const net = val.gain - val.consume;
                     if (net > 0) data.push({ name: sKey, value: net });
+                }
+            }
+        } else if (sel && typeof SourceI18n !== 'undefined' && SourceI18n.parseCompositeDynamic && ['id:100004', 'id:100005'].includes(sel)) {
+            for (const [sKey, val] of Object.entries(sources)) {
+                const dyn = SourceI18n.parseCompositeDynamic(sKey);
+                if (dyn && 'id:' + dyn.type === sel) {
+                    const net = val.gain - val.consume;
+                    if (net > 0) data.push({ name: SourceI18n.translate(sKey, lang), value: net });
                 }
             }
         } else if (sel) {
@@ -274,13 +303,29 @@ const ItemsTab = {
                 const net = val.gain - val.consume;
                 if (net <= 0) continue;
                 
-                if (this.hasI18n(sKey)) {
+                const dyn = typeof SourceI18n !== 'undefined' && SourceI18n.parseCompositeDynamic ? SourceI18n.parseCompositeDynamic(sKey) : null;
+                if (dyn) {
+                    const grp = 'id:' + dyn.type;
+                    dynamicNets[grp] += net;
+                    dynamicDetails[grp].push({ name: SourceI18n.translate(sKey, lang), value: net });
+                } else if (this.hasI18n(sKey)) {
                     data.push({ name: SourceI18n.translate(sKey, lang), value: net });
                 } else {
                     otherNet += net;
                     otherDetails.push({ name: sKey, value: net });
                 }
             }
+            
+            ['id:100004', 'id:100005'].forEach(grp => {
+                if (dynamicNets[grp] > 0) {
+                    data.push({
+                        name: SourceI18n.translate(grp, lang),
+                        value: dynamicNets[grp],
+                        details: dynamicDetails[grp].sort((a, b) => b.value - a.value)
+                    });
+                }
+            });
+
             if (otherNet > 0) {
                 data.push({
                     name: I18n.t('logs.sourceOther'),

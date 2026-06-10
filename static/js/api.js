@@ -120,27 +120,22 @@ const API = {
 
     // Stats
     async loadStats() {
-        const data = await this.fetch(this.endpoints.stats) || {};
-        return typeof Utils !== 'undefined' && Utils.normalizeSources ? Utils.normalizeSources(data) : data;
+        return await this.fetch(this.endpoints.stats) || {};
     },
 
     async loadCaveStats() {
-        const data = await this.fetch(this.endpoints.cave) || {};
-        return typeof Utils !== 'undefined' && Utils.normalizeSources ? Utils.normalizeSources(data) : data;
+        return await this.fetch(this.endpoints.cave) || {};
     },
 
     async loadChallengeStats() {
-        const data = await this.fetch(this.endpoints.challenge) || {};
-        return typeof Utils !== 'undefined' && Utils.normalizeSources ? Utils.normalizeSources(data) : data;
+        return await this.fetch(this.endpoints.challenge) || {};
     },
 
     async loadRuneTicketStats() {
-        const data = await this.fetch(this.endpoints.runeTicket) || {};
-        return typeof Utils !== 'undefined' && Utils.normalizeSources ? Utils.normalizeSources(data) : data;
+        return await this.fetch(this.endpoints.runeTicket) || {};
     },
 
     async loadUpgradePanaceaStats() {
-        const data = await this.fetch(this.endpoints.upgradePanacea) || {};
-        return typeof Utils !== 'undefined' && Utils.normalizeSources ? Utils.normalizeSources(data) : data;
+        return await this.fetch(this.endpoints.upgradePanacea) || {};
     }
 };
