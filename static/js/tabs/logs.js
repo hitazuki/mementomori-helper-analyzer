@@ -23,13 +23,9 @@ const LogsTab = {
 
     // 判断来源是否有 i18n 支持
     hasI18n(sourceKey) {
-        if (!sourceKey) return false;
-        if (sourceKey === 'none') return true;
-        if (sourceKey.startsWith('id:')) {
-            const id = sourceKey.substring(3);
-            if (SourceI18n.mapping[id] || SourceI18n.parseRewardMissionComposite(id)) return true;
-        }
-        return false;
+        return typeof SourceI18n !== 'undefined' && typeof SourceI18n.hasI18n === 'function'
+            ? SourceI18n.hasI18n(sourceKey)
+            : false;
     },
 
     // 初始化图表

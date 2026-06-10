@@ -54,6 +54,27 @@ const SourceI18n = {
     }
   },
 
+  gachaPrefixes: ['Gacha ', '抽卡 ', 'ガチャ ', '가챠 '],
+  openPrefixes: ['Open ', '開放 ', '开启 ', '오픈 '],
+
+  parseCompositeDynamic(sourceKey) {
+    if (!sourceKey) return null;
+    
+    for (const prefix of this.gachaPrefixes) {
+      if (sourceKey.startsWith(prefix)) {
+        return { type: '100005', suffix: sourceKey.substring(prefix.length) };
+      }
+    }
+    
+    for (const prefix of this.openPrefixes) {
+      if (sourceKey.startsWith(prefix)) {
+        return { type: '100004', suffix: sourceKey.substring(prefix.length) };
+      }
+    }
+    
+    return null;
+  },
+
   /**
    * Translate source name.
    * @param {string} sourceKey - Source key, usually "id:140" or raw text.
@@ -92,6 +113,20 @@ const SourceI18n = {
         }
         if (entry.alias) return entry.alias;
       }
+    } else {
+      const dynamic = this.parseCompositeDynamic(sourceKey);
+      if (dynamic) {
+        let translatedPrefix = '';
+        const entry = this.mapping[dynamic.type];
+        if (entry && entry.translations && entry.translations[lang]) {
+          translatedPrefix = entry.translations[lang] + ' ';
+        } else if (entry && entry.alias) {
+          translatedPrefix = entry.alias + ' ';
+        } else {
+          translatedPrefix = dynamic.type === '100005' ? 'Gacha ' : 'Open ';
+        }
+        return translatedPrefix + dynamic.suffix;
+      }
     }
 
     return sourceKey;
@@ -114,9 +149,28 @@ const SourceI18n = {
 
       const entry = this.mapping[id];
       if (entry && entry.alias) return entry.alias;
+    } else {
+      const dynamic = this.parseCompositeDynamic(sourceKey);
+      if (dynamic) {
+        let prefixAlias = dynamic.type === '100005' ? 'Gacha ' : 'Open ';
+        const entry = this.mapping[dynamic.type];
+        if (entry && entry.alias) prefixAlias = entry.alias + ' ';
+        return prefixAlias + dynamic.suffix;
+      }
     }
 
     return sourceKey;
+  },
+
+  hasI18n(sourceKey) {
+    if (!sourceKey) return false;
+    if (sourceKey === 'none') return true;
+    if (sourceKey.startsWith('id:')) {
+        const id = sourceKey.substring(3);
+        if (this.mapping[id] || this.parseRewardMissionComposite(id)) return true;
+    }
+    if (this.parseCompositeDynamic(sourceKey)) return true;
+    return false;
   },
 
   parseRewardMissionComposite(id) {
